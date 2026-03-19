@@ -195,7 +195,7 @@ END;
 /
 ```
 
-### 5-2. BATCH_USERS — CPU 2순위 80%
+### 5-2. BATCH_USERS — CPU 2순위 70%
 
 ```sql
 BEGIN
@@ -203,13 +203,13 @@ BEGIN
         'NIGHTTIME',
         'BATCH_USERS',
         'Batch users high priority at night',
-        cpu_p2 => 80
+        cpu_p2 => 70
     );
 END;
 /
 ```
 
-### 5-3. ONLINE_USERS — CPU 2순위 10%
+### 5-3. ONLINE_USERS — CPU 2순위 20%
 
 ```sql
 BEGIN
@@ -217,7 +217,7 @@ BEGIN
         'NIGHTTIME',
         'ONLINE_USERS',
         'Online users low priority at night',
-        cpu_p2 => 10,
+        cpu_p2 => 20,
         max_idle_blocker_time => 30,
         parallel_degree_limit_p1 => 2
     );
@@ -235,7 +235,7 @@ BEGIN
         'Other users minimal resources',
         cpu_p2 => 10,
         max_idle_blocker_time => 30,
-        parallel_degree_limit_p1 => 4
+        parallel_degree_limit_p1 => 2
     );
 END;
 /
