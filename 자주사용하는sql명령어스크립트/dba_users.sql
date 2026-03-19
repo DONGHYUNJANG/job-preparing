@@ -1,0 +1,7 @@
+col username for a25;
+col account_STATUS for a25;
+col DEFAULT_TABLESPACE for a20;
+col TEMPORARY_TABLESPACE for a20;
+select USERNAME, ACCOUNT_STATUS,DEFAULT_TABLESPACE,TEMPORARY_TABLESPACE,USER_ID from dba_users;
+/
+
