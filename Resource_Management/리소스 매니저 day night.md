@@ -8,6 +8,23 @@
 **밤 시간대 (NIGHTTIME)**: 배치 작업 유저(BATCH_USERS)에게 CPU 우선권 부여
 **Linux cron**을 이용하여 시간대별 자동 플랜 전환
 > 
+1. **낮 시간에는 사용자 체감 성능(응답시간) 보호**
+    - 낮에는 OLTP, 화면 조회, API 호출처럼 *짧고 빈번한 트랜잭션*이 많습니다.
+    - 이때 대용량 배치나 무거운 리포트 쿼리가 CPU를 잡아먹으면 전체 세션이 느려집니다.
+    - 낮 플랜에서
+        - 온라인 서비스용 Consumer Group에 **최소 보장(share/min)** 을 주고
+        - 배치/분석 그룹에는 **상한(limit)** 을 두면
+        - “업무 중 전체 서비스가 멈춘 것처럼 느려지는 상황”을 예방할 수 있습니다.
+        
+2. **밤 시간에는 배치 처리량(Throughput) 극대화**
+    - 밤에는 사용자 접속이 적어 OLTP 우선순위가 낮아집니다.
+    - 대신 ETL, 정산, 대량 인덱스/통계 갱신 같은 작업을 빠르게 끝내는 것이 중요합니다.
+    - 밤 플랜에서 배치 그룹의 share를 높이고, 병렬 실행이나 I/O를 더 허용하면 **야간 윈도우 안에 작업을 완료**하기 쉬워집니다.
+    
+3. **유지보수 작업과 일반 업무의 충돌 방지**
+    - 통계 수집, 인덱스 재구성, 백업 같은 유지보수는 일정 자원을 필요로 합니다.
+    - 낮에는 유지보수로 인한 성능 저하가 민감하고, 밤에는 유지보수가 지나치게 느리면 다음날 영향을 줍니다.
+    - 시간대별 플랜으로 유지보수 작업에 **적절한 우선순위**를 부여해, 서비스 품질과 완료 시간을 둘 다 관리할 수 있습니다.
 
 ---
 
@@ -186,8 +203,7 @@ BEGIN
         'NIGHTTIME',
         'BATCH_USERS',
         'Batch users high priority at night',
-        cpu_p2 => 80,
-        parallel_degree_limit_p1 => 8
+        cpu_p2 => 80
     );
 END;
 /
@@ -201,7 +217,9 @@ BEGIN
         'NIGHTTIME',
         'ONLINE_USERS',
         'Online users low priority at night',
-        cpu_p2 => 10
+        cpu_p2 => 10,
+        max_idle_blocker_time => 30,
+        parallel_degree_limit_p1 => 2
     );
 END;
 /
@@ -215,7 +233,9 @@ BEGIN
         'NIGHTTIME',
         'OTHER_GROUPS',
         'Other users minimal resources',
-        cpu_p2 => 10
+        cpu_p2 => 10,
+        max_idle_blocker_time => 30,
+        parallel_degree_limit_p1 => 4
     );
 END;
 /
