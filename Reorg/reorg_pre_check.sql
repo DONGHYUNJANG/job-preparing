@@ -68,7 +68,24 @@ WHERE
     A.TABLESPACE_NAME = B.TABLESPACE_NAME(+);
 
 PROMPT
-PROMPT [2-2] Archive Log Mode & Usage
+PROMPT [2-2] Temporary Tablespace Usage
+PROMPT - Check for sufficient free space in the temporary tablespace.
+PROMPT - Large index rebuilds will require significant temp space for sorting.
+SELECT D.tablespace_name,
+       ROUND(NVL(total_space, 0) / 1024 / 1024, 2) AS "TOTAL_MB",
+       ROUND(NVL(total_space - free_space, 0) / 1024 / 1024, 2) AS "USED_MB",
+       ROUND(NVL(free_space, 0) / 1024 / 1024, 2) AS "FREE_MB",
+       ROUND(NVL((total_space - free_space) / total_space * 100, 0), 2) AS "USED_%"
+FROM   (SELECT tablespace_name, SUM(bytes) AS total_space
+        FROM   dba_temp_files
+        GROUP BY tablespace_name) D,
+       (SELECT tablespace_name, SUM(bytes_free) AS free_space
+        FROM   v$temp_space_header
+        GROUP BY tablespace_name) F
+WHERE  D.tablespace_name = F.tablespace_name(+);
+
+PROMPT
+PROMPT [2-3] Archive Log Mode & Usage
 PROMPT - LOG_MODE should be 'ARCHIVELOG'.
 PROMPT - Check archive destination usage; it must not be full.
 SELECT 
@@ -87,7 +104,7 @@ WHERE
     SPACE_LIMIT > 0;
 
 PROMPT
-PROMPT [2-3] PGA (Program Global Area) Status
+PROMPT [2-4] PGA (Program Global Area) Status
 PROMPT - 'total PGA allocated' should be well below 'PGA aggregate limit'.
 PROMPT - 'cache hit percentage' on 'PGA Target Advice' should be high (e.g., > 90%).
 SELECT 

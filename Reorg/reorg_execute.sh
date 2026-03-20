@@ -34,17 +34,29 @@ DOP=4  # Degree of Parallelism: Adjust based on pre-check results (e.g., cpu_cou
 LOG_FILE="reorg_execute_$(date +%Y%m%d_%H%M%S).log"
 TABLE_LIST_FILE="reorg_table_list.txt"
 INDEX_LIST_FILE="reorg_index_list.txt"
+UNUSABLE_INDEX_LIST_FILE="reorg_unusable_indexes.txt"
+INVALID_OBJECT_LIST_FILE="reorg_invalid_objects.txt"
 
 # Function to log messages
 log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" | tee -a ${LOG_FILE}
 }
 
-# Function to run SQL commands
-run_sql() {
+# Function to run SQL commands and spool output
+run_sql_spool() {
     sqlplus -S "${SQLPLUS_CONN}" <<EOF
 SET HEADING OFF FEEDBACK OFF VERIFY OFF TERMOUT OFF LINES 200 PAGES 0
 $1
+EXIT;
+EOF
+}
+
+# Function to run SQL commands/PLSQL for execution (no spool)
+run_sql_exec() {
+    sqlplus -S "${SQLPLUS_CONN}" <<EOF
+SET FEEDBACK OFF VERIFY OFF SERVEROUTPUT ON
+$1
+/
 EXIT;
 EOF
 }
@@ -58,7 +70,7 @@ log "Degree of Parallelism (DOP): ${DOP}"
 
 # ---[ 3-1. Generate Table List ]---
 log "Step 1: Generating list of tables to reorganize..."
-run_sql "SPOOL ${TABLE_LIST_FILE};
+run_sql_spool "SPOOL ${TABLE_LIST_FILE};
 SELECT TABLE_NAME FROM DBA_TABLES WHERE OWNER = '${SCHEMA_NAME}' AND PARTITIONED = 'NO' AND IOT_TYPE IS NULL;
 SPOOL OFF;"
 
@@ -76,7 +88,7 @@ for table in $(cat ${TABLE_LIST_FILE}); do
     (
         log "  -> Moving table: ${table}"
         move_sql="ALTER TABLE ${SCHEMA_NAME}.${table} MOVE PARALLEL ${DOP};"
-        run_sql "${move_sql}"
+        run_sql_exec "${move_sql}"
         log "  <- Move complete: ${table}"
     ) &
 
@@ -92,10 +104,7 @@ log "All table MOVE operations completed."
 
 # ---[ 3-3. Rebuild Indexes ]---
 log "Step 3: Rebuilding indexes in parallel (DOP=${DOP})..."
-
-# Generate Index List
-log "Generating list of indexes to rebuild..."
-run_sql "SPOOL ${INDEX_LIST_FILE};
+run_sql_spool "SPOOL ${INDEX_LIST_FILE};
 SELECT INDEX_NAME FROM DBA_INDEXES WHERE OWNER = '${SCHEMA_NAME}' AND TABLE_NAME IN (SELECT TABLE_NAME FROM DBA_TABLES WHERE OWNER = '${SCHEMA_NAME}' AND PARTITIONED = 'NO' AND IOT_TYPE IS NULL);
 SPOOL OFF;"
 
@@ -108,7 +117,7 @@ else
         (
             log "  -> Rebuilding index: ${index}"
             rebuild_sql="ALTER INDEX ${SCHEMA_NAME}.${index} REBUILD PARALLEL ${DOP};"
-            run_sql "${rebuild_sql}"
+            run_sql_exec "${rebuild_sql}"
             log "  <- Rebuild complete: ${index}"
         ) &
 
@@ -123,10 +132,53 @@ fi
 log "All index REBUILD operations completed."
 
 
+# ---[ 3-4. Validate Index Status ]---
+log "Step 4: Validating index status..."
+run_sql_spool "SPOOL ${UNUSABLE_INDEX_LIST_FILE};
+SELECT OWNER, INDEX_NAME, STATUS FROM DBA_INDEXES WHERE OWNER = '${SCHEMA_NAME}' AND STATUS = 'UNUSABLE';
+SPOOL OFF;"
+
+# -s checks if file exists and is not empty
+if [ -s "${UNUSABLE_INDEX_LIST_FILE}" ]; then
+    log "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    log "ERROR: Found UNUSABLE indexes after rebuild. Please check."
+    cat "${UNUSABLE_INDEX_LIST_FILE}" | tee -a ${LOG_FILE}
+    log "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    exit 1
+else
+    log "All indexes are valid."
+fi
+
+
+# ---[ 3-5. Check for Invalid Objects ]---
+log "Step 5: Checking for invalid objects..."
+run_sql_spool "SPOOL ${INVALID_OBJECT_LIST_FILE};
+SELECT OWNER, OBJECT_NAME, OBJECT_TYPE, STATUS FROM DBA_OBJECTS WHERE OWNER = '${SCHEMA_NAME}' AND STATUS = 'INVALID';
+SPOOL OFF;"
+
+if [ -s "${INVALID_OBJECT_LIST_FILE}" ]; then
+    log "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+    log "WARNING: Found INVALID objects. Please review them."
+    cat "${INVALID_OBJECT_LIST_FILE}" | tee -a ${LOG_FILE}
+    log "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+else
+    log "No invalid objects found."
+fi
+
+
+# ---[ 3-6. Gather Schema Statistics ]---
+log "Step 6: Gathering schema statistics..."
+log "This may take a while..."
+run_sql_exec "BEGIN
+    DBMS_STATS.GATHER_SCHEMA_STATS(ownname => '${SCHEMA_NAME}');
+END;"
+log "Schema statistics gathered successfully."
+
+
 # ---[ 4. Finalization ]-------------------------------------------------------
 
 log "Cleaning up temporary files..."
-rm -f ${TABLE_LIST_FILE} ${INDEX_LIST_FILE}
+rm -f ${TABLE_LIST_FILE} ${INDEX_LIST_FILE} ${UNUSABLE_INDEX_LIST_FILE} ${INVALID_OBJECT_LIST_FILE}
 
 log ">>>>> Table Reorg Script Finished Successfully. <<<<<"
 
