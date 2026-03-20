@@ -159,6 +159,9 @@
 ### 추가 스크립트 (sql_temp에서 복사, 비파라미터)
 
 - `free.sql` : `DBA_DATA_FILES` + `DBA_FREE_SPACE`로 테이블스페이스 사용률(Alloc/Used/Free%) 계산
+- `tbs_list.sql` : `DBA_TABLESPACES` 테이블스페이스 목록/속성
+- `tbs_files.sql` : `DBA_DATA_FILES` 데이터파일 목록/용량/자동확장
+- `tbs_free_space.sql` : `DBA_FREE_SPACE` 프리 블록 상세
 - `i.sql` : `V$INSTANCE`로 인스턴스 이름/상태 조회
 - `line.sql` : `V$LOG`로 redo log 그룹별 status/sequence#/archived 조회
 - `log.sql` : `V$LOGFILE`로 redo log 파일 멤버 목록 조회
