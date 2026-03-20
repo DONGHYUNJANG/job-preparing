@@ -15,8 +15,7 @@ select tablespace_name,
        segment_space_management,
        status,
        bigfile,
-       allocation_type,
-       def_autoextensible
+       allocation_type
 from dba_tablespaces
 order by tablespace_name;
 
