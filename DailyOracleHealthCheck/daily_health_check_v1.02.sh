@@ -64,7 +64,7 @@ EOF
 
     # 결과값이 비어있지 않은지 확인 (DB가 Down된 경우 결과가 없을 수 있음)
     if [ -z "$RESULT" ]; then
-        printf "%-12s | %-12s | %-15s | %-15s\n" "$SID" "DOWN" "N/A" "OFFLINE"
+        printf "%-12s | %-12s | %-15s | %-15s\n" "$SID" "DOWN" "N/A" "OFFLINE"  >> $REPORT_FILE
     else
         # 쉼표(,)를 기준으로 데이터 분리
         I_NAME=$(echo $RESULT | cut -d',' -f1)
