@@ -1,0 +1,2 @@
+scp대신
+rsync -avz --ignore-existing /home/oracle/pump_ora12c/sh_meta.dmp oracle@192.168.23.174:/home/oracle/pump_ora19c/
