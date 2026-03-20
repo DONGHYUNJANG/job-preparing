@@ -1,4 +1,2 @@
-select group#, member
-from v$logfile
-order by group# asc
+select member from v$logfile
 /
