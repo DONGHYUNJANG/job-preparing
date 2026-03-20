@@ -1,11 +1,9 @@
--- dba_users.sql : DBA_USERS 조회 (USERNAME 필터, blank=all)
+-- dba_users_f.sql : DBA_USERS 전체 조회 (계정 상태 / 기본·임시 테이블스페이스)
 set pagesize 1000 linesize 260 trimspool on verify off feedback off
 column username             format a25
 column account_status       format a25
 column default_tablespace   format a20
 column temporary_tablespace format a20
-
-accept u prompt 'USERNAME (blank=all): '
 
 select username,
        account_status,
@@ -13,5 +11,4 @@ select username,
        temporary_tablespace,
        user_id
 from dba_users
-where ('&u' = '' or username = upper('&u'))
 order by username;

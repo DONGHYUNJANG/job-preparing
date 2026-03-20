@@ -10,8 +10,6 @@ column cache_sz  format 9999999
 column cycle_f   format a3
 column order_f   format a3
 
-accept o prompt 'OWNER (blank=all): '
-accept s prompt 'SEQUENCE_NAME (blank=all): '
 
 select sequence_owner owner,
        sequence_name seq_name,
@@ -23,7 +21,5 @@ select sequence_owner owner,
        cycle_flag    cycle_f,
        order_flag    order_f
 from dba_sequences
-where ('&o' = '' or sequence_owner = upper('&o'))
-  and ('&s' = '' or sequence_name = upper('&s'))
 order by sequence_owner, seq_name;
 
