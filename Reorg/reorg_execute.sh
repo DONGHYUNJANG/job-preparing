@@ -1,0 +1,133 @@
+#!/bin/bash
+
+# =============================================================================
+# Oracle Table/Index Reorg Parallel Execution Script
+# =============================================================================
+#
+# !! WARNING !!
+# 1. Run this script outside of peak hours.
+# 2. Ensure a full backup is completed before execution.
+# 3. This script is intended for NON-PARTITIONED, NON-IOT tables.
+#
+
+# ---[ 1. User Configuration ]-------------------------------------------------
+# !! Set your environment and connection details !!
+export ORACLE_SID="ORCL"                  # Your Oracle SID
+export ORACLE_HOME="/u01/app/oracle/product/19c/dbhome_1" # Your Oracle Home
+export PATH=$ORACLE_HOME/bin:$PATH
+
+# -- Connection (Option 1: OS Authentication)
+# SQLPLUS_CONN="/ as sysdba"
+
+# -- Connection (Option 2: User/Password)
+# It is recommended to use Oracle Wallet for production environments.
+SQLPLUS_USER="system"
+SQLPLUS_PASS="your_password"
+SQLPLUS_CONN="${SQLPLUS_USER}/${SQLPLUS_PASS}"
+
+# -- Target Schema and Parallelism
+SCHEMA_NAME="SH"
+DOP=4  # Degree of Parallelism: Adjust based on pre-check results (e.g., cpu_count / 2)
+
+
+# ---[ 2. Script Setup ]-------------------------------------------------------
+LOG_FILE="reorg_execute_$(date +%Y%m%d_%H%M%S).log"
+TABLE_LIST_FILE="reorg_table_list.txt"
+INDEX_LIST_FILE="reorg_index_list.txt"
+
+# Function to log messages
+log() {
+    echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" | tee -a ${LOG_FILE}
+}
+
+# Function to run SQL commands
+run_sql() {
+    sqlplus -S "${SQLPLUS_CONN}" <<EOF
+SET HEADING OFF FEEDBACK OFF VERIFY OFF TERMOUT OFF LINES 200 PAGES 0
+$1
+EXIT;
+EOF
+}
+
+
+# ---[ 3. Main Execution ]-----------------------------------------------------
+
+log ">>>>> Table Reorg Script Started. <<<<<"
+log "Target Schema: ${SCHEMA_NAME}"
+log "Degree of Parallelism (DOP): ${DOP}"
+
+# ---[ 3-1. Generate Table List ]---
+log "Step 1: Generating list of tables to reorganize..."
+run_sql "SPOOL ${TABLE_LIST_FILE};
+SELECT TABLE_NAME FROM DBA_TABLES WHERE OWNER = '${SCHEMA_NAME}' AND PARTITIONED = 'NO' AND IOT_TYPE IS NULL;
+SPOOL OFF;"
+
+if [ ! -s "${TABLE_LIST_FILE}" ]; then
+    log "ERROR: No tables found for schema ${SCHEMA_NAME} or failed to generate table list."
+    exit 1
+fi
+log "Table list generated: ${TABLE_LIST_FILE}"
+
+
+# ---[ 3-2. Reorganize Tables ]---
+log "Step 2: Reorganizing tables in parallel (DOP=${DOP})..."
+job_count=0
+for table in $(cat ${TABLE_LIST_FILE}); do
+    (
+        log "  -> Moving table: ${table}"
+        move_sql="ALTER TABLE ${SCHEMA_NAME}.${table} MOVE PARALLEL ${DOP};"
+        run_sql "${move_sql}"
+        log "  <- Move complete: ${table}"
+    ) &
+
+    ((job_count++))
+    if [ ${job_count} -ge ${DOP} ]; then
+        wait
+        job_count=0
+    fi
+done
+wait
+log "All table MOVE operations completed."
+
+
+# ---[ 3-3. Rebuild Indexes ]---
+log "Step 3: Rebuilding indexes in parallel (DOP=${DOP})..."
+
+# Generate Index List
+log "Generating list of indexes to rebuild..."
+run_sql "SPOOL ${INDEX_LIST_FILE};
+SELECT INDEX_NAME FROM DBA_INDEXES WHERE OWNER = '${SCHEMA_NAME}' AND TABLE_NAME IN (SELECT TABLE_NAME FROM DBA_TABLES WHERE OWNER = '${SCHEMA_NAME}' AND PARTITIONED = 'NO' AND IOT_TYPE IS NULL);
+SPOOL OFF;"
+
+if [ ! -s "${INDEX_LIST_FILE}" ]; then
+    log "WARNING: No indexes found for tables in schema ${SCHEMA_NAME}."
+else
+    log "Index list generated: ${INDEX_LIST_FILE}"
+    job_count=0
+    for index in $(cat ${INDEX_LIST_FILE}); do
+        (
+            log "  -> Rebuilding index: ${index}"
+            rebuild_sql="ALTER INDEX ${SCHEMA_NAME}.${index} REBUILD PARALLEL ${DOP};"
+            run_sql "${rebuild_sql}"
+            log "  <- Rebuild complete: ${index}"
+        ) &
+
+        ((job_count++))
+        if [ ${job_count} -ge ${DOP} ]; then
+            wait
+            job_count=0
+        fi
+    done
+    wait
+fi
+log "All index REBUILD operations completed."
+
+
+# ---[ 4. Finalization ]-------------------------------------------------------
+
+log "Cleaning up temporary files..."
+rm -f ${TABLE_LIST_FILE} ${INDEX_LIST_FILE}
+
+log ">>>>> Table Reorg Script Finished Successfully. <<<<<"
+
+exit 0
