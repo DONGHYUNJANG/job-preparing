@@ -1,0 +1,24 @@
+TODO: 
+1. 실제 현업에서 REORGANIZATION 전에 백업은 잘 수행하지 않으므로 순서에서 빼는게 좋겠다
+2. 스크립트 동작 검증 및 실제로 얼마 만큼의 블럭 갯수가 줄었는가, 워터마크가 내려갔는가, FullScan검색속도 향상에 효과가 있는가에 대한 검증이 되면 좋을것 같다.
+3. 검증을 위한 시나리오도 자동화 하면 좋겠지만 이건 고민해 봐야겠다.
+4. 아래의 소스코드를 적용할지 생각해볼것
+5. 온라인 모드와 오프라인 모드 둘다 지원 가능하게 하면 좋을것 같다 아마 파라메터로 조정 가능할것이다.
+
+
+# ---[ 3-1. Generate Table List ]---
+log "Step 1: Generating list of tables to reorganize..."
+run_sql_spool "SPOOL ${TABLE_LIST_FILE};
+SELECT TABLE_NAME FROM DBA_TABLES
+WHERE OWNER = '${SCHEMA_NAME}'
+  AND PARTITIONED = 'NO'
+  AND IOT_TYPE IS NULL
+  AND TEMPORARY = 'N'
+  AND NESTED = 'NO'
+  AND SECONDARY = 'N'
+  AND CLUSTER_NAME IS NULL
+  AND TABLE_NAME NOT LIKE 'AQ\$%'
+  AND TABLE_NAME NOT LIKE 'MLOG\$%'
+  AND TABLE_NAME NOT LIKE 'RUPD\$%'
+  AND DROPPED = 'NO';
+SPOOL OFF;"
