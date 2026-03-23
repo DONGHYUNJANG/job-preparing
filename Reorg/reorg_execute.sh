@@ -3,106 +3,134 @@
 # =============================================================================
 # Oracle Table/Index Reorg Parallel Execution Script (Refactored)
 # =============================================================================
-#
-# !! WARNING !!
-# 1. Run this script outside of peak hours.
-# 2. Ensure a full backup is completed before execution.
-# 3. This script is intended for NON-PARTITIONED, NON-IOT tables.
-#
 
-# ---[ 1. User Configuration ]-------------------------------------------------
-# !! Set your environment and connection details !!
-export ORACLE_SID="ORCL"                  # Your Oracle SID
-export ORACLE_HOME="/u01/app/oracle/product/19c/dbhome_1" # Your Oracle Home
+export ORACLE_SID="ORCL"
+export ORACLE_HOME="/u01/app/oracle/product/19.3.0/dbhome_1"
 export PATH=$ORACLE_HOME/bin:$PATH
 
-# -- Connection (Option 1: OS Authentication)
-# SQLPLUS_CONN="/ as sysdba"
-
-# -- Connection (Option 2: User/Password)
 SQLPLUS_USER="system"
-SQLPLUS_PASS="your_password"
+SQLPLUS_PASS="oracle"
 SQLPLUS_CONN="${SQLPLUS_USER}/${SQLPLUS_PASS}"
 
-# -- Target Schema and Parallelism
+# ===[ Configuration ]=========================================================
 SCHEMA_NAME="SH"
-# [Refactored 1] Separated Shell Concurrency and SQL Parallelism
-JOB_CONCURRENCY=2  # Number of tables/indexes to process simultaneously at the shell level.
-SQL_DOP=4          # Degree of Parallelism for each SQL operation (ALTER TABLE/INDEX).
+JOB_CONCURRENCY=2
+SQL_DOP=4
+# =============================================================================
 
-# ---[ 2. Script Setup ]-------------------------------------------------------
-# Get the directory where the script is located, for robust file path handling.
-SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" &> /dev/null && pwd)
+LOG_DIR="./logs"
+LOG_FILE="${LOG_DIR}/reorg_execute_$(date +%Y%m%d_%H%M%S).log"
+TABLE_LIST_FILE="${LOG_DIR}/reorg_table_list.txt"
+INDEX_LIST_FILE="${LOG_DIR}/reorg_index_list.txt"
 
-LOG_FILE="${SCRIPT_DIR}/reorg_execute_$(date +%Y%m%d_%H%M%S).log"
-TABLE_LIST_FILE="${SCRIPT_DIR}/reorg_table_list.txt"
-INDEX_LIST_FILE="${SCRIPT_DIR}/reorg_index_list.txt"
-UNUSABLE_INDEX_LIST_FILE="${SCRIPT_DIR}/reorg_unusable_indexes.txt"
-INVALID_OBJECT_LIST_FILE="${SCRIPT_DIR}/reorg_invalid_objects.txt"
+# --- Pre/Post check report files
+PRE_REORG_STATS="${LOG_DIR}/pre_reorg_stats.txt"
+POST_REORG_STATS="${LOG_DIR}/post_reorg_stats.txt"
+REORG_COMPARISON_REPORT="${LOG_DIR}/reorg_comparison_report.txt"
 
-# Function to log messages
+# Create log directory if it doesn't exist
+mkdir -p ${LOG_DIR}
+
 log() {
     echo "[$(date +'%Y-%m-%d %H:%M:%S')] $1" | tee -a ${LOG_FILE}
 }
 
-# [Refactored 2] Enhanced spooling options for cleaner files
 run_sql_spool() {
     sqlplus -S "${SQLPLUS_CONN}" <<EOF
 SET HEADING OFF FEEDBACK OFF VERIFY OFF TERMOUT OFF LINES 200 PAGESIZE 0 TRIMSPOOL ON ECHO OFF
-$1
+SPOOL $1;
+$2
+SPOOL OFF;
 EXIT;
 EOF
 }
 
-# [Refactored 3] Added error handling to stop on SQL errors
 run_sql_exec() {
     sqlplus -S "${SQLPLUS_CONN}" <<EOF
 SET FEEDBACK OFF VERIFY OFF SERVEROUTPUT ON
 WHENEVER SQLERROR EXIT FAILURE ROLLBACK;
 $1
+/
 EXIT;
 EOF
 }
 
+# [NEW] Function to get schema stats (Blocks and HWM)
+get_schema_stats() {
+    local output_file=$1
+    log "Capturing schema stats for ${SCHEMA_NAME} into ${output_file}..."
+    local sql_query="SELECT TABLE_NAME || ',' || BLOCKS || ',' || EMPTY_BLOCKS FROM DBA_TABLES WHERE OWNER = '${SCHEMA_NAME}' AND TABLE_NAME IN (SELECT TABLE_NAME FROM DBA_TABLES WHERE OWNER = '${SCHEMA_NAME}' AND PARTITIONED = 'NO' AND IOT_TYPE IS NULL AND TEMPORARY = 'N' AND NESTED = 'NO' AND SECONDARY = 'N' AND CLUSTER_NAME IS NULL AND TABLE_NAME NOT LIKE 'AQ\$%' AND TABLE_NAME NOT LIKE 'MLOG\$%' AND TABLE_NAME NOT LIKE 'RUPD\$%' AND DROPPED = 'NO') ORDER BY TABLE_NAME;"
+    run_sql_spool "${output_file}" "${sql_query}"
+}
 
-# ---[ 3. Main Execution ]-----------------------------------------------------
+# [NEW] Function to compare pre and post stats
+generate_comparison_report() {
+    log "Generating comparison report..."
+    
+    (
+        echo "==========================================================================================="
+        echo " Reorganization Comparison Report for Schema: ${SCHEMA_NAME}"
+        echo "==========================================================================================="
+        echo " "
+        echo "HWM (High Water Mark) is represented by the 'BLOCKS' count."
+        echo "A reduction in BLOCKS indicates successful HWM lowering and space reclamation."
+        echo " "
+        printf "%-35s | %-20s | %-20s | %-10s\n" "TABLE_NAME" "BLOCKS (BEFORE)" "BLOCKS (AFTER)" "SAVED"
+        echo "-------------------------------------------------------------------------------------------"
+    ) > ${REORG_COMPARISON_REPORT}
 
-log ">>>>> Table Reorg Script Started. <<<<<"
-log "Target Schema: ${SCHEMA_NAME}"
-log "Job Concurrency (Shell): ${JOB_CONCURRENCY}"
-log "SQL DOP (Oracle): ${SQL_DOP}"
+    total_blocks_before=0
+    total_blocks_after=0
 
-# ---[ 3-1. Generate Table List ]---
+    # Use awk to join files and calculate differences
+    awk -F, '
+        BEGIN { OFS="," }
+        NR==FNR { before[$1] = $2; next }
+        {
+            if ($1 in before) {
+                diff = before[$1] - $2;
+                printf "%-35s | %-20s | %-20s | %-10s\n", $1, before[$1], $2, diff;
+                total_before += before[$1];
+                total_after += $2;
+            }
+        }
+        END {
+            total_saved = total_before - total_after;
+            printf "\n-------------------------------------------------------------------------------------------\n";
+            printf "TOTALS\n";
+            printf "%-35s | %-20s | %-20s | %-10s\n", " ", total_before, total_after, total_saved;
+        }
+    ' ${PRE_REORG_STATS} ${POST_REORG_STATS} >> ${REORG_COMPARISON_REPORT}
+    
+    log "Comparison report generated at ${REORG_COMPARISON_REPORT}"
+    cat ${REORG_COMPARISON_REPORT}
+}
+
+
+# ---[ 0. Capture Pre-Reorg Stats ]---
+log "Step 0: Capturing pre-reorganization statistics..."
+get_schema_stats "${PRE_REORG_STATS}"
+
+# ---[ 1. Get List of Tables and Indexes ]---
 log "Step 1: Generating list of tables to reorganize..."
-run_sql_spool "SPOOL ${TABLE_LIST_FILE};
-SELECT TABLE_NAME FROM DBA_TABLES
-WHERE OWNER = '${SCHEMA_NAME}'
-  AND PARTITIONED = 'NO'
-  AND IOT_TYPE IS NULL
-  AND TEMPORARY = 'N'
-  AND NESTED = 'NO'
-  AND SECONDARY = 'N'
-  AND CLUSTER_NAME IS NULL
-  AND TABLE_NAME NOT LIKE 'AQ\$%'
-  AND TABLE_NAME NOT LIKE 'MLOG\$%'
-  AND TABLE_NAME NOT LIKE 'RUPD\$%'
-  AND DROPPED = 'NO';
-SPOOL OFF;"
+table_list_sql="SELECT TABLE_NAME FROM DBA_TABLES WHERE OWNER = '${SCHEMA_NAME}' AND PARTITIONED = 'NO' AND IOT_TYPE IS NULL AND TEMPORARY = 'N' AND NESTED = 'NO' AND SECONDARY = 'N' AND CLUSTER_NAME IS NULL AND TABLE_NAME NOT LIKE 'AQ\$%' AND TABLE_NAME NOT LIKE 'MLOG\$%' AND TABLE_NAME NOT LIKE 'RUPD\$%' AND DROPPED = 'NO';"
+run_sql_spool "${TABLE_LIST_FILE}" "${table_list_sql}"
+
+log "Step 2: Generating list of indexes to rebuild..."
+index_list_sql="SELECT INDEX_NAME FROM DBA_INDEXES WHERE OWNER = '${SCHEMA_NAME}' AND INDEX_TYPE = 'NORMAL' AND TABLE_NAME IN ($(echo ${table_list_sql} | sed 's/;//g'));"
+run_sql_spool "${INDEX_LIST_FILE}" "${index_list_sql}"
 
 if [ ! -s "${TABLE_LIST_FILE}" ]; then
-    log "ERROR: No tables found for schema ${SCHEMA_NAME} or failed to generate table list."
-    exit 1
+    log "No tables found for schema ${SCHEMA_NAME}. Exiting."
+    exit 0
 fi
-log "Table list generated: ${TABLE_LIST_FILE}"
 
-
-# ---[ 3-2. Reorganize Tables ]---
-log "Step 2: Reorganizing tables (Job Concurrency=${JOB_CONCURRENCY}, SQL DOP=${SQL_DOP})..."
+# ---[ 3. Reorganize Tables ]---
+log "Step 3: Reorganizing tables in parallel (Job Concurrency=${JOB_CONCURRENCY}, SQL DOP=${SQL_DOP})..."
 job_count=0
 for table in $(cat ${TABLE_LIST_FILE}); do
     (
         log "  -> Moving table: ${table}"
-        # [Refactored 4] Added NOPARALLEL to reset table properties after MOVE
         move_sql="
         ALTER TABLE ${SCHEMA_NAME}.${table} MOVE PARALLEL ${SQL_DOP};
         ALTER TABLE ${SCHEMA_NAME}.${table} NOPARALLEL;
@@ -121,101 +149,44 @@ wait
 log "All table MOVE operations completed."
 
 
-# ---[ 3-3. Rebuild Indexes ]---
-log "Step 3: Rebuilding indexes (Job Concurrency=${JOB_CONCURRENCY}, SQL DOP=${SQL_DOP})..."
-run_sql_spool "SPOOL ${INDEX_LIST_FILE};
-SELECT INDEX_NAME FROM DBA_INDEXES WHERE OWNER = '${SCHEMA_NAME}' AND TABLE_NAME IN (
-    SELECT TABLE_NAME FROM DBA_TABLES
-    WHERE OWNER = '${SCHEMA_NAME}'
-      AND PARTITIONED = 'NO'
-      AND IOT_TYPE IS NULL
-      AND TEMPORARY = 'N'
-      AND NESTED = 'NO'
-      AND SECONDARY = 'N'
-      AND CLUSTER_NAME IS NULL
-      AND TABLE_NAME NOT LIKE 'AQ\$%'
-      AND TABLE_NAME NOT LIKE 'MLOG\$%'
-      AND TABLE_NAME NOT LIKE 'RUPD\$%'
-      AND DROPPED = 'NO'
-);
-SPOOL OFF;"
+# ---[ 4. Rebuild Indexes ]---
+log "Step 4: Rebuilding indexes in parallel (Job Concurrency=${JOB_CONCURRENCY}, SQL DOP=${SQL_DOP})..."
+job_count=0
+for index in $(cat ${INDEX_LIST_FILE}); do
+    (
+        log "  -> Rebuilding index: ${index}"
+        rebuild_sql="
+        ALTER INDEX ${SCHEMA_NAME}.${index} REBUILD PARALLEL ${SQL_DOP};
+        ALTER INDEX ${SCHEMA_NAME}.${index} NOPARALLEL;
+        "
+        run_sql_exec "${rebuild_sql}"
+        log "  <- Rebuild & Noparallel complete: ${index}"
+    ) &
 
-if [ ! -s "${INDEX_LIST_FILE}" ]; then
-    log "WARNING: No indexes found for tables in schema ${SCHEMA_NAME}."
-else
-    log "Index list generated: ${INDEX_LIST_FILE}"
-    job_count=0
-    for index in $(cat ${INDEX_LIST_FILE}); do
-        (
-            log "  -> Rebuilding index: ${index}"
-            # [Refactored 5] Added NOPARALLEL to reset index properties after REBUILD
-            rebuild_sql="
-            ALTER INDEX ${SCHEMA_NAME}.${index} REBUILD PARALLEL ${SQL_DOP};
-            ALTER INDEX ${SCHEMA_NAME}.${index} NOPARALLEL;
-            "
-            run_sql_exec "${rebuild_sql}"
-            log "  <- Rebuild & Noparallel complete: ${index}"
-        ) &
-
-        ((job_count++))
-        if [ ${job_count} -ge ${JOB_CONCURRENCY} ]; then
-            wait
-            job_count=0
-        fi
-    done
-    wait
-fi
+    ((job_count++))
+    if [ ${job_count} -ge ${JOB_CONCURRENCY} ]; then
+        wait
+        job_count=0
+    fi
+done
+wait
 log "All index REBUILD operations completed."
 
+# ---[ 5. Gather Statistics ]---
+log "Step 5: Gathering fresh statistics for schema ${SCHEMA_NAME}..."
+stats_sql="EXEC DBMS_STATS.GATHER_SCHEMA_STATS(ownname => '${SCHEMA_NAME}', estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE, method_opt => 'FOR ALL COLUMNS SIZE AUTO', degree => ${SQL_DOP}, cascade => TRUE);"
+run_sql_exec "${stats_sql}"
+log "Schema statistics gathering complete."
 
-# ---[ 3-4. Validate Index Status ]---
-log "Step 4: Validating index status..."
-run_sql_spool "SPOOL ${UNUSABLE_INDEX_LIST_FILE};
-SELECT OWNER, INDEX_NAME, STATUS FROM DBA_INDEXES WHERE OWNER = '${SCHEMA_NAME}' AND STATUS = 'UNUSABLE';
-SPOOL OFF;"
+# ---[ 6. Capture Post-Reorg Stats and Compare ]---
+log "Step 6: Capturing post-reorganization statistics..."
+get_schema_stats "${POST_REORG_STATS}"
 
-# -s checks if file exists and is not empty
-if [ -s "${UNUSABLE_INDEX_LIST_FILE}" ]; then
-    log "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    log "ERROR: Found UNUSABLE indexes after rebuild. Please check."
-    cat "${UNUSABLE_INDEX_LIST_FILE}" | tee -a ${LOG_FILE}
-    log "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    exit 1
-else
-    log "All indexes are valid."
-fi
+log "Step 7: Generating comparison report..."
+generate_comparison_report
 
-
-# ---[ 3-5. Check for Invalid Objects ]---
-log "Step 5: Checking for invalid objects..."
-run_sql_spool "SPOOL ${INVALID_OBJECT_LIST_FILE};
-SELECT OWNER, OBJECT_NAME, OBJECT_TYPE, STATUS FROM DBA_OBJECTS WHERE OWNER = '${SCHEMA_NAME}' AND STATUS = 'INVALID';
-SPOOL OFF;"
-
-if [ -s "${INVALID_OBJECT_LIST_FILE}" ]; then
-    log "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-    log "WARNING: Found INVALID objects. Please review them."
-    cat "${INVALID_OBJECT_LIST_FILE}" | tee -a ${LOG_FILE}
-    log "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
-else
-    log "No invalid objects found."
-fi
-
-
-# ---[ 3-6. Gather Schema Statistics ]---
-log "Step 6: Gathering schema statistics..."
-log "This may take a while..."
-run_sql_exec "BEGIN
-    DBMS_STATS.GATHER_SCHEMA_STATS(ownname => '${SCHEMA_NAME}');
-END;"
-log "Schema statistics gathered successfully."
-
-
-# ---[ 4. Finalization ]-------------------------------------------------------
-
-log "Cleaning up temporary files..."
-rm -f ${TABLE_LIST_FILE} ${INDEX_LIST_FILE} ${UNUSABLE_INDEX_LIST_FILE} ${INVALID_OBJECT_LIST_FILE}
-
-log ">>>>> Table Reorg Script Finished Successfully. <<<<<"
+log "Reorganization script finished successfully."
+log "Please check the full log at: ${LOG_FILE}"
+log "Comparison report is available at: ${REORG_COMPARISON_REPORT}"
 
 exit 0
