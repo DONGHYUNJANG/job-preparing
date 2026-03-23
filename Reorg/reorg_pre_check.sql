@@ -32,17 +32,18 @@ COLUMN "CACHE_HIT(%)"         FORMAT 990
 COLUMN estd_overalloc_count   FORMAT 999,999,990
 
 PROMPT +------------------------------------------------------------------------+
-PROMPT | Oracle Reorganization Pre-check Script                                 |
+PROMPT | Oracle Reorganization 사전 점검 스크립트                               |
 PROMPT +------------------------------------------------------------------------+
 
 PROMPT 
-PROMPT ===[ 1. Target Schema Check ]=============================================
+PROMPT ===[ 1. 대상 스키마 점검 ]================================================
 PROMPT
-ACCEPT schema_name CHAR PROMPT 'Enter the schema name to check: ' DEFAULT 'SH'
+ACCEPT schema_name CHAR PROMPT '점검할 스키마 이름을 입력하세요: ' DEFAULT 'SH'
 
 PROMPT
-PROMPT [1-1] Schema Total Size
-PROMPT - Calculating total disk space used by schema: &schema_name
+PROMPT [1-1] 스키마 전체 크기
+
+PROMPT - 스키마(&schema_name)의 전체 디스크 사용량을 계산합니다.
 PROMPT 
 SELECT
     SUM(bytes) / 1024 / 1024 AS "SIZE_MB"
@@ -52,13 +53,14 @@ WHERE
     owner = UPPER('&schema_name');
 
 PROMPT
-PROMPT [1-2] Reorganization Recommendation
-PROMPT - A large schema size can indicate potential for space reclamation.
+PROMPT [1-2] 재구성(Reorg) 권장 사항
+
+PROMPT - 스키마 크기가 클 경우, 공간 회수 및 성능 향상의 가능성이 있습니다.
 PROMPT 
 SELECT
     CASE
-        WHEN SUM(bytes) > 0 THEN 'Reorganization is possible for schema ' || UPPER('&schema_name') || ' (' || ROUND(SUM(bytes)/1024/1024, 2) || ' MB).'
-        ELSE 'Schema ' || UPPER('&schema_name') || ' has no segments or is empty. Reorganization is not needed.'
+        WHEN SUM(bytes) > 0 THEN '스키마 ' || UPPER('&schema_name') || '는 재구성 가능합니다. (총 크기: ' || ROUND(SUM(bytes)/1024/1024, 2) || ' MB).'
+        ELSE '스키마 ' || UPPER('&schema_name') || '에 데이터가 없으므로 재구성이 필요하지 않습니다.'
     END AS "Recommendation"
 FROM
     dba_segments
@@ -66,12 +68,13 @@ WHERE
     owner = UPPER('&schema_name');
 
 PROMPT 
-PROMPT ===[ 2. CPU and Parallelism Check ]=========================================
+PROMPT ===[ 2. CPU 및 병렬 처리 점검 ]============================================
 PROMPT
-PROMPT [2-1] CPU Core and Parallel Parameter
-PROMPT - CPU_COUNT: Number of CPU cores available to the instance.
-PROMPT - PARALLEL_MAX_SERVERS: Maximum parallel processes.
-PROMPT - Recommended DOP (Degree of Parallelism) is usually CPU_COUNT or CPU_COUNT / 2.
+PROMPT [2-1] CPU 코어 및 병렬 처리 파라미터
+
+PROMPT - CPU_COUNT: 인스턴스가 사용 가능한 CPU 코어 수.
+PROMPT - PARALLEL_MAX_SERVERS: 최대 병렬 프로세스 수.
+PROMPT - 권장 병렬 처리 수준(DOP)은 보통 CPU_COUNT 또는 그 절반입니다.
 PROMPT
 SELECT 
     name        AS param_name, 
@@ -83,9 +86,10 @@ WHERE
     name IN ('cpu_count', 'parallel_max_servers');
 
 PROMPT
-PROMPT [2-2] OS CPU Load (Optional, requires specific privileges)
-PROMPT - BUSY_TIME / (BUSY_TIME + IDLE_TIME) gives the CPU utilization.
-PROMPT - A high load average may require reducing the DOP.
+PROMPT [2-2] OS CPU 부하 (Optional)
+
+PROMPT - BUSY_TIME / (BUSY_TIME + IDLE_TIME)으로 현재 CPU 사용률을 계산합니다.
+PROMPT - 시스템 부하가 높을 경우 병렬 처리 수준(DOP)을 낮추는 것을 권장합니다.
 PROMPT
 SELECT 
     stat_name AS os_stat_name, 
@@ -97,11 +101,13 @@ WHERE
 
 
 PROMPT
-PROMPT ===[ 3. Resource Check ]==================================================
+PROMPT ===[ 3. 시스템 자원 점검 ]================================================
 PROMPT
-PROMPT [3-1] Undo Tablespace Usage
-PROMPT - Check the current usage and free space of the Undo tablespace.
-PROMPT - Ensure there is enough free space to handle the Reorg transaction.
+PROMPT [3-1] Undo 테이블스페이스 사용량
+
+PROMPT - 'ALTER TABLE ... MOVE'는 단일 트랜잭션으로 많은 Undo 공간을 사용합니다.
+PROMPT - 권장: 최소한 재구성 대상이 되는 가장 큰 테이블의 크기만큼,
+PROMPT   안전하게는 스키마 전체 크기만큼의 여유 공간을 확보해야 합니다.
 PROMPT
 SELECT
     A.tablespace_name,
@@ -135,9 +141,11 @@ WHERE
     A.tablespace_name = B.tablespace_name(+);
 
 PROMPT
-PROMPT [3-2] Temporary Tablespace Usage
-PROMPT - Check for sufficient free space in the temporary tablespace.
-PROMPT - Large index rebuilds will require significant temp space for sorting.
+PROMPT [3-2] Temporary 테이블스페이스 사용량
+
+PROMPT - 인덱스 리빌드 시 정렬(Sort) 연산을 위해 Temp 공간이 대량으로 사용됩니다.
+PROMPT - 권장: 최소한 스키마에서 가장 큰 인덱스의 크기만큼의 여유 공간을
+PROMPT   확보하는 것이 좋습니다.
 PROMPT
 SELECT 
     D.tablespace_name,
@@ -166,9 +174,11 @@ WHERE
     D.tablespace_name = F.tablespace_name(+);
 
 PROMPT
-PROMPT [3-3] Archive Log Mode and Usage
-PROMPT - LOG_MODE should be 'ARCHIVELOG'.
-PROMPT - Check archive destination usage; it must not be full.
+PROMPT [3-3] 아카이브 로그 모드 및 사용량
+
+PROMPT - Reorg 작업은 로깅 시 Redo를 대량으로 발생시키며, 이는 아카이브 로그로 기록됩니다.
+PROMPT - 권장: 아카이브 목적지(FRA) 사용률이 낮아야 하며, 테이블 이동에 따른
+PROMPT   아카이브 로그 증가량(테이블 크기)을 감당할 수 있어야 합니다.
 PROMPT
 SELECT 
     log_mode 
@@ -176,7 +186,7 @@ FROM
     v$database;
 
 PROMPT
-PROMPT - Archive destination usage (%).
+PROMPT - 아카이브 목적지 사용량 (%).
 PROMPT
 SELECT
     name AS recovery_dest_name,
@@ -187,9 +197,22 @@ WHERE
     space_limit > 0;
 
 PROMPT
-PROMPT [3-4] PGA (Program Global Area) Status
-PROMPT - 'total PGA allocated' should be well below 'PGA aggregate limit'.
-PROMPT - 'cache hit percentage' on 'PGA Target Advice' should be high (e.g., > 90%).
+PROMPT [3-4] PGA (Program Global Area) 상태
+/*
+  [ 운영 참고 사항 - 필수 확인 ]
+  1. PGA Cache Hit %는 '과거의 통계'입니다. 
+     - 현재 100%이더라도, 대규모 Reorg나 Index Rebuild를 '처음' 수행한다면 
+       이 수치는 신뢰할 수 없습니다.
+  2. Reorg 작업 시 Parallel(병렬) 옵션을 사용할 경우:
+     - 각 Parallel Slave가 개별적으로 PGA를 점유하므로 메모리 부족(Temp 사용)이 
+       발생할 확률이 급격히 높아집니다.
+  3. 대응 방안:
+     - 대규모 인덱스 생성 전에는 pga_aggregate_target을 임시로 상향 조정하거나,
+     - v$sql_workarea_active를 통해 실시간 'MULTI-PASS(디스크 쓰기)' 발생 여부를 모니터링하세요.
+*/
+PROMPT - PGA는 인덱스 리빌드 시 정렬과 같은 작업을 메모리 내에서 수행할 때 사용됩니다.
+PROMPT - 권장: PGA가 충분하면 디스크(Temp) 대신 메모리에서 빠르게 작업을 처리할 수
+PROMPT   있어 성능에 유리합니다. 'PGA Target Advice'의 적중률을 확인하세요.
 PROMPT
 SELECT 
     name AS pga_stat_name, 
@@ -204,7 +227,7 @@ WHERE
     );
 
 PROMPT
-PROMPT - PGA Target Advice to estimate required memory for parallel operations.
+PROMPT - PGA Target Advice를 통한 메모리 요구량 예측
 PROMPT
 SELECT 
     pga_target_for_estimate / 1024 / 1024   AS "PGA_TARGET(MB)",
@@ -215,7 +238,7 @@ FROM
 
 PROMPT
 PROMPT +------------------------------------------------------------------------+
-PROMPT | End of Pre-check Script                                                |
+PROMPT | 스크립트 점검 종료                                                     |
 PROMPT +------------------------------------------------------------------------+
 
 -- =============================================================================
@@ -227,3 +250,4 @@ SET TERMOUT ON;
 SET FEEDBACK ON;
 SET VERIFY ON;
 CLEAR COLUMNS;
+
