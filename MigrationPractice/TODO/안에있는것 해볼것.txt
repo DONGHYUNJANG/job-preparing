@@ -1,0 +1,79 @@
+
+CREATE OR REPLACE PROCEDURE PROC_COMPARE_SCHEMA_TOTAL (
+    p_dblink_name IN VARCHAR2  -- 비교할 DB 링크 이름 (예: 'hr_link')
+) AS
+    v_sql       VARCHAR2(2000);
+    
+    -- 메타데이터 구조 정의
+    TYPE type_meta IS RECORD (
+        view_name VARCHAR2(30),
+        col_name  VARCHAR2(30),
+        label     VARCHAR2(50)
+    );
+    TYPE t_meta_list IS TABLE OF type_meta;
+    
+    -- 비교할 오브젝트 리스트 (프로시저, 트리거 추가)
+    v_meta_list t_meta_list := t_meta_list(
+        type_meta('USER_TABLES',      'TABLE_NAME',      '테이블'),
+        type_meta('USER_INDEXES',     'INDEX_NAME',      '인덱스'),
+        type_meta('USER_CONSTRAINTS', 'CONSTRAINT_NAME', '제약조건'),
+        type_meta('USER_SEQUENCES',   'SEQUENCE_NAME',   '시퀀스'),
+        type_meta('USER_SYNONYMS',    'SYNONYM_NAME',    '시너님'),
+        type_meta('USER_VIEWS',       'VIEW_NAME',       '뷰'),
+        type_meta('USER_PROCEDURES',  'OBJECT_NAME',     '프로시저/함수'),
+        type_meta('USER_TRIGGERS',    'TRIGGER_NAME',    '트리거')
+    );
+
+    -- 내부 출력용 서브 프로시저
+    PROCEDURE run_minus(p_title VARCHAR2, p_sql VARCHAR2) IS
+        TYPE t_cursor IS REF CURSOR;
+        c_result t_cursor;
+        v_res_name VARCHAR2(128);
+        v_found BOOLEAN := FALSE;
+    BEGIN
+        OPEN c_result FOR p_sql;
+        LOOP
+            FETCH c_result INTO v_res_name;
+            EXIT WHEN c_result%NOTFOUND;
+            IF NOT v_found THEN
+                DBMS_OUTPUT.PUT_LINE(RPAD('-', 50, '-'));
+                DBMS_OUTPUT.PUT_LINE('[' || p_title || ']');
+                v_found := TRUE;
+            END IF;
+            DBMS_OUTPUT.PUT_LINE('  - ' || v_res_name);
+        END LOOP;
+        CLOSE c_result;
+    END;
+
+BEGIN
+    DBMS_OUTPUT.PUT_LINE('==================================================');
+    DBMS_OUTPUT.PUT_LINE('DB 비교 시작 (Target: @' || p_dblink_name || ')');
+    DBMS_OUTPUT.PUT_LINE('==================================================');
+
+    -- 1. 각 오브젝트별 존재 여부 비교 (MINUS)
+    FOR i IN 1..v_meta_list.COUNT LOOP
+        -- Local에만 존재하는 것
+        v_sql := 'SELECT ' || v_meta_list(i).col_name || ' FROM ' || v_meta_list(i).view_name || 
+                 ' MINUS SELECT ' || v_meta_list(i).col_name || ' FROM ' || v_meta_list(i).view_name || '@' || p_dblink_name;
+        run_minus('LOCAL ONLY: ' || v_meta_list(i).label, v_sql);
+
+        -- Remote에만 존재하는 것
+        v_sql := 'SELECT ' || v_meta_list(i).col_name || ' FROM ' || v_meta_list(i).view_name || '@' || p_dblink_name ||
+                 ' MINUS SELECT ' || v_meta_list(i).col_name || ' FROM ' || v_meta_list(i).view_name;
+        run_minus('REMOTE ONLY: ' || v_meta_list(i).label, v_sql);
+    END LOOP;
+
+    -- 2. 테이블 데이터 건수(NUM_ROWS) 차이 비교
+    v_sql := 'SELECT TABLE_NAME || '' (Local: '' || NVL(NUM_ROWS, 0) || '')'' FROM USER_TABLES ' ||
+             'MINUS SELECT TABLE_NAME || '' (Local: '' || NVL(NUM_ROWS, 0) || '')'' FROM USER_TABLES@' || p_dblink_name;
+    run_minus('데이터 건수 상이 (TABLE NAME)', v_sql);
+
+    -- 3. 프로시저/소스 코드 라인 수 차이 비교 (소스 수정 여부 간접 확인)
+    v_sql := 'SELECT NAME || '' (Lines: '' || COUNT(*) || '')'' FROM USER_SOURCE GROUP BY NAME ' ||
+             'MINUS SELECT NAME || '' (Lines: '' || COUNT(*) || '')'' FROM USER_SOURCE@' || p_dblink_name || ' GROUP BY NAME';
+    run_minus('소스 코드 내용 상이 가능성 (PROC/FUNC/TRG)', v_sql);
+
+    DBMS_OUTPUT.PUT_LINE(RPAD('=', 50, '='));
+    DBMS_OUTPUT.PUT_LINE('비교 작업이 완료되었습니다.');
+END;
+/
