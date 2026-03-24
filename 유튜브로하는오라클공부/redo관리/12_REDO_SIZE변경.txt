@@ -1,0 +1,169 @@
+/***************************************************************************
+  REDO LOG 사이즈 변경 작업
+   Oracle 19c 기준으로 작성되었습니다. 
+   DB보다 영상 Linux  Oracle DB를 설치하시면 똑같이 따라하시기 좋아요~ 
+     1.VirtualBox를 이용해서 리눅스8.5, 오라클19c 설치(리눅스편)
+     2.VirtualBox를 이용해서 리눅스8.5, 오라클19c 설치(오라클편)
+     3.개발자를 위한 무료 SQL툴 SQL Developer 활용 꿀팁	
+	 4.오라클이 권고하는 REDO로그 스위치는 20분에 1번꼴
+***************************************************************************/
+
+
+
+/***************************************************************************
+  REDO 로그 상태 정보 확인 
+    SQL Developer(SQL Tool에서 조회)
+***************************************************************************/
+-- REDO LOG 변경 정보(스위칭) 전체 조회
+SELECT
+    TO_CHAR(FIRST_TIME,'YYYY/MM/DD HH24'), 
+    COUNT(*)
+FROM V$LOG_HISTORY
+GROUP BY TO_CHAR(FIRST_TIME,'YYYY/MM/DD HH24')
+ORDER BY 1;
+
+-- REDO LOG 변경 정보 시간, 분 단위로 분석
+-- 2022/07/15 ~ 2022/07/16 기간 조회
+-- 추가로 일자를 변경하려면 TO_DATE(년월일)을 바꿔주세요.
+-- 예) 2022년 7월 20일 부터 2022년 7월 21일 조회
+--       WHERE FIRST_TIME >= TO_DATE('20220720') 
+--       AND   FIRST_TIME  <   TO_DATE('20220721') 
+SELECT
+    TO_CHAR(FIRST_TIME,'HH24:MI'), 
+    COUNT(*)
+FROM V$LOG_HISTORY
+WHERE FIRST_TIME >= TO_DATE('20260131', 'YYYYMMDD')
+AND   FIRST_TIME <  TO_DATE('20260324', 'YYYYMMDD')
+GROUP BY TO_CHAR(FIRST_TIME,'HH24:MI')
+ORDER BY 1;
+
+
+-- 최근 10일 동안 REDO LOG 변경(스위칭) 정보 조회
+SELECT
+    DECODE(TO_CHAR(FIRST_TIME,'HH24'),NULL,'TOTAL',TO_CHAR(FIRST_TIME,'HH24')) AS "REDO_TIME",
+    SUM(CASE WHEN FIRST_TIME >= TRUNC(SYSDATE)-10 AND FIRST_TIME < TRUNC(SYSDATE) -9 THEN 1 ELSE 0 END) AS "TODAY-10",
+    SUM(CASE WHEN FIRST_TIME >= TRUNC(SYSDATE) -9 AND FIRST_TIME < TRUNC(SYSDATE) -8 THEN 1 ELSE 0 END) AS "TODAY-9",
+    SUM(CASE WHEN FIRST_TIME >= TRUNC(SYSDATE) -8 AND FIRST_TIME < TRUNC(SYSDATE) -7 THEN 1 ELSE 0 END) AS "TODAY-8",
+    SUM(CASE WHEN FIRST_TIME >= TRUNC(SYSDATE) -7 AND FIRST_TIME < TRUNC(SYSDATE) -6 THEN 1 ELSE 0 END) AS "TODAY-7",
+    SUM(CASE WHEN FIRST_TIME >= TRUNC(SYSDATE) -6 AND FIRST_TIME < TRUNC(SYSDATE) -5 THEN 1 ELSE 0 END) AS "TODAY-6",
+    SUM(CASE WHEN FIRST_TIME >= TRUNC(SYSDATE) -5 AND FIRST_TIME < TRUNC(SYSDATE) -4 THEN 1 ELSE 0 END) AS "TODAY-5",
+    SUM(CASE WHEN FIRST_TIME >= TRUNC(SYSDATE) -4 AND FIRST_TIME < TRUNC(SYSDATE) -3 THEN 1 ELSE 0 END) AS "TODAY-4",
+    SUM(CASE WHEN FIRST_TIME >= TRUNC(SYSDATE) -3 AND FIRST_TIME < TRUNC(SYSDATE) -2 THEN 1 ELSE 0 END) AS "TODAY-3",
+    SUM(CASE WHEN FIRST_TIME >= TRUNC(SYSDATE) -2 AND FIRST_TIME < TRUNC(SYSDATE) -1 THEN 1 ELSE 0 END) AS "TODAY-2",
+    SUM(CASE WHEN FIRST_TIME >= TRUNC(SYSDATE) -1 AND FIRST_TIME < TRUNC(SYSDATE) -0 THEN 1 ELSE 0 END) AS "TODAY-1",
+    SUM(CASE WHEN FIRST_TIME >= TRUNC(SYSDATE)    AND FIRST_TIME < TRUNC(SYSDATE) +1 THEN 1 ELSE 0 END) AS "TODAY",
+    SUM(DECODE(TO_CHAR(FIRST_TIME,'HH24'),NULL,0,1)) AS "SUM"
+FROM V$LOG_HISTORY
+WHERE FIRST_TIME >= TRUNC(SYSDATE) - 10
+GROUP BY ROLLUP(TO_CHAR(FIRST_TIME,'HH24'))
+ORDER BY 1;
+
+
+/***************************************************************************
+  리눅스 WHILE문을 이용한 REDO 상태 확인 
+    리눅스에서 작업한다. (oracle 계정 확인)
+***************************************************************************/
+
+while [ 0 ]
+do
+date
+sqlplus / as sysdba << EOF
+SET LINES 180
+SET PAGES 200
+COL GROUP# FOR 99
+COL STATUS FOR A9
+COL MEMBER FOR A45
+SELECT      
+      A.GROUP#
+    , A.STATUS
+    , B.MEMBER
+    , A.BYTES/1024/1024 AS "SIZE(MB)"
+FROM 
+      V\$LOG A
+    , V\$LOGFILE B
+WHERE A.GROUP# = B.GROUP#
+ORDER BY 1;
+exit
+EOF
+sleep 3
+done
+
+
+while [ 0 ]
+do
+sqlplus / as sysdba << EOF
+@redo_check.sql
+exit
+EOF
+sleep3
+done
+
+
+/***************************************************************************
+  REDO 로그 추가
+   REDO 로그 그룹 1~8 생성 
+   사이즈는 500MB 설정
+   sqplus / as sysdba 접속
+***************************************************************************/
+-- REDO 그룹 4 추가
+ALTER DATABASE 
+ADD LOGFILE GROUP 4 
+(
+ '/u01/app/oracle/oradata/ORCL/REDO4_1.LOG',
+ '/u01/app/oracle/oradata/ORCL/REDO4_2.LOG'
+) SIZE 500M;
+
+
+
+
+-- *****************주의 반드시 EDO 로그 스위치하면서 INACTIVE 상태에서 DROP 명령어 실행***************
+-- *****************주의 반드시 EDO 로그 스위치하면서 INACTIVE 상태에서 DROP 명령어 실행***************
+
+-- 초기 설정된 REDO 로그 삭제
+-- (REDO 로그 스위치하면서 INACTIVE 상태에서 DROP 명령어 실행)
+-- sqplus / as sysdba 접속
+     alter system switch logfile
+
+ALTER DATABASE DROP LOGFILE GROUP 1;
+ALTER DATABASE DROP LOGFILE GROUP 2;
+ALTER DATABASE DROP LOGFILE GROUP 3;
+
+
+-- REDO 그룹 1 추가
+ALTER DATABASE 
+ADD LOGFILE GROUP 1
+(
+ '/u01/app/oracle/oradata/ORCL/REDO1_1.LOG',
+ '/u01/app/oracle/oradata/ORCL/REDO1_2.LOG'
+) SIZE 500M;
+
+-- REDO 그룹 2 추가
+ALTER DATABASE 
+ADD LOGFILE GROUP 2
+(
+ '/u01/app/oracle/oradata/ORCL/REDO2_1.LOG',
+ '/u01/app/oracle/oradata/ORCL/REDO2_2.LOG'
+) SIZE 500M;
+
+ALTER DATABASE 
+ADD LOGFILE GROUP 3
+(
+ '/u01/app/oracle/oradata/ORCL/REDO3_1.LOG',
+ '/u01/app/oracle/oradata/ORCL/REDO3_2.LOG'
+) SIZE 500M;
+
+
+
+/***************************************************************************
+  REDO 로그 파일 삭제
+   초기 설정된 REDO 로그 그룹 1,2,3 삭제
+   리눅스에서 작업한다. (oracle 계정 확인)
+***************************************************************************/
+
+cd /oracle/app/oracle/oradata/ORCL
+cd $ORACLE_BASE/oradata/ORCL
+
+rm /u01/app/oracle/oradata/ORCL/redo01.log
+rm /u01/app/oracle/oradata/ORCL/redo02.log
+rm /u01/app/oracle/oradata/ORCL/redo03.log
+
