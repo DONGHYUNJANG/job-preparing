@@ -1,0 +1,25 @@
+상황별 응급 처치
+① 삭제 명령 후 파일이 안 지워졌거나 에러가 날 때
+리두 로그 그룹을 DROP 했는데 ORA-01624나 ORA-00312가 뜨면서 멈췄다면:
+
+조치: 절대로 DB를 끄지 마세요. ALTER SYSTEM ARCHIVE LOG CURRENT; 명령을 통해 강제로 아카이빙을 시키고, V$LOG의 STATUS가 INACTIVE로 변할 때까지 기다린 후 다시 삭제를 시도합니다.
+
+② CURRENT 로그를 실수로 지웠거나 깨졌을 때 (가장 심각)
+이때는 DB가 Shutdown 될 가능성이 높습니다.
+
+조치:
+
+STARTUP MOUNT 상태로 올립니다.
+
+RECOVER DATABASE UNTIL CANCEL; 같은 불완전 복구를 수행해야 할 수도 있습니다.
+
+최악의 경우 RESETLOGS 옵션으로 DB를 오픈해야 합니다. (이때는 기존 백업이 무효화되므로 즉시 전체 백업을 새로 받아야 합니다.)
+
+③ INACTIVE 로그 파일만 물리적으로 지워졌을 때
+DB가 떠 있는 상태에서 실수로 리눅스 rm으로 로그 파일을 지웠다면:
+
+조치: 당황하지 말고 SQL에서 해당 그룹을 CLEAR 해줍니다.
+
+SQL
+ALTER DATABASE CLEAR LOGFILE GROUP [그룹번호];
+이 명령은 파일을 새로 생성해주며 다시 사용할 수 있게 만듭니다.
