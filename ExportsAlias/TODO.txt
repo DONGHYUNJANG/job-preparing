@@ -1,1 +1,4 @@
 집에서만든파일 업로드 할것
+
+cp * 2>/dev/null
+rm * 2>/dev/null

@@ -1,33 +1,23 @@
--- dba_tbs_p.sql : dba_tab_partitions (파티션만, 자주 보는 컬럼만)
-set pagesize 1000 linesize 360 trimspool on verify off feedback off
-column owner     format a20
-column tbl_name  format a30
-column part_name format a30
-column part_pos  format 99999
-column tbs_space format a20
-column status    format a12
-column num_rows  format 999999999999
-column blocks    format 999999999999
-column last_an   format a19
-column hi_v      format a60
+SET LINESIZE 250
+SET PAGESIZE 100
+SET VERIFY OFF
 
-accept o prompt 'OWNER (blank=all): '
-accept t prompt 'TABLE_NAME (blank=all): '
-accept p prompt 'PARTITION_NAME (blank=all): '
+COL table_owner FOR a15
+COL table_name FOR a20
+COL partition_name FOR a20
+COL tablespace_name FOR a20
+COL high_value FOR a40
 
-select owner,
-       table_name       tbl_name,
-       partition_name   part_name,
-       partition_position part_pos,
-       tablespace_name  tbs_space,
-       status,
-       num_rows,
-       blocks,
-       to_char(last_analyzed, 'YYYY-MM-DD HH24:MI:SS') last_an,
-       substr(high_value, 1, 200) hi_v
-from dba_tab_partitions
-where ('&o' = '' or owner = upper('&o'))
-  and ('&t' = '' or table_name = upper('&t'))
-  and ('&p' = '' or partition_name = upper('&p'))
-order by owner, table_name, partition_position;
-
+SELECT 
+    table_owner,
+    table_name,
+    partition_name,
+    partition_position AS pos,
+    tablespace_name,
+    num_rows,
+    blocks,
+    high_value
+FROM dba_tab_partitions
+WHERE table_owner = UPPER('&owner')
+  AND table_name  = UPPER('&table_name')
+ORDER BY partition_position;
