@@ -4,18 +4,19 @@
 # Oracle Partitioned Table/Index Reorg Parallel Execution Script
 # =================================================================================
 
-export ORACLE_SID="ORCL"
+export ORACLE_SID="orcl"
 export ORACLE_HOME="/u01/app/oracle/product/19.3.0/dbhome_1"
 export PATH=$ORACLE_HOME/bin:$PATH
 
-SQLPLUS_USER="system"
-SQLPLUS_PASS="oracle"
-SQLPLUS_CONN="${SQLPLUS_USER}/${SQLPLUS_PASS}"
+#SQLPLUS_USER="system"
+#SQLPLUS_PASS="oracle"
+#SQLPLUS_CONN="${SQLPLUS_USER}/${SQLPLUS_PASS}"
 
+SQLPLUS_CONN=" / as sysdba"
 # ===[ Configuration ]=============================================================
-SCHEMA_NAME="SH"
-JOB_CONCURRENCY=2
-SQL_DOP=4
+SCHEMA_NAME="SH2"
+JOB_CONCURRENCY=1
+SQL_DOP=2
 # =================================================================================
 
 LOG_DIR="./logs"
@@ -82,30 +83,28 @@ generate_comparison_report() {
     total_blocks_before=0
     total_blocks_after=0
 
+# generate_comparison_report 함수 내의 awk 부분을 이렇게 수정하세요.
+
     awk -F, '
-        BEGIN { OFS="," }
-        NR==FNR { before[$1] = $2; next }
-        {
-            if ($1 in before) {
-                diff = before[$1] - $2;
-                printf "%-35s | %-20s | %-20s | %-10s
-", $1, before[$1], $2, diff;
-                total_before += before[$1];
-                total_after += $2;
-            }
-        }
-        END {
-            total_saved = total_before - total_after;
-            printf "
--------------------------------------------------------------------------------------------
-";
-            printf "TOTALS
-";
-            printf "%-35s | %-20s | %-20s | %-10s
-", " ", total_before, total_after, total_saved;
-        }
-    ' ${PRE_REORG_STATS} ${POST_REORG_STATS} >> ${REORG_COMPARISON_REPORT}
-    
+	BEGIN { OFS="," }
+	NR==FNR { before[$1] = $2; next }
+	{
+	    if ($1 in before) {
+		diff = before[$1] - $2;
+		# 1. 데이터 행 출력: 포맷 끝에 \n 추가
+		printf "%-35s | %-20s | %-20s | %-10s\n", $1, before[$1], $2, diff;
+		total_before += before[$1];
+		total_after += $2;
+	    }
+	}
+	END {
+	    total_saved = total_before - total_after;
+	    # 2. 합계 영역 구분선 및 데이터 출력
+	    printf "-------------------------------------------------------------------------------------------\n";
+	    printf "%-35s | %-20s | %-20s | %-10s\n", "TOTALS", total_before, total_after, total_saved;
+	}
+    ' ${PRE_REORG_STATS} ${POST_REORG_STATS} >> ${REORG_COMPARISON_REPORT}    
+
     log "Comparison report generated at ${REORG_COMPARISON_REPORT}"
     cat ${REORG_COMPARISON_REPORT}
 }
