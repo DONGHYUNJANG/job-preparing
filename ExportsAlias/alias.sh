@@ -1,5 +1,5 @@
 export NLS_LANG=AMERICAN_AMERICA.AL32UTF8
-export SQLPATH=/oracle/home/MyOraSql
+export SQLPATH=/home/oracle/MyOraSql
 
 alias sys="sqlplus / as sysdba"
 alias adrci="adrci"
