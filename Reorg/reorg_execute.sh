@@ -4,18 +4,20 @@
 # Oracle Table/Index Reorg Parallel Execution Script (Refactored)
 # =============================================================================
 
-export ORACLE_SID="ORCL"
-export ORACLE_HOME="/u01/app/oracle/product/19.3.0/dbhome_1"
-export PATH=$ORACLE_HOME/bin:$PATH
+#export ORACLE_SID="ORCL"
+#export ORACLE_HOME="/u01/app/oracle/product/19.3.0/dbhome_1"
+#export PATH=$ORACLE_HOME/bin:$PATH
 
-SQLPLUS_USER="system"
-SQLPLUS_PASS="oracle"
-SQLPLUS_CONN="${SQLPLUS_USER}/${SQLPLUS_PASS}"
+#SQLPLUS_USER="system"
+#SQLPLUS_PASS="oracle"
+#SQLPLUS_CONN="${SQLPLUS_USER}/${SQLPLUS_PASS}"
+
+SQLPLUS_CONN=" / as  sysdba"
 
 # ===[ Configuration ]=========================================================
-SCHEMA_NAME="SH"
-JOB_CONCURRENCY=2
-SQL_DOP=4
+export SCHEMA_NAME="SH2"
+export JOB_CONCURRENCY=2
+export SQL_DOP=2
 # =============================================================================
 
 LOG_DIR="./logs"
@@ -117,7 +119,7 @@ table_list_sql="SELECT TABLE_NAME FROM DBA_TABLES WHERE OWNER = '${SCHEMA_NAME}'
 run_sql_spool "${TABLE_LIST_FILE}" "${table_list_sql}"
 
 log "Step 2: Generating list of indexes to rebuild..."
-index_list_sql="SELECT INDEX_NAME FROM DBA_INDEXES WHERE OWNER = '${SCHEMA_NAME}' AND INDEX_TYPE = 'NORMAL' AND TABLE_NAME IN ($(echo ${table_list_sql} | sed 's/;//g'));"
+index_list_sql="SELECT INDEX_NAME FROM DBA_INDEXES WHERE OWNER = '${SCHEMA_NAME}' AND INDEX_TYPE = 'NORMAL' AND TABLE_NAME IN (SELECT TABLE_NAME FROM DBA_TABLES WHERE OWNER = '${SCHEMA_NAME}' AND PARTITIONED = 'NO' AND IOT_TYPE IS NULL AND TEMPORARY = 'N' AND NESTED = 'NO' AND SECONDARY = 'N' AND CLUSTER_NAME IS NULL AND TABLE_NAME NOT LIKE 'AQ\$%' AND TABLE_NAME NOT LIKE 'MLOG\$%' AND TABLE_NAME NOT LIKE 'RUPD\$%' AND DROPPED = 'NO');"
 run_sql_spool "${INDEX_LIST_FILE}" "${index_list_sql}"
 
 if [ ! -s "${TABLE_LIST_FILE}" ]; then
@@ -174,7 +176,7 @@ log "All index REBUILD operations completed."
 
 # ---[ 5. Gather Statistics ]---
 log "Step 5: Gathering fresh statistics for schema ${SCHEMA_NAME}..."
-stats_sql="EXEC DBMS_STATS.GATHER_SCHEMA_STATS(ownname => '${SCHEMA_NAME}', estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE, method_opt => 'FOR ALL COLUMNS SIZE AUTO', degree => ${SQL_DOP}, cascade => TRUE);"
+stats_sql="EXEC DBMS_STATS.GATHER_SCHEMA_STATS(ownname => '${SCHEMA_NAME}', estimate_percent => DBMS_STATS.AUTO_SAMPLE_SIZE, method_opt => 'FOR ALL COLUMNS SIZE AUTO', degree => DBMS_STATS.AUTO_DEGREE, cascade => TRUE);"
 run_sql_exec "${stats_sql}"
 log "Schema statistics gathering complete."
 
