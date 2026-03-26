@@ -1,0 +1,95 @@
+/***************************************************************************
+  Parameter 실전
+   Oracle 19c 기준으로 작성되었습니다. 
+   DB보다 영상 Linux  Oracle DB를 설치하시면 똑같이 따라하시기 좋아요~ 
+     1.VirtualBox를 이용해서 리눅스8.5, 오라클19c 설치(리눅스편)
+     2.VirtualBox를 이용해서 리눅스8.5, 오라클19c 설치(오라클편)
+     3.개발자를 위한 무료 SQL툴 SQL Developer 활용 꿀팁	
+***************************************************************************/
+
+
+
+/***************************************************************************
+  Oracle Parameter 파일 백업 
+***************************************************************************/
+-- Linux에서 스크립트를 실행해주세요~(putty 이용하면 편리합니다.)
+-- oracle 계정 접속 수행
+cd $ORACLE_HOME/dbs
+cd /oracle/app/oracle/product/19.0.0.0/db_1/dbs
+
+-- 백업 디렉터리 생성
+mkdir backup_parameter
+
+-- 파라미터 파일 백업 디렉터리로 이동
+mv initSTR.ora_20220706 backup_parameter
+mv initSTR.ora_20220711 backup_parameter
+mv spfileSTR.ora_20220706 backup_parameter
+mv spfileSTR.ora_20220711 backup_parameter
+
+-- 파라미터 백업
+cp spfileSTR.ora spfileSTR.ora_20220713
+
+
+-- SQL Developer 엑셀 백업
+SELECT * 
+FROM V$PARAMETER;
+
+
+/***************************************************************************
+  Oracle Parameter 변경 
+   <<주의>> 절대 운영 DB에 바로 적용하면 안됩니다.
+   DB Restart 필요
+     shutdown immeidate
+     startup
+***************************************************************************/
+-- sqlplus / as sysdba  실행
+-- Oracle Optimizer Mode
+ALTER SYSTEM SET optimizer_mode=FIRST_ROWS_1 COMMENT='2022/07/14 DBBODA' SCOPE=SPFILE;
+ALTER SYSTEM SET optimizer_index_caching=90 COMMENT='2022/07/14 DBBODA' SCOPE=SPFILE;
+ALTER SYSTEM SET optimizer_index_cost_adj=30 COMMENT='2022/07/14 DBBODA' SCOPE=SPFILE;
+-- Adaptive Query Optimization
+ALTER SYSTEM SET optimizer_adaptive_plans=FALSE COMMENT='2022/07/14 DBBODA' SCOPE=SPFILE;
+ALTER SYSTEM SET optimizer_adaptive_reporting_only=TRUE COMMENT='2022/07/14 DBBODA' SCOPE=SPFILE;
+-- Bind, Group by, Column
+ALTER SYSTEM SET "_optimizer_adaptive_cursor_sharing"=FALSE COMMENT='2022/07/14 DBBODA' SCOPE=SPFILE;
+ALTER SYSTEM SET "_optimizer_aggr_groupby_elim"=FALSE COMMENT='2022/07/14 DBBODA' SCOPE=SPFILE;
+ALTER SYSTEM SET "_add_col_optim_enabled"=FALSE COMMENT='2022/07/14 DBBODA' SCOPE=SPFILE;
+
+-- SQL Developer에서 실행
+-- 파라미터 변경 확인
+SELECT
+    NAME, 
+    VALUE, 
+    UPDATE_COMMENT
+FROM V$SPPARAMETER
+WHERE NAME IN (
+                'optimizer_mode',
+                'optimizer_index_cost_adj',
+                'optimizer_index_caching',
+                'optimizer_adaptive_reporting_only',
+                'optimizer_adaptive_plans',
+                '_optimizer_adaptive_cursor_sharing',
+                '_add_col_optim_enabled',
+                '_optimizer_aggr_groupby_elim'
+               );        
+
+
+
+/***************************************************************************
+  Oracle 파라미터 복구
+
+   DB Restart 필요
+     shutdown immeidate
+     startup
+***************************************************************************/
+-- sqlplus / as sysdba  실행
+ALTER SYSTEM RESET optimizer_mode SCOPE=SPFILE;
+ALTER SYSTEM RESET optimizer_index_caching SCOPE=SPFILE;
+ALTER SYSTEM RESET optimizer_index_cost_adj SCOPE=SPFILE;
+
+ALTER SYSTEM RESET optimizer_adaptive_plans SCOPE=SPFILE;
+ALTER SYSTEM RESET optimizer_adaptive_reporting_only SCOPE=SPFILE;
+
+ALTER SYSTEM RESET "_optimizer_adaptive_cursor_sharing" SCOPE=SPFILE;
+ALTER SYSTEM RESET "_optimizer_aggr_groupby_elim" SCOPE=SPFILE;
+ALTER SYSTEM RESET "_add_col_optim_enabled" SCOPE=SPFILE;

@@ -1,0 +1,141 @@
+/***************************************************************************
+  Parameter 실무
+   Oracle 19c 기준으로 작성되었습니다. 
+   DB보다 영상 Linux  Oracle DB를 설치하시면 똑같이 따라하시기 좋아요~ 
+     1.VirtualBox를 이용해서 리눅스8.5, 오라클19c 설치(리눅스편)
+     2.VirtualBox를 이용해서 리눅스8.5, 오라클19c 설치(오라클편)	
+***************************************************************************/
+
+
+/***************************************************************************
+  Oracle Manual Memory 변경
+   <<주의>> 절대 운영 DB에 바로 적용하면 안됩니다.
+   물리적인 서버 메모리 대략 10~20% 수준에서 오라클 메모리 파라미터 
+   초기 설정을 진행합니다.
+    SGA: 2G(2048M)
+    PGA: 768M
+***************************************************************************/
+cd $ORACLE_HOME/dbs
+cd /oracle/app/oracle/product/19.0.0.0/db_1/dbs
+
+cp spfileSTR.ora spfileSTR.ora_20220711
+mv initSTR.ora initSTR.ora_20220706
+
+sqlplus / as sysdba
+create pfile from spfile;
+exit
+
+mv initSTR.ora initSTR.ora_20220711
+
+--SQL Developer 파라미터 파일 엑셀 백업
+SELECT * 
+FROM V$PARAMETER;
+
+-- 파라미터 파일 변경
+ALTER SYSTEM SET sga_target=0 scope=spfile;
+ALTER SYSTEM SET sga_max_size=2048M scope=spfile;
+ALTER SYSTEM SET shared_pool_size=512M scope=spfile;
+ALTER SYSTEM SET shared_pool_reserved_size=52M scope=spfile;
+ALTER SYSTEM SET db_cache_size=1024M scope=spfile;
+
+ALTER SYSTEM SET java_pool_size=128M scope=spfile;
+ALTER SYSTEM SET large_pool_size=128M scope=spfile;
+ALTER SYSTEM SET streams_pool_size=128M scope=spfile;
+
+ALTER SYSTEM SET pga_aggregate_target=768M scope=spfile;
+ALTER SYSTEM SET pga_aggregate_limit=0 scope=spfile;
+
+ALTER SYSTEM SET processes=1000 scope=spfile;
+ALTER SYSTEM SET sessions=1600 scope=spfile;
+ALTER SYSTEM SET transactions=1600 scope=spfile;
+ALTER SYSTEM SET open_cursors=500 scope=spfile;
+
+ALTER SYSTEM SET optimizer_dynamic_sampling=0 scope=spfile;
+ALTER SYSTEM SET "_optim_peek_user_binds"=FALSE scope=spfile;
+ALTER SYSTEM SET "_optimizer_use_feedback"=FALSE scope=spfile;
+
+
+
+
+-- 파라미터값 확인
+SELECT 
+    NAME,
+    VALUE,
+    DEFAULT_VALUE,
+    ISSYS_MODIFIABLE 
+FROM V$PARAMETER
+WHERE NAME IN (
+                'sga_target',
+                'sga_max_size',
+                'shared_pool_size',
+                'shared_pool_reserved_size',
+                'db_cache_size',
+                'java_pool_size',
+                'large_pool_size',
+                'streams_pool_size',
+                'pga_aggregate_target',
+                'pga_aggregate_limit',
+                'processes',
+                'sessions',
+                'transactions',
+                'open_cursors',
+                'optimizer_dynamic_sampling'
+               );
+               
+
+
+-- Hidden Parameter 조회
+SELECT 
+    a.ksppinm "Parameter", 
+    b.KSPPSTDF "Default Value",
+    b.ksppstvl "Session Value", 
+    c.ksppstvl "Instance Value",
+    decode(bitand(a.ksppiflg/256,1),1,'TRUE','FALSE') IS_SESSION_MODIFIABLE,
+    decode(bitand(a.ksppiflg/65536,3),1,'IMMEDIATE',2,'DEFERRED',3,'IMMEDIATE','FALSE') IS_SYSTEM_MODIFIABLE
+FROM   x$ksppi a,
+       x$ksppcv b,
+       x$ksppsv c
+WHERE  a.indx = b.indx
+AND    a.indx = c.indx
+AND    a.ksppinm LIKE '/_%' escape '/'
+AND    a.ksppinm IN ('_optim_peek_user_binds','_optimizer_use_feedback');
+
+
+
+-- SGA, PGA Hit Ratio 상태 정보
+SELECT 
+    'SHARED_POOL_SIZE(LIBRARY CACHE)' AS "MEMORY_PARAMETER", 
+    ROUND((1-SUM (reloads)/SUM(pins))*100,2) AS "HIT_RATIO"
+From V$LIBRARYCACHE
+UNION ALL
+SELECT 
+    'SHARED_POOL_SIZE(DATA DICTIONARY)', 
+    ROUND((1-SUM(getmisses)/SUM(gets))*100,2)
+FROM V$ROWCACHE
+UNION ALL
+SELECT 
+    'DB_CACHE_SIZE',
+    ROUND(((1-(SUM(DECODE(name, 'physical reads', value,0)) / 
+    (SUM(DECODE(name, 'db block gets', value,0))+(SUM(DECODE(name, 'consistent gets', value, 0))))))*100),2) 
+FROM V$SYSSTAT
+UNION ALL
+SELECT 
+    'PGA_AGGREGATE_TARGET',
+    ROUND(VALUE,2) 
+FROM V$PGASTAT
+WHERE NAME = 'cache hit percentage';
+
+
+
+
+
+show parameter open_cursors
+
+-- Parameter open_cursors Default값으로 변경
+ALTER SYSTEM RESET open_cursors SCOPE=SPFILE;
+
+-- Parameter open_cursors 500 변경
+ALTER SYSTEM SET open_cursors=500 SCOPE=SPFILE;
+
+
+
