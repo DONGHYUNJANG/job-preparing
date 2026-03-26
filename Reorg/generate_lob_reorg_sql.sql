@@ -17,6 +17,7 @@ SET LINESIZE 300
 SET FEEDBACK OFF
 SET HEADING OFF
 SET TERMOUT OFF
+SET VERIFY OFF
 
 -- Spool file to save the generated commands
 SPOOL _generated_lob_reorg_commands.sql
@@ -39,7 +40,9 @@ SELECT
 FROM
     dba_lobs l
 WHERE
-    l.owner = UPPER('&1');
+    l.owner = UPPER('&1')
+    AND l.table_name NOT LIKE 'DR$%'
+    AND l.table_name NOT LIKE 'SYS_IOT_OVER_%';
 
 -- 2. Generate LOB index rebuild commands
 PROMPT
@@ -53,7 +56,9 @@ JOIN
     dba_lobs l ON i.owner = l.owner AND i.index_name = l.index_name
 WHERE
     i.index_type = 'LOB'
-    AND i.owner = UPPER('&1');
+    AND i.owner = UPPER('&1')
+    AND l.table_name NOT LIKE 'DR$%'
+    AND l.table_name NOT LIKE 'SYS_IOT_OVER_%';
 
 PROMPT
 PROMPT -- Generation Complete.

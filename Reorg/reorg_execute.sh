@@ -75,7 +75,7 @@ generate_comparison_report() {
         echo "HWM (High Water Mark) is represented by the 'BLOCKS' count."
         echo "A reduction in BLOCKS indicates successful HWM lowering and space reclamation."
         echo " "
-        printf "%%-35s | %%-20s | %%-20s | %%-10s\n" "TABLE_NAME" "BLOCKS (BEFORE)" "BLOCKS (AFTER)" "SAVED"
+        printf "%-35s | %-20s | %-20s | %-10s\n" "TABLE_NAME" "BLOCKS (BEFORE)" "BLOCKS (AFTER)" "SAVED"
         echo "-------------------------------------------------------------------------------------------"
     ) > ${REORG_COMPARISON_REPORT}
 
@@ -89,7 +89,7 @@ generate_comparison_report() {
         {
             if ($1 in before) {
                 diff = before[$1] - $2;
-                printf "%%-35s | %%-20s | %%-20s | %%-10s\n", $1, before[$1], $2, diff;
+                printf "%-35s | %-20s | %-20s | %-10s\n", $1, before[$1], $2, diff;
                 total_before += before[$1];
                 total_after += $2;
             }
@@ -98,7 +98,7 @@ generate_comparison_report() {
             total_saved = total_before - total_after;
             printf "\n-------------------------------------------------------------------------------------------\n";
             printf "TOTALS\n";
-            printf "%%-35s | %%-20s | %%-20s | %%-10s\n", " ", total_before, total_after, total_saved;
+            printf "%-35s | %-20s | %-20s | %-10s\n", " ", total_before, total_after, total_saved;
         }
     ' ${PRE_REORG_STATS} ${POST_REORG_STATS} >> ${REORG_COMPARISON_REPORT}
     

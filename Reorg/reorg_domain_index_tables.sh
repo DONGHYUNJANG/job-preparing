@@ -1,48 +1,50 @@
 #!/bin/bash
 
 # =============================================================================
-# Oracle LOB Reorganization Script
+# Oracle Domain Index Table Reorganization Script
 # =============================================================================
 #
 # Description:
-#   This script orchestrates the reorganization of LOB (Large Object) segments
-#   for a given schema, captures before/after block counts, and generates a
-#   comparison report.
+#   This script finds tables with Domain (e.g., Oracle Text) indexes, 
+#   reorganizes them, rebuilds the indexes, captures before/after block 
+#   counts, and generates a comparison report.
 #
 # Usage:
 #   1. Configure the environment variables below.
-#   2. Grant execute permission: chmod +x reorg_lob_execute.sh
-#   3. Run the script: ./reorg_lob_execute.sh
+#   2. Grant execute permission: chmod +x reorg_domain_index_tables.sh
+#   3. Run the script: ./reorg_domain_index_tables.sh
 #
 # =============================================================================
 
 # ---[ 1. User Configuration ]-------------------------------------------------
 # !! Set your environment and connection details !!
-export ORACLE_SID="ORCL"
-export ORACLE_HOME="/u01/app/oracle/product/19c/dbhome_1" # Your Oracle Home
-export PATH=$ORACLE_HOME/bin:$PATH
+#export ORACLE_SID="ORCL"
+#export ORACLE_HOME="/u01/app/oracle/product/19c/dbhome_1" # Your Oracle Home
+#export PATH=$ORACLE_HOME/bin:$PATH
 
 # -- Connection Details
-SQLPLUS_USER="system"
-SQLPLUS_PASS="your_password" # Use the actual password
-SQLPLUS_CONN="${SQLPLUS_USER}/${SQLPLUS_PASS}"
+#SQLPLUS_USER="system"
+#SQLPLUS_PASS="your_password" # Use the actual password
+#SQLPLUS_CONN="${SQLPLUS_USER}/${SQLPLUS_PASS}"
+
+SQLPLUS_CONN=" / as sysdba"
+
 
 # -- Target Schema and Parallelism
-SCHEMA_NAME="SH"
-DOP=4 # Parallelism level, adjust based on CPU resources
+SCHEMA_NAME="SH2"
+DOP=2 # Parallelism level, adjust based on CPU resources
 # -----------------------------------------------------------------------------
 
 # ---[ 2. Script Setup ]-------------------------------------------------------
 LOG_DIR="./logs"
-LOG_FILE="${LOG_DIR}/reorg_lob_execute_$(date +%Y%m%d_%H%M%S).log"
-GENERATED_SQL_FILE="_generated_lob_reorg_commands.sql"
-AFFECTED_TABLES_LIST_FILE="${LOG_DIR}/reorg_affected_tables_list.txt"
+LOG_FILE="${LOG_DIR}/reorg_domain_tables_execute_$(date +%Y%m%d_%H%M%S).log"
+TABLES_TO_REORG_LIST_FILE="${LOG_DIR}/reorg_domain_index_tables_list.txt"
 DOMAIN_INDEXES_LIST_FILE="${LOG_DIR}/reorg_domain_indexes_list.txt"
 
 # --- Pre/Post check report files
-PRE_REORG_STATS="${LOG_DIR}/pre_reorg_lob_table_stats.txt"
-POST_REORG_STATS="${LOG_DIR}/post_reorg_lob_table_stats.txt"
-REORG_COMPARISON_REPORT="${LOG_DIR}/reorg_lob_table_comparison_report.txt"
+PRE_REORG_STATS="${LOG_DIR}/pre_reorg_domain_table_stats.txt"
+POST_REORG_STATS="${LOG_DIR}/post_reorg_domain_table_stats.txt"
+REORG_COMPARISON_REPORT="${LOG_DIR}/reorg_domain_table_comparison_report.txt"
 
 # Create log directory if it doesn't exist
 mkdir -p ${LOG_DIR}
@@ -69,12 +71,12 @@ EOF
 
 get_table_stats() {
     local output_file=$1
-    log "Capturing LOB table stats for ${SCHEMA_NAME} into ${output_file}..."
+    log "Capturing Domain Index table stats for ${SCHEMA_NAME} into ${output_file}..."
     local sql_query="
     SELECT T.TABLE_NAME || ',' || T.BLOCKS
     FROM DBA_TABLES T
     WHERE T.OWNER = UPPER('${SCHEMA_NAME}')
-      AND T.TABLE_NAME IN (SELECT DISTINCT TABLE_NAME FROM DBA_LOBS WHERE OWNER = UPPER('${SCHEMA_NAME}'))
+      AND T.TABLE_NAME IN (SELECT DISTINCT TABLE_NAME FROM DBA_INDEXES WHERE OWNER = UPPER('${SCHEMA_NAME}') AND INDEX_TYPE = 'DOMAIN')
     ORDER BY T.TABLE_NAME;"
     run_sql_spool "${output_file}" "${sql_query}"
 }
@@ -84,7 +86,7 @@ generate_comparison_report() {
     
     (
         echo "==========================================================================================="
-        echo "      LOB Table Reorganization Comparison Report for Schema: ${SCHEMA_NAME}"
+        echo "    Domain Index Table Reorganization Comparison Report for Schema: ${SCHEMA_NAME}"
         echo "==========================================================================================="
         echo " "
         echo "HWM (High Water Mark) is represented by the 'BLOCKS' count for the table segment."
@@ -98,7 +100,7 @@ generate_comparison_report() {
     total_blocks_before=0
     total_blocks_after=0
 
-    awk -F, '
+    local awk_script='
 	BEGIN { OFS="," }
 	NR==FNR { before[$1] = $2; next }
 	{
@@ -114,7 +116,8 @@ generate_comparison_report() {
 	    printf "-------------------------------------------------------------------------------------------\n";
 	    printf "%-35s | %-20s | %-20s | %-10s\n", "TOTALS", total_before, total_after, total_saved;
 	}
-    ' ${PRE_REORG_STATS} ${POST_REORG_STATS} >> ${REORG_COMPARISON_REPORT}    
+'
+    awk -F, "${awk_script}" ${PRE_REORG_STATS} ${POST_REORG_STATS} >> ${REORG_COMPARISON_REPORT}    
 
     log "Comparison report generated at ${REORG_COMPARISON_REPORT}"
     cat ${REORG_COMPARISON_REPORT} | tee -a ${LOG_FILE}
@@ -123,15 +126,20 @@ generate_comparison_report() {
 
 
 # ---[ 4. Main Execution ]-----------------------------------------------------
-log "======= Starting LOB Reorganization for Schema: ${SCHEMA_NAME} ======="
+log "======= Starting Domain Index Table Reorganization for Schema: ${SCHEMA_NAME} ======="
 
-# --- Step 0: Get list of tables to process ---
-log "Step 0: Generating list of tables with LOBs to reorganize..."
-tables_sql="SELECT DISTINCT table_name FROM dba_lobs WHERE owner = UPPER('${SCHEMA_NAME}') AND table_name NOT LIKE 'DR$%' AND table_name NOT LIKE 'SYS_IOT_OVER_%';"
-run_sql_spool "${AFFECTED_TABLES_LIST_FILE}" "${tables_sql}"
+# --- Step 0: Get list of tables and indexes to process ---
+log "Step 0: Generating list of tables with Domain Indexes to reorganize..."
+tables_sql="SELECT DISTINCT table_name FROM dba_indexes WHERE owner = UPPER('${SCHEMA_NAME}') AND index_type = 'DOMAIN';"
+run_sql_spool "${TABLES_TO_REORG_LIST_FILE}" "${tables_sql}"
 
-if [ ! -s "${AFFECTED_TABLES_LIST_FILE}" ]; then
-    log "No tables with LOBs found for schema ${SCHEMA_NAME}. Exiting."
+log "Step 0: Generating list of Domain Indexes to rebuild..."
+indexes_sql="SELECT index_name FROM dba_indexes WHERE owner = UPPER('${SCHEMA_NAME}') AND index_type = 'DOMAIN';"
+run_sql_spool "${DOMAIN_INDEXES_LIST_FILE}" "${indexes_sql}"
+
+
+if [ ! -s "${TABLES_TO_REORG_LIST_FILE}" ]; then
+    log "No tables with Domain Indexes found for schema ${SCHEMA_NAME}. Exiting."
     exit 0
 fi
 
@@ -139,40 +147,41 @@ fi
 log "Step 1: Capturing pre-reorganization statistics..."
 get_table_stats "${PRE_REORG_STATS}"
 
-# --- Step 2: Generate Reorganization Commands ---
-log "Step 2: Generating LOB reorganization commands..."
-sqlplus -S "${SQLPLUS_CONN}" <<EOF >> ${LOG_FILE} 2>&1
-WHENEVER SQLERROR EXIT FAILURE ROLLBACK;
-@generate_lob_reorg_sql.sql ${SCHEMA_NAME}
+# --- Step 2: Reorganize Tables ---
+log "Step 2: Reorganizing tables..."
+for table in $(cat ${TABLES_TO_REORG_LIST_FILE}); do
+    log "  -> Moving table: ${table}"
+    sqlplus -S "${SQLPLUS_CONN}" <<EOF >> ${LOG_FILE} 2>&1
+    WHENEVER SQLERROR EXIT 1 ROLLBACK;
+    ALTER TABLE ${SCHEMA_NAME}.${table} MOVE PARALLEL ${DOP};
+    ALTER TABLE ${SCHEMA_NAME}.${table} NOPARALLEL;
 EOF
+    if [ $? -ne 0 ]; then
+        log "ERROR: Failed to move table ${table}. Check log for details."
+        exit 1
+    fi
+done
+log "Table reorganization completed successfully."
 
-if [ $? -ne 0 ] || [ ! -s "${GENERATED_SQL_FILE}" ]; then
-    log "ERROR: Failed to generate LOB reorg commands. Check log for details."
-    exit 1
-fi
-log "Successfully generated commands in ${GENERATED_SQL_FILE}."
 
-# --- Step 3: Execute Generated Commands ---
-log "Step 3: Executing the generated LOB reorganization and index rebuild commands..."
-sqlplus -S "${SQLPLUS_CONN}" <<EOF >> ${LOG_FILE} 2>&1
-WHENEVER SQLERROR EXIT 1 ROLLBACK;
-SET FEEDBACK ON
-SET TIMING ON
-
-@${GENERATED_SQL_FILE}
-
-EXIT;
+# --- Step 3: Rebuild All Domain (Text) Indexes ---
+log "Step 3: Rebuilding all Domain (e.g., Oracle Text) indexes..."
+for index in $(cat ${DOMAIN_INDEXES_LIST_FILE}); do
+    log "  -> Rebuilding Domain index: ${index}"
+    sqlplus -S "${SQLPLUS_CONN}" <<EOF >> ${LOG_FILE} 2>&1
+    WHENEVER SQLERROR CONTINUE;
+    ALTER INDEX ${SCHEMA_NAME}.${index} REBUILD;
 EOF
+    if [ $? -ne 0 ]; then
+        log "ERROR: Failed to rebuild Domain index ${index}. Check the log for details."
+    fi
+done
+log "Domain index rebuild process complete."
 
-if [ $? -ne 0 ]; then
-    log "ERROR: An error occurred during LOB reorganization. Check the log for details."
-    exit 1
-fi
-log "LOB reorganization and index rebuilds completed successfully."
 
 # --- Step 4: Gather Statistics on Affected Tables ---
-log "Step 4: Gathering statistics for tables with reorganized LOBs..."
-for table in $(cat ${AFFECTED_TABLES_LIST_FILE}); do
+log "Step 4: Gathering statistics for reorganized tables..."
+for table in $(cat ${TABLES_TO_REORG_LIST_FILE}); do
     log "  -> Gathering stats for table: ${table}"
     sqlplus -S "${SQLPLUS_CONN}" <<EOF >> ${LOG_FILE} 2>&1
     WHENEVER SQLERROR CONTINUE;
@@ -193,33 +202,12 @@ log "Table statistics gathering complete."
 log "Step 5: Capturing post-reorganization statistics..."
 get_table_stats "${POST_REORG_STATS}"
 
-# --- Step 6: Rebuild All Domain (Text) Indexes ---
-log "Step 6: Rebuilding all Domain (e.g., Oracle Text) indexes..."
-indexes_sql="SELECT index_name FROM dba_indexes WHERE owner = UPPER('${SCHEMA_NAME}') AND index_type = 'DOMAIN';"
-run_sql_spool "${DOMAIN_INDEXES_LIST_FILE}" "${indexes_sql}"
-
-if [ ! -s "${DOMAIN_INDEXES_LIST_FILE}" ]; then
-    log "  -> No Domain indexes found for schema ${SCHEMA_NAME}. Skipping."
-else
-    for index in $(cat ${DOMAIN_INDEXES_LIST_FILE}); do
-        log "  -> Rebuilding Domain index: ${index}"
-        sqlplus -S "${SQLPLUS_CONN}" <<EOF >> ${LOG_FILE} 2>&1
-        WHENEVER SQLERROR CONTINUE;
-        ALTER INDEX ${SCHEMA_NAME}.${index} REBUILD;
-EOF
-        if [ $? -ne 0 ]; then
-            log "ERROR: Failed to rebuild Domain index ${index}. Check the log for details."
-        fi
-    done
-fi
-log "Domain index rebuild process complete."
-
-# --- Step 7: Generate Comparison Report ---
-log "Step 7: Generating comparison report..."
+# --- Step 6: Generate Comparison Report ---
+log "Step 6: Generating comparison report..."
 generate_comparison_report
 
 
-log "======= LOB Reorganization Script Finished Successfully ======="
+log "======= Domain Index Table Reorganization Script Finished Successfully ======="
 log "Full log is available at: ${LOG_FILE}"
 # -----------------------------------------------------------------------------
 
