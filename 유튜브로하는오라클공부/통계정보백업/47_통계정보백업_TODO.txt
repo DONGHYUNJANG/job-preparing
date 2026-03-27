@@ -1,0 +1,106 @@
+/***************************************************************************
+오라클 SQL 기초 통계정보 자동 백업
+Oracle 19c 기준으로 작성되었습니다. 
+
+ DB & SQL 공부에 도움이 되는 영상 순서별로 정리했어요~
+
+   1.오라클 설치 영상(STR DB 생성)
+         - VirtualBox를 이용한 Linux 8.6, Oracle 19c설치 1부~4부
+   2.오라클 기초
+         - Oracle(기초) 오라클 시작 & 종료 노하우~
+         - Oracle(기초) 오라클  리스너 Listener 시작 & 종료 노하우~
+   3. DB계정 생성(STR DB계정 생성) 
+        테이블 & 데이터 생성(CUST, CUST_DTL 테이블 생성 및 데이터 입력)
+        - Oracle(기초) 오라클 DB계정 & 테이블스페이스 생성
+        - Oracle(기초) 오라클 테이블 생성
+   4. SQL Developer 사용법
+        - 개발자를 위한 무료 SQL툴 SQL Developer 활용 꿀팁
+***************************************************************************/
+
+
+------------------------------------------------------------------
+-- 리눅스 디렉터리 생성
+-- oracle 계정에서 수행
+------------------------------------------------------------------
+## Shell 스크립트 디렉터리 생성
+mkdir /home/oracle/script
+
+## Shell 로그 백업 디렉터리 생성
+mkdir /home/oracle/oraclelog
+
+
+
+------------------------------------------------------------------
+-- 자동 백업 스크립트 생성
+-- oracle 계정에서 수행
+------------------------------------------------------------------
+cat << \FILE > /home/oracle/script/dbst_str_backup.sh
+#!/bin/bash
+
+################################################################################
+#  STATISTICS BACKUP SCRIPT
+#    V 1.0    통계정보 백업  DBBODA
+#             백업 대상 계정: STR
+################################################################################
+
+export ORACLE_HOME=/oracle/app/oracle/product/19.0.0.0/db_1
+export ORACLE_SID=STR
+export PATH=$ORACLE_HOME/bin:$PATH
+export DATE=`date +%Y%m%d`
+export LOG=/home/oracle/oraclelog/dbst_STR_BACKUP_${DATE}.log
+
+sqlplus / as sysdba << EOF >> ${LOG}
+
+EXEC DBMS_STATS.CREATE_STAT_TABLE(OWNNAME=>'SYSTEM', STATTAB=>'DBST_BACKUP_STR_${DATE}', TBLSPACE=>'SYSTEM');
+
+BEGIN
+ FOR X IN (
+          SELECT
+            TABLE_NAME
+          FROM DBA_TABLES
+          WHERE OWNER = 'STR'
+          )
+ LOOP
+    DBMS_STATS.EXPORT_TABLE_STATS(OWNNAME=>'STR',TABNAME=>X.TABLE_NAME,STATTAB=>'DBST_BACKUP_STR_${DATE}',CASCADE=>TRUE,STATOWN=>'SYSTEM');
+ END LOOP;
+END;
+/
+
+EXIT
+EOF
+
+FILE
+
+
+------------------------------------------------------------------
+-- Shell 스크립트 권한 변경
+-- oracle 계정에서 수행
+------------------------------------------------------------------
+## Shell 스크립트 권한 변경
+chmod 755 /home/oracle/script/dbst_str_backup.sh
+
+
+
+------------------------------------------------------------------
+-- crontab 생성
+-- oracle 계정에서 수행
+------------------------------------------------------------------
+crontab -e
+
+## ORACLE GATHER STATS BACKUP (STR)
+10 00 * * * /home/oracle/script/dbst_str_backup.sh
+
+
+
+------------------------------------------------------------------
+-- 데이터 확인
+-- sqlplus / as sysdba 수행
+------------------------------------------------------------------
+
+sqlplus -s / as sysdba << EOF
+SELECT
+    DISTINCT C1
+FROM SYSTEM.DBST_BACKUP_STR_20230404
+ORDER BY C1;
+EXIT
+EOF
