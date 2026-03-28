@@ -1,0 +1,167 @@
+
+BS Key  Size       Device Type Elapsed Time Completion Time
+------- ---------- ----------- ------------ -------------------
+5       5.50K      DISK        00:00:00     2026/03/28:10:28:58
+        BP Key: 5   Status: AVAILABLE  Compressed: YES  Tag: TAG20260328T102858
+        Piece Name: /u01/app/oracle/fast_recovery_area/ORA19/backupset/2026_03_28/o1_mf_annnn_TAG20260328T102858_nwgcptb5_.bkp
+
+  List of Archived Logs in backup set 5
+  Thrd Seq     Low SCN    Low Time            Next SCN   Next Time
+  ---- ------- ---------- ------------------- ---------- ---------
+  1    15      2654182    2026/03/28:10:27:34 2654249    2026/03/28:10:28:57
+
+BS Key  Type LV Size       Device Type Elapsed Time Completion Time
+------- ---- -- ---------- ----------- ------------ -------------------
+6       Full    10.20M     DISK        00:00:01     2026/03/28:10:29:00
+        BP Key: 6   Status: AVAILABLE  Compressed: NO  Tag: TAG20260328T102859
+        Piece Name: /u01/app/oracle/fast_recovery_area/ORA19/autobackup/2026_03_28/o1_mf_s_1229077739_nwgcpw9c_.bkp
+  SPFILE Included: Modification time: 2026/03/28:09:18:10
+  SPFILE db_unique_name: ORA19
+  Control File Included: Ckp SCN: 2654262      Ckp time: 2026/03/28:10:28:59
+
+
+
+
+
+TO_CHAR(SYSDATE,'YY
+-------------------
+2026-03-28:10:35:39
+2026-03-28:10:35:39
+2026-03-28:10:35:39
+2026-03-28:10:35:39
+2026-03-28:10:35:39
+2026-03-28:10:35:39
+2026-03-28:10:35:39
+2026-03-28:10:35:39
+2026-03-28:10:35:39
+2026-03-28:10:35:39
+2026-03-28:10:35:39
+
+TO_CHAR(SYSDATE,'YY
+-------------------
+2026-03-28:10:35:39
+2026-03-28:10:35:39
+2026-03-28:10:35:39
+2026-03-28:10:35:39
+2026-03-28:10:35:39
+
+830 rows selected.
+
+SQL> DROP TABLE HR.EMPLOYEES PURGE;
+DROP TABLE HR.EMPLOYEES PURGE
+              *
+ERROR at line 1:
+ORA-02449: unique/primary keys in table referenced by foreign keys
+
+
+SQL>
+SQL> DROP TABLE HR.EMPLOYEES CASCADE CONSTRAINTS PURGE;
+
+Table dropped.
+
+SQL> ALTER SYSTEM SWITCH LOGFILE;
+
+System altered.
+
+SQL>
+
+
+SQL> shutdown immediate
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+SQL> startup mount
+ORACLE instance started.
+
+Total System Global Area  532674560 bytes
+Fixed Size                  8898560 bytes
+Variable Size             281018368 bytes
+Database Buffers          234881024 bytes
+Redo Buffers                7876608 bytes
+Database mounted.
+SQL> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[oracle@ora19c ~]$ rman target / nocatalog
+
+Recovery Manager: Release 19.0.0.0.0 - Production on Sat Mar 28 10:39:18 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+connected to target database: ORA19 (DBID=725837126, not open)
+using target database control file instead of recovery catalog
+
+RMAN> run {
+2> set until time='2026-03-28:10:35:39';
+3> restore database;
+4> recover database;
+5> }
+
+executing command: SET until clause
+
+Starting restore at 2026/03/28:10:42:31
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=137 device type=DISK
+
+channel ORA_DISK_1: starting datafile backup set restore
+channel ORA_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_DISK_1: restoring datafile 00001 to /u01/app/oracle/oradata/ORA19/system01.dbf
+channel ORA_DISK_1: restoring datafile 00002 to /u01/app/oracle/oradata/ORA19/ts20000.dbf
+channel ORA_DISK_1: restoring datafile 00003 to /u01/app/oracle/oradata/ORA19/sysaux01.dbf
+channel ORA_DISK_1: restoring datafile 00004 to /u01/app/oracle/oradata/ORA19/undotbs01.dbf
+channel ORA_DISK_1: restoring datafile 00005 to /u01/app/oracle/oradata/ORA19/users02.dbf
+channel ORA_DISK_1: restoring datafile 00007 to /u01/app/oracle/oradata/ORA19/users01.dbf
+channel ORA_DISK_1: reading from backup piece /u01/app/oracle/fast_recovery_area/ORA19/backupset/2026_03_28/o1_mf_nnndf_TAG20260328T102801_nwgco2m1_.bkp
+channel ORA_DISK_1: piece handle=/u01/app/oracle/fast_recovery_area/ORA19/backupset/2026_03_28/o1_mf_nnndf_TAG20260328T102801_nwgco2m1_.bkp tag=TAG20260328T102801
+channel ORA_DISK_1: restored backup piece 1
+channel ORA_DISK_1: restore complete, elapsed time: 00:01:45
+Finished restore at 2026/03/28:10:44:18
+
+Starting recover at 2026/03/28:10:44:19
+using channel ORA_DISK_1
+
+starting media recovery
+media recovery complete, elapsed time: 00:00:02
+
+Finished recover at 2026/03/28:10:44:21
+
+RMAN>
+
+
+
+RMAN> exit
+
+
+Recovery Manager complete.
+[oracle@ora19c ~]$ sys
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Sat Mar 28 10:51:46 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+SQL> @i
+
+INSTANCE_NAME    STATUS
+---------------- ------------
+ORA19            MOUNTED
+
+SQL> alter database open resetlogs;
+
+Database altered.
+
+SQL> conn hr/hr
+Connected.
+SQL> select count(*) from employees;
+
+  COUNT(*)
+----------
+       107
+
+

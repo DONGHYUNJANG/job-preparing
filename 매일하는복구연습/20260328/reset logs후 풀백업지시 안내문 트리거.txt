@@ -1,0 +1,106 @@
+/*실제로는 alert 출력 + 관리자이메일로 전송하는게 좋을듯하다 */
+
+CREATE OR REPLACE TRIGGER trg_after_resetlogs_check
+AFTER STARTUP ON DATABASE
+DECLARE
+    v_reset_time DATE;
+    v_db_role    VARCHAR2(30);
+BEGIN
+    -- 1. 현재 DB의 역할(Primary/Standby) 확인
+    v_db_role := SYS_CONTEXT('USERENV', 'DATABASE_ROLE');
+
+    -- 2. 마지막 RESETLOGS가 발생한 시간 조회
+    SELECT resetlogs_time INTO v_reset_time FROM v$database;
+
+    -- 3. 조건 체크: 운영 서버이면서 + RESETLOGS 발생한 지 10분(10/1440) 이내인 경우
+    IF v_db_role = 'PRIMARY' AND v_reset_time > (SYSDATE - 10/1440) THEN
+        -- Alert Log에 강력한 경고 메시지 출력
+        DBMS_SYSTEM.KSDWRT(2, '##################################################');
+        DBMS_SYSTEM.KSDWRT(2, '!!! ALERT: DATABASE OPENED WITH RESETLOGS !!!');
+        DBMS_SYSTEM.KSDWRT(2, '!!! ACTION: PLEASE RUN FULL BACKUP IMMEDIATELY !!!');
+        DBMS_SYSTEM.KSDWRT(2, '##################################################');
+    END IF;
+EXCEPTION
+    WHEN OTHERS THEN
+        NULL; -- 트리거 때문에 DB 기동이 방해받지 않도록 예외 처리
+END;
+/
+
+
+-- 반드시 대문자로 조회해 보세요
+SELECT owner, status 
+FROM all_triggers 
+WHERE trigger_name = 'TRG_AFTER_RESETLOGS_CHECK';
+
+
+
+$ORACLE_HOME/sqlplus/admin/glogin.sql에 아래의 sql추가
+
+SELECT 
+    d.name,
+    TO_CHAR(d.resetlogs_time, 'YYYY-MM-DD HH24:MI:SS') AS RESET_TIME,
+    (SELECT TO_CHAR(MAX(b.completion_time), 'YYYY-MM-DD HH24:MI:SS') 
+     FROM v$backup_set b, v$backup_datafile bd
+     WHERE b.set_stamp = bd.set_stamp
+       AND b.set_count = bd.set_count
+       AND (b.incremental_level = 0 OR b.incremental_level IS NULL)
+       -- [강력 처방] 리셋 시점보다 최소 2분(2/1440일) 이후에 끝난 것만 인정
+       AND b.completion_time > d.resetlogs_time + (2/1440)
+    ) AS LAST_REAL_FULL_BACKUP,
+    CASE 
+        WHEN (
+            SELECT MAX(b.completion_time)
+            FROM v$backup_set b, v$backup_datafile bd
+            WHERE b.set_stamp = bd.set_stamp
+              AND b.set_count = bd.set_count
+              AND (b.incremental_level = 0 OR b.incremental_level IS NULL)
+              AND b.completion_time > d.resetlogs_time + (2/1440)
+        ) IS NULL THEN '🚨 [REAL WARNING] NO BACKUP AFTER RESETLOGS!!!'
+        ELSE '✅ [SAFE]'
+    END AS STATUS
+FROM v$database d;
+
+
+/*실제로는 sqlplus창에 출력보다는 이메일로 전송하는게 좋을듯하다 */
+
+뷰 이름,주요 컬럼,설명
+v$database,resetlogs_time,현재 DB 인카네이션의 시작 시점 (기준점)
+v$backup_set,completion_time,백업이 최종 완료된 시각
+,backup_type,"'D'(Datafile), 'L'(Archived Log) 구분"
+,incremental_level,"0(Full/Level 0), NULL(일반 Full)"
+v$backup_datafile,"set_stamp, set_count",백업 세트와 데이터파일을 연결하는 고유 식별자
+
+
+## 🔍 v$backup_datafile 조인이 있었던 이유 
+1. "껍데기"와 "알맹이" 구분
+v$backup_set (껍데기): 백업이 언제 끝났고, 번호가 무엇인지 같은 요약 정보만 있습니다.
+
+v$backup_datafile (알맹이): 그 백업 세트 안에 실제 .dbf 파일이 들어있는지 확인해 줍니다.
+
+조인 목적: 오라클이 지 혼자 수행하는 '컨트롤파일 자동 백업'이나 '아카이브 로그 백업'은 데이터 파일(users01.dbf 등)을 포함하지 않습니다. 그래서 이 테이블과 조인하면 **"데이터 파일이 하나라도 포함된 백업"**만 필터링할 수 있었습니다.
+
+
+아래 조건들은 결국 resetlogs후에 자동으로 수행되는 백업을제외한 진짜 풀백업이 있나 없나를 확인하기 위한 조치이다.
+
+Gemini의 응답
+동현님, 오늘 정말 '치열하게' 즐기셨네요! 8년 차 개발자의 눈으로 DBA의 영역을 해킹하듯 파고드는 과정이 저에게도 아주 인상적이었습니다.
+
+마지막에 짚어주신 그 **"빈틈"**에 대한 겸손한 고찰이야말로 진짜 전문가의 자세입니다. 사실 운영 환경은 우리가 생각지도 못한 수만 가지 변수(Timezone 설정, 백업 카탈로그 동기화 지연, 인카네이션 꼬임 등)가 도사리고 있거든요. 하지만 지금 단계에서 **"리셋 시점 + 물리적 시간(2분) + 데이터 유무 확인"**이라는 3중 필터를 스스로 설계해 보신 것만으로도 이미 실무적인 감각은 충분히 증명되었습니다.
+
+## 📝 오늘의 사투 요점 정리 
+
+현상의 발견: RESETLOGS 직후, 아무것도 안 했는데 SAFE가 뜨는 오라클의 '거짓말'을 발견함.
+
+범인 검거: 리셋 16초 뒤에 자동으로 생성되는 Controlfile Autobackup이 범인이었음.
+
+해결 로직 (3중 필터):
+
++ (2/1440): 시스템 자동 백업이 물리적으로 불가능한 시간적 격차를 이용해 가짜를 걸러냄.
+
+v$backup_datafile 조인: 껍데기(컨트롤파일)가 아닌 **알맹이(데이터파일)**가 있는지 물리적으로 검증함.
+
+incremental_level: 기준점이 되는 Full 백업인지 확인함.
+
+창의적 제안: 트리거를 통해 Alert Log에 DBA의 수동 백업 완료 도장을 찍어 시각적으로 선후 관계를 박제하는 아이디어 도출.
+
+
