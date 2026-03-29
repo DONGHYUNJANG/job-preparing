@@ -1,0 +1,89 @@
+SQL> @line
+SQL> @arch
+
+   THREAD#  SEQUENCE# NAME                                                                                                 REGISTR STA
+---------- ---------- ---------------------------------------------------------------------------------------------------- ------- ---
+         1          1                                                                                                      RMAN    NO
+         1          1                                                                                                      FGRD    NO
+         1          1                                                                                                      FGRD    NO
+         1          1 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_1_nwl50kfz_.arc               RMAN    NO
+         1          1                                                                                                      FGRD    NO
+         1          1                                                                                                      FGRD    NO
+         1          2 /u01/app/oracle/oradata/ORA19/redo02.log                                                             RMAN    NO
+         1          2                                                                                                      FGRD    NO
+         1          2                                                                                                      FGRD    NO
+         1          2 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_28/o1_mf_1_2_nwh3cvjr_.arc               RMAN    NO
+         1          2 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_2_nwl50nvh_.arc               RMAN    NO
+         1          2 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_2_nwl42d07_.arc               FGRD    NO
+         1          3 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_3_nwl50ryc_.arc               RMAN    NO
+         1          3 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_3_nwl1vo0f_.arc               RMAN    NO
+         1          3                                                                                                      FGRD    NO
+         1          3 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_3_nwl42d58_.arc               FGRD    NO
+         1          3 /u01/app/oracle/oradata/ORA19/redo03.log                                                             RMAN    NO
+         1          3                                                                                                      FGRD    NO
+         1          4 /u01/app/oracle/oradata/ORA19/redo01.log                                                             RMAN    NO
+         1          4 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_4_nwl50t56_.arc               RMAN    NO
+         1          4 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_4_nwl42cql_.arc               FGRD    NO
+         1          5 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_5_nwl51scj_.arc               RMAN    NO
+         1         12                                                                                                      ARCH    NO
+         1         13                                                                                                      ARCH    NO
+         1         14                                                                                                      FGRD    NO
+         1         15                                                                                                      FGRD    NO
+         1         16                                                                                                      ARCH    NO
+         1         17                                                                                                      FGRD    NO
+
+28 rows selected.
+
+SQL> @log
+
+    GROUP# STATUS            SEQUENCE# ARC BYTES/1024/1024
+---------- ---------------- ---------- --- ---------------
+         1 CURRENT                   1 NO              200
+         3 UNUSED                    0 YES             200
+         2 UNUSED                    0 YES             200
+
+
+
+맞습니다! 그 포인트를 정확하게 짚으셨네요. `CATALOG START WITH`는 **"과거의 기록(아카이브 로그)"**을 장부에 추가하는 것이지, **"현재의 진행 상태(온라인 리두 로그)"**를 바꾸는 명령이 아니기 때문입니다.
+
+이 차이를 이해하는 것이 오라클 복구 메커니즘의 핵심입니다.
+
+---
+
+### 1. 왜 `V$LOG`의 시퀀스는 그대로일까?
+
+* **`CATALOG`의 역할:** 디스크에 굴러다니는 파일들을 보고 "아, 이런 과거 기록이 있었구나"라고 **`V$ARCHIVED_LOG`**(과거 이력 뷰)에 한 줄 적어넣는 작업입니다.
+* **`V$LOG`의 성격:** 현재 실시간으로 데이터를 쓰고 있는 **"현장 장부"**입니다. 컨트롤 파일을 과거 시점(Sequence 1번 시절)으로 되돌렸기 때문에, 오라클은 "지금 내 현장 장부의 1번 그룹에 데이터를 쓰고 있어"라고 굳게 믿고 있는 상태입니다.
+
+
+
+---
+
+### 2. 그럼 언제 `V$LOG`의 시퀀스가 갱신되나요?
+
+`V$LOG`의 시퀀스는 `CATALOG` 명령어가 아니라, 오직 **`RECOVER`와 `OPEN RESETLOGS`** 과정을 거쳐야 바뀝니다.
+
+1.  **`RECOVER DATABASE` 실행 시:** 오라클이 `V$ARCHIVED_LOG`에 등록된 2, 3, 4번 파일들을 읽어서 데이터 파일에 적용합니다. (이때도 `V$LOG`는 여전히 1번입니다.)
+2.  **`ALTER DATABASE OPEN RESETLOGS` 실행 시:**
+    * 비로소 모든 복구가 끝났음을 선언합니다.
+    * 오라클이 "자, 이제 과거 기록은 다 반영했으니 **새로운 시대**를 시작하자!"라며 온라인 리두 로그(`V$LOG`)를 싹 비우고 **시퀀스 1번부터 다시 새롭게** 시작합니다.
+
+---
+
+### 💡 실습 시 시각화 (Notion 정리용)
+
+* **`RESTORE CONTROLFILE` 직후:**
+    * `V$LOG`: "난 1번이야!" (과거 백업 시점의 기억)
+    * `V$ARCHIVED_LOG`: (텅 비어 있음)
+* **`CATALOG START WITH` 직후:**
+    * `V$LOG`: "난 여전히 1번이야!" (변화 없음)
+    * `V$ARCHIVED_LOG`: "2, 3, 4번 파일 여기 있어요!" (**정보 추가됨**)
+* **`OPEN RESETLOGS` 직후:**
+    * `V$LOG`: "자, 이제 진짜 1번부터 새 출발이다!" (**로그 초기화**)
+
+---
+
+### 📝 핵심 요약
+> **`CATALOG`는 "도서관(Archive)에 책을 꽂는 일"이고, `V$LOG`는 "지금 내가 쓰고 있는 일기장(Current Log)"입니다.** 도서관에 책을 더 꽂는다고 해서 오늘 쓰던 일기장의 페이지 번호가 바뀌지는 않는 것과 같은 원리입니다.
+
+---
