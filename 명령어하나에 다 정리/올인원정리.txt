@@ -1,0 +1,222 @@
+# ==========================================
+# 아카이브 로그 관리 (Archivelog Management)
+# ==========================================
+
+# 아카이브 로그 현재 상태 확인
+archive log list;
+
+# 아카이브 로그 전체 경로 확인 (V$ 뷰 활용)
+SELECT name, sequence#, status FROM v$archived_log WHERE status = 'A';
+
+# FRA 크기 및 경로 설정
+ALTER SYSTEM SET DB_RECOVERY_FILE_DEST_SIZE = 10G;
+ALTER SYSTEM SET DB_RECOVERY_FILE_DEST = '/u01/app/oracle/fast_recovery_area';
+
+# 아카이브 목적지 다중화 (FRA + Local)
+ALTER SYSTEM SET LOG_ARCHIVE_DEST_1 = 'LOCATION=USE_DB_RECOVERY_FILE_DEST' SCOPE=BOTH;
+ALTER SYSTEM SET LOG_ARCHIVE_DEST_2 = 'LOCATION=/u01/app/oracle/arch_second' SCOPE=BOTH;
+
+# 최소 성공 횟수 설정
+ALTER SYSTEM SET LOG_ARCHIVE_MIN_SUCCEED_DEST = 1;	
+
+# ==========================================
+# 테이블스페이스 관리 (Tablespace Management)
+# ==========================================
+
+# [생성] 표준 영구(Permanent) 테이블스페이스 생성
+# EXTENT MANAGEMENT LOCAL 및 SEGMENT SPACE MANAGEMENT AUTO는 19c 기본값입니다.
+CREATE TABLESPACE ts_data
+DATAFILE '/u01/app/oracle/oradata/orcl/ts_data01.dbf' SIZE 100M
+AUTOEXTEND ON NEXT 10M MAXSIZE 500M;
+
+# [생성] 임시(Temporary) 테이블스페이스 생성 (정렬 작업용)
+CREATE TEMPORARY TABLESPACE ts_temp
+TEMPFILE '/u01/app/oracle/oradata/orcl/ts_temp01.dbf' SIZE 50M
+AUTOEXTEND ON;
+
+# [생성] 언두(Undo) 테이블스페이스 생성 (롤백 및 읽기 일관성)
+CREATE UNDO TABLESPACE ts_undo
+DATAFILE '/u01/app/oracle/oradata/orcl/ts_undo01.dbf' SIZE 100M;
+
+# [수정] 기존 테이블스페이스에 데이터 파일 추가 (용량 확장)
+ALTER TABLESPACE ts_data 
+ADD DATAFILE '/u01/app/oracle/oradata/orcl/ts_data02.dbf' SIZE 100M;
+
+# [수정] 특정 데이터 파일 크기 수동 직접 변경
+ALTER DATABASE DATAFILE '/u01/app/oracle/oradata/orcl/ts_data01.dbf' RESIZE 200M;
+
+# [삭제] 테이블스페이스 및 물리 파일까지 완전 삭제 (주의)
+DROP TABLESPACE ts_data INCLUDING CONTENTS AND DATAFILES;
+
+# [조회] 테이블스페이스 목록 및 상태 확인
+SELECT tablespace_name, status, contents, extent_management 
+FROM dba_tablespaces;
+
+# [조회] 물리적 데이터 파일 경로 및 크기 확인
+SELECT file_name, tablespace_name, bytes/1024/1024 "Size(MB)", autoextensible 
+FROM dba_data_files;
+
+
+# ============================================================
+# 경로 및 상태 조회 (Path & Status Inquiry)
+# ============================================================
+
+# 화면 설정: 한 줄 길이와 페이지당 행 수 최적화
+SET LINESIZE 200
+SET PAGESIZE 100
+SET FEEDBACK OFF
+
+# 컬럼별 너비 및 헤더 설정
+COL file_id         FOR 999          HEAD 'ID'
+COL tablespace_name FOR A20          HEAD 'Tablespace'
+COL file_name       FOR A60          HEAD 'Physical_Path'
+COL "Size(MB)"      FOR 9,999,999    HEAD 'Size(MB)'
+COL "MaxSize(MB)"   FOR 9,999,999    HEAD 'Max(MB)'
+COL "Auto"          FOR A5           HEAD 'Auto'
+COL "Total(MB)"     FOR 9,999,999    HEAD 'Total(MB)'
+COL "Used(MB)"      FOR 9,999,999    HEAD 'Used(MB)'
+COL "Used(%)"       FOR 999.99       HEAD 'Used(%)'
+
+### [조회 1] 모든 데이터파일의 실제 경로 및 용량
+SELECT 
+    file_id,
+    tablespace_name,
+    file_name,
+    bytes/1024/1024 AS "Size(MB)",
+    autoextensible AS "Auto"
+FROM dba_data_files
+ORDER BY tablespace_name, file_id;
+
+### [조회 2] 임시(Temp) 파일 경로 확인
+SELECT 
+    file_id,
+    tablespace_name,
+    file_name,
+    bytes/1024/1024 AS "Size(MB)"
+FROM dba_temp_files;
+
+### [조회 3] 테이블스페이스별 현재 사용량 (%)
+SELECT 
+    df.tablespace_name,
+    ROUND(df.bytes / (1024 * 1024)) AS "Total(MB)",
+    ROUND((df.bytes - NVL(SUM(fs.bytes),0)) / (1024 * 1024)) AS "Used(MB)",
+    ROUND((df.bytes - NVL(SUM(fs.bytes),0)) / df.bytes * 100, 2) AS "Used(%)"
+FROM dba_data_files df
+LEFT JOIN dba_free_space fs ON df.file_id = fs.file_id
+GROUP BY df.tablespace_name, df.bytes
+ORDER BY 4 DESC;
+
+
+# ============================================================
+# 유저 및 보안 관리 (User & Security Management)
+# ============================================================
+
+### [포맷팅] 유저 조회용 설정 (Run this first)
+COL username         FOR A20      HEAD 'User_Name'
+COL account_status   FOR A20      HEAD 'Status'
+COL lock_date        FOR A15      HEAD 'Locked_At'
+COL profile          FOR A15      HEAD 'Profile_Name'
+COL expiry_date      FOR A15      HEAD 'Expires_At'
+
+### [조회] 현재 유저 상태 및 프로파일 확인
+SELECT username, account_status, lock_date, profile, expiry_date 
+FROM dba_users 
+ORDER BY username;
+
+### [제어] 유저 LOCK 해제 및 계정 잠금
+# - Unlock: 잠금 해제
+ALTER USER hr ACCOUNT UNLOCK;
+# - Lock: 계정 잠금 (접속 차단)
+ALTER USER hr ACCOUNT LOCK;
+
+### [제어] 비밀번호 변경 및 강제 만료
+# - 비밀번호 즉시 변경
+ALTER USER hr IDENTIFIED BY "new_password123!";
+# - 다음 접속 시 비밀번호 강제 변경 유도
+ALTER USER hr PASSWORD EXPIRE;
+
+# ============================================================
+# 패스워드 정책 관리 (Profile & Policy)
+# ============================================================
+
+### [조회] 현재 적용된 프로파일 정책 상세 확인
+# - 특정 유저에게 걸린 정책 제한 수치 확인
+SELECT resource_name, limit 
+FROM dba_profiles 
+WHERE profile = (SELECT profile FROM dba_users WHERE username = 'HR');
+
+### [수정] 비밀번호 정책 변경 (DEFAULT 프로파일 기준)
+# - 5회 실패 시 계정 잠금
+ALTER PROFILE DEFAULT LIMIT FAILED_LOGIN_ATTEMPTS 5;
+# - 계정 잠금 유지 시간 (1일)
+ALTER PROFILE DEFAULT LIMIT PASSWORD_LOCK_TIME 1;
+# - 비밀번호 유효 기간 (90일)
+ALTER PROFILE DEFAULT LIMIT PASSWORD_LIFE_TIME 90;
+# - 비밀번호 재사용 금지 기간 (180일)
+ALTER PROFILE DEFAULT LIMIT PASSWORD_REUSE_TIME 180;
+
+# ============================================================
+# 세션 환경 및 날짜 포맷 (Session & NLS Setting)
+# ============================================================
+
+### [조회] 현재 내 세션의 NLS 설정 확인
+# - 어떤 포맷이 적용되어 있는지 먼저 확인합니다.
+SELECT parameter, value 
+FROM v$nls_parameters 
+WHERE parameter IN ('NLS_DATE_FORMAT', 'NLS_LANGUAGE', 'NLS_TERRITORY', 'NLS_TIMESTAMP_FORMAT');
+
+### [날짜] 날짜 출력 형식 변경 (Date Format)
+# - 기본: RR/MM/DD -> 상세: YYYY-MM-DD HH24:MI:SS
+ALTER SESSION SET NLS_DATE_FORMAT = 'YYYY-MM-DD HH24:MI:SS';
+
+# - 타임스탬프(밀리초 포함) 포맷 변경
+ALTER SESSION SET NLS_TIMESTAMP_FORMAT = 'YYYY-MM-DD HH24:MI:SS.FF';
+
+### [언어] 에러 메시지 및 언어 설정 변경
+# - 영문으로 변경 (구글링이나 에러 분석 시 유리)
+ALTER SESSION SET NLS_LANGUAGE = 'AMERICAN';
+# - 한국어로 변경
+ALTER SESSION SET NLS_LANGUAGE = 'KOREAN';
+
+### [지역] 지역 및 통화 기구 설정
+# - 지역을 미국으로 설정 (날짜 표기 방식 등이 바뀜)
+ALTER SESSION SET NLS_TERRITORY = 'AMERICA';
+# - 지역을 한국으로 설정
+ALTER SESSION SET NLS_TERRITORY = 'KOREA';
+
+### [기타] 많이 쓰이는 기타 Alter Session
+# - 정렬 방식 변경 (한글 자음/모음 순 등)
+ALTER SESSION SET NLS_SORT = 'KOREAN_M';
+# - 세션 타임존 변경
+ALTER SESSION SET TIME_ZONE = '+09:00';
+
+# ============================================================
+# 🔑 8. 패스워드 파일 관리 (Password File Management)
+# ============================================================
+
+### [조회] 패스워드 파일에 저장된 유저 확인
+# - 어떤 유저가 관리자 권한을 가지고 파일에 등록되어 있는지 확인
+COL username FOR A20
+COL sysdba   FOR A10
+SELECT username, sysdba, sysoper, sysbackup FROM v$pwfile_users;
+
+### [확인] 패스워드 파일 설정 및 상태 확인
+# - VALUE가 'EXCLUSIVE'여야 개별 유저 등록이 가능함 (기본값)
+# - VALUE가 'NONE'이면 패스워드 파일 사용 안 함
+SHOW PARAMETER remote_login_passwordfile;
+
+### [등록/해제] 패스워드 파일에 유저 추가 및 삭제
+# - 유저 등록 (SYSDBA 권한 부여 시 자동으로 파일에 기록됨)
+GRANT SYSDBA TO hr;
+
+# - 유저 해제 (권한 박탈 시 파일에서 자동 삭제됨)
+REVOKE SYSDBA FROM hr;
+
+### [생성/복구] 패스워드 파일 생성 (orapwd 유틸리티)
+# - 파일이 삭제되었거나 비밀번호를 초기화해야 할 때 사용 (OS 커맨드)
+# - entries: 등록 가능한 최대 유저 수
+orapwd file=$ORACLE_HOME/dbs/orapw<SID> password=<sys_password> entries=10 force=y format=12;
+
+### [재생성] 패스워드 파일 포맷 업그레이드 (12c 이상)
+# - 구버전 포맷을 12c 이상의 새로운 포맷으로 변경할 때
+orapwd file=$ORACLE_HOME/dbs/orapw<SID> dbname=<SID> format=12 force=y;
