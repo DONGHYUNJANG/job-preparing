@@ -220,3 +220,78 @@ orapwd file=$ORACLE_HOME/dbs/orapw<SID> password=<sys_password> entries=10 force
 ### [재생성] 패스워드 파일 포맷 업그레이드 (12c 이상)
 # - 구버전 포맷을 12c 이상의 새로운 포맷으로 변경할 때
 orapwd file=$ORACLE_HOME/dbs/orapw<SID> dbname=<SID> format=12 force=y;
+
+# ============================================================
+# 📦 10. Data Pump 실행 옵션 (Practical Options)
+# ============================================================
+
+### [EXPORT] 자주 쓰는 내보내기 옵션 (expdp)
+# - SCHEMAS: 특정 유저 전체 백업
+# - PARALLEL: 프로세스 병렬 처리 (속도 향상)
+# - COMPRESSION: 덤프 파일 압축 (용량 절감)
+expdp hr/password@orcl \
+DIRECTORY=dpump_dir \
+DUMPFILE=hr_full_%U.dmp \
+LOGFILE=exp_hr.log \
+SCHEMAS=hr \
+PARALLEL=4 \
+COMPRESSION=ALL;
+
+### [IMPORT] 자주 쓰는 들여오기 옵션 (impdp)
+# - REMAP_SCHEMA: A유저 데이터를 B유저로 옮길 때
+# - REMAP_TABLESPACE: 소스 테이블스페이스가 타겟에 없을 때
+# - TABLE_EXISTS_ACTION: 테이블이 이미 있을 때 처리 (APPEND, REPLACE, TRUNCATE)
+impdp system/password@orcl \
+DIRECTORY=dpump_dir \
+DUMPFILE=hr_full_01.dmp \
+LOGFILE=imp_hr.log \
+REMAP_SCHEMA=hr:scott \
+REMAP_TABLESPACE=users:ts_data \
+TABLE_EXISTS_ACTION=REPLACE;
+
+### [FILTER] 특정 조건만 골라내기 (Include/Exclude)
+# - EXCLUDE: 특정 오브젝트 제외 (예: 통계정보, 인덱스 제외)
+# - CONTENT: 데이터만(DATA_ONLY) 또는 구조만(METADATA_ONLY)
+expdp hr/password@orcl \
+DIRECTORY=dpump_dir \
+DUMPFILE=hr_meta.dmp \
+CONTENT=METADATA_ONLY \
+EXCLUDE=STATISTICS,INDEX;
+
+
+# ============================================================
+# 🔗 11. 데이터베이스 링크 (Database Link)
+# ============================================================
+
+### [권한] DB Link 생성을 위한 권한 부여 (System 계정에서 실행)
+GRANT CREATE DATABASE LINK TO hr;
+# (Public 생성 시) GRANT CREATE PUBLIC DATABASE LINK TO hr;
+
+### [생성] 방법 1. TNS 정보를 직접 입력하는 방식 (권장)
+# - tnsnames.ora 설정을 건드리지 않아도 되어 간편합니다.
+CREATE DATABASE LINK remote_link
+CONNECT TO remote_user IDENTIFIED BY "password123!"
+USING '(DESCRIPTION=(ADDRESS=(PROTOCOL=TCP)(HOST=192.168.0.100)(PORT=1521))(CONNECT_DATA=(SID=orcl)))';
+
+### [생성] 방법 2. TNS 명칭을 사용하는 방식
+# - 로컬 서버의 tnsnames.ora에 'PROD_DB'가 정의되어 있어야 합니다.
+CREATE DATABASE LINK prod_link
+CONNECT TO scott IDENTIFIED BY tiger
+USING 'PROD_DB';
+
+### [조회] 생성된 DB Link 목록 확인
+COL owner FOR A10
+COL db_link FOR A20
+COL host FOR A30
+SELECT owner, db_link, username, host FROM dba_db_links;
+
+### [사용] 원격지 테이블 조회 및 데이터 복사
+# - 테이블명 뒤에 '@링크이름'을 붙입니다.
+SELECT * FROM emp@remote_link;
+
+# - 원격지 데이터를 로컬로 바로 복사 (CTAS)
+CREATE TABLE local_emp_bak AS SELECT * FROM emp@remote_link;
+
+### [삭제] DB Link 제거
+DROP DATABASE LINK remote_link;
+# (Public 삭제 시) DROP PUBLIC DATABASE LINK remote_link;
