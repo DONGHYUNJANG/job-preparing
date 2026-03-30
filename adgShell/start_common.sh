@@ -32,4 +32,4 @@ echo " 점검이 완료되었습니다. 확인된 Role에 따라 아래 스크�
 echo " 반드시 프라이머리를 먼저 시작하시기 바랍니다."
 echo "========================================"
 echo "프라이머리 스타트 스크립트 \"/home/oracle/start_adg_pri.sh\""
-echo "스탠바이 스타트 스크립트 \"/home/oracle/exit_sbdb.sh\""
+echo "스탠바이 스타트 스크립트 \"/home/oracle/start_sbdb.sh\""

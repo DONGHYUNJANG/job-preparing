@@ -1,0 +1,503 @@
+RMAN> recover database;
+
+Starting recover at 30-MAR-26
+using channel ORA_DISK_1
+
+starting media recovery
+
+archived log for thread 1 with sequence 1 is already on disk as file /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229249761.dbf
+archived log file name=/u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229249761.dbf thread=1 sequence=1
+unable to find archived log
+archived log thread=1 sequence=1
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of recover command at 03/30/2026 12:03:47
+RMAN-06054: media recovery requesting unknown archived log for thread 1 with sequence 1 and starting SCN of 3006370
+
+RMAN> exit
+
+
+Recovery Manager complete.
+[oracle@orcl dbs]$ sys
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Mon Mar 30 12:05:18 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+********************************************************************
+*  Welcome to DBBODA Database Channel                              *
+*  DB Info: Oracle 19c                                             *
+*  DB Name: STR                                                    *
+********************************************************************
+SYS@orcl:SQL> @archive
+SP2-0310: unable to open file "archive.sql"
+SYS@orcl:SQL> @arch
+ORDER BY SEQUENCE#
+*
+ERROR at line 4:
+ORA-00920: invalid relational operator
+
+
+SYS@orcl:SQL> @i
+
+INSTANCE_NAME    STATUS
+---------------- ------------
+orcl             MOUNTED
+
+SYS@orcl:SQL> @arch
+
+   THREAD#  SEQUENCE# NAME                                                                                                 REGISTR STA
+---------- ---------- ---------------------------------------------------------------------------------------------------- ------- ---
+         1          0 /u01/app/oracle/oradata/ORCL/REDO4_1.LOG                                                             RMAN    NO
+         1          0 /u01/app/oracle/oradata/ORCL/REDO3_2.LOG                                                             RMAN    NO
+         1          0 /u01/app/oracle/oradata/ORCL/REDO3_1.LOG                                                             RMAN    NO
+         1          0 /u01/app/oracle/oradata/ORCL/REDO2_2.LOG                                                             RMAN    NO
+         1          0 /u01/app/oracle/oradata/ORCL/REDO2_1.LOG                                                             RMAN    NO
+         1          0 /u01/app/oracle/oradata/ORCL/REDO4_2.LOG                                                             RMAN    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229007010.dbf                                   ARCH    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229007746.dbf                                   FGRD    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229249761.dbf                                   FGRD    NO
+         1          1 /u01/app/oracle/oradata/ORCL/REDO1_1.LOG                                                             RMAN    NO
+         1          1 /u01/app/oracle/oradata/ORCL/REDO1_2.LOG                                                             RMAN    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229005337.dbf                                   FGRD    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229004375.dbf                                   FGRD    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1228997259.dbf                                   FGRD    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1228993842.dbf                                   FGRD    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1228919136.dbf                                   RMAN    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1228917890.dbf                                   ARCH    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1228921464.dbf                                   ARCH    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1228917890.dbf                                   ARCH    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1228921464.dbf                                   ARCH    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1228993842.dbf                                   ARCH    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1228997259.dbf                                   FGRD    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1229004375.dbf                                   ARCH    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1229005337.dbf                                   ARCH    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1229007010.dbf                                   FGRD    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1229007746.dbf                                   ARCH    NO
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1228917890.dbf                                   ARCH    NO
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1228921464.dbf                                   ARCH    NO
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1228997259.dbf                                   ARCH    NO
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1229004375.dbf                                   ARCH    NO
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1229005337.dbf                                   ARCH    NO
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1229007746.dbf                                   ARCH    NO
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1228917890.dbf                                   ARCH    NO
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1228921464.dbf                                   ARCH    NO
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1228997259.dbf                                   ARCH    NO
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1229004375.dbf                                   ARCH    NO
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1229005337.dbf                                   ARCH    NO
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1229007746.dbf                                   ARCH    NO
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1225040460.dbf                                   ARCH    NO
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1228917890.dbf                                   ARCH    NO
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1228921464.dbf                                   ARCH    NO
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1228997259.dbf                                   FGRD    NO
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1229004375.dbf                                   ARCH    NO
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1229005337.dbf                                   ARCH    NO
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1229007746.dbf                                   ARCH    NO
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1225040460.dbf                                   ARCH    NO
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1228917890.dbf                                   ARCH    NO
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1228921464.dbf                                   ARCH    NO
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1228997259.dbf                                   ARCH    NO
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1229004375.dbf                                   ARCH    NO
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1229007746.dbf                                   ARCH    NO
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1225040460.dbf                                   ARCH    NO
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1228917890.dbf                                   ARCH    NO
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1228921464.dbf                                   ARCH    NO
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1228997259.dbf                                   ARCH    NO
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1229004375.dbf                                   ARCH    NO
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1229007746.dbf                                   ARCH    NO
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1225040460.dbf                                   ARCH    NO
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1228917890.dbf                                   ARCH    NO
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1228921464.dbf                                   ARCH    NO
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1228997259.dbf                                   ARCH    NO
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1229004375.dbf                                   FGRD    NO
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1229007746.dbf                                   ARCH    NO
+         1          9 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_9_1225040460.dbf                                   ARCH    NO
+         1          9 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_9_1228917890.dbf                                   ARCH    NO
+         1          9 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_9_1228921464.dbf                                   ARCH    NO
+         1          9 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_9_1228997259.dbf                                   ARCH    NO
+         1          9 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_9_1229007746.dbf                                   ARCH    NO
+         1         10 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_10_1225040460.dbf                                  ARCH    NO
+         1         10 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_10_1228921464.dbf                                  FGRD    NO
+         1         10 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_10_1228997259.dbf                                  ARCH    NO
+         1         10 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_10_1229007746.dbf                                  ARCH    NO
+         1         11 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_11_1225040460.dbf                                  ARCH    NO
+         1         11 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_11_1228921464.dbf                                  FGRD    NO
+         1         11 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_11_1228997259.dbf                                  FGRD    NO
+         1         11 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_11_1229007746.dbf                                  ARCH    NO
+         1         12 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_12_1225040460.dbf                                  ARCH    NO
+         1         12 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_12_1228921464.dbf                                  FGRD    NO
+         1         12 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_12_1229007746.dbf                                  ARCH    NO
+         1         13 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_13_1225040460.dbf                                  ARCH    NO
+         1         13 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_13_1228921464.dbf                                  FGRD    NO
+         1         13 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_13_1229007746.dbf                                  FGRD    NO
+         1         14 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_14_1225040460.dbf                                  ARCH    NO
+         1         14 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_14_1228921464.dbf                                  RMAN    NO
+         1         14 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_14_1229007746.dbf                                  RMAN    NO
+         1         15 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_15_1225040460.dbf                                  ARCH    NO
+         1         15 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_15_1228921464.dbf                                  RMAN    NO
+         1         15 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_15_1229007746.dbf                                  RMAN    NO
+         1         16 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_16_1225040460.dbf                                  ARCH    NO
+         1         16 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_16_1228921464.dbf                                  RMAN    NO
+         1         16 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_16_1229007746.dbf                                  RMAN    NO
+         1         17 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_17_1225040460.dbf                                  ARCH    NO
+         1         17 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_17_1228921464.dbf                                  RMAN    NO
+         1         17 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_17_1229007746.dbf                                  RMAN    NO
+         1         18 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_18_1225040460.dbf                                  ARCH    NO
+         1         18 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_18_1229007746.dbf                                  RMAN    NO
+         1         19 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_19_1225040460.dbf                                  ARCH    NO
+
+   THREAD#  SEQUENCE# NAME                                                                                                 REGISTR STA
+---------- ---------- ---------------------------------------------------------------------------------------------------- ------- ---
+         1         19 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_19_1229007746.dbf                                  RMAN    NO
+         1         20 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_20_1225040460.dbf                                  ARCH    NO
+         1         20 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_20_1229007746.dbf                                  RMAN    NO
+         1         21 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_21_1225040460.dbf                                  ARCH    NO
+         1         21 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_21_1229007746.dbf                                  RMAN    NO
+         1         22 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_22_1225040460.dbf                                  ARCH    NO
+         1         23 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_23_1225040460.dbf                                  ARCH    NO
+         1         24 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_24_1225040460.dbf                                  ARCH    NO
+         1         25 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_25_1225040460.dbf                                  ARCH    NO
+         1         26 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_26_1225040460.dbf                                  ARCH    NO
+         1         27 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_27_1225040460.dbf                                  ARCH    NO
+         1         28 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_28_1225040460.dbf                                  RMAN    NO
+         1         29 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_29_1225040460.dbf                                  RMAN    NO
+         1         30 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_30_1225040460.dbf                                  RMAN    NO
+         1         31 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_31_1225040460.dbf                                  RMAN    NO
+         1         32 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_32_1225040460.dbf                                  RMAN    NO
+
+113 rows selected.
+
+SYS@orcl:SQL> desc V$ARCHIVED_LOG;
+ Name                                                                                                              Null?    Type
+ ----------------------------------------------------------------------------------------------------------------- -------- ----------------------------------------------------------------------------
+ RECID                                                                                                                      NUMBER
+ STAMP                                                                                                                      NUMBER
+ NAME                                                                                                                       VARCHAR2(513)
+ DEST_ID                                                                                                                    NUMBER
+ THREAD#                                                                                                                    NUMBER
+ SEQUENCE#                                                                                                                  NUMBER
+ RESETLOGS_CHANGE#                                                                                                          NUMBER
+ RESETLOGS_TIME                                                                                                             DATE
+ RESETLOGS_ID                                                                                                               NUMBER
+ FIRST_CHANGE#                                                                                                              NUMBER
+ FIRST_TIME                                                                                                                 DATE
+ NEXT_CHANGE#                                                                                                               NUMBER
+ NEXT_TIME                                                                                                                  DATE
+ BLOCKS                                                                                                                     NUMBER
+ BLOCK_SIZE                                                                                                                 NUMBER
+ CREATOR                                                                                                                    VARCHAR2(7)
+ REGISTRAR                                                                                                                  VARCHAR2(7)
+ STANDBY_DEST                                                                                                               VARCHAR2(3)
+ ARCHIVED                                                                                                                   VARCHAR2(3)
+ APPLIED                                                                                                                    VARCHAR2(9)
+ DELETED                                                                                                                    VARCHAR2(3)
+ STATUS                                                                                                                     VARCHAR2(1)
+ COMPLETION_TIME                                                                                                            DATE
+ DICTIONARY_BEGIN                                                                                                           VARCHAR2(3)
+ DICTIONARY_END                                                                                                             VARCHAR2(3)
+ END_OF_REDO                                                                                                                VARCHAR2(3)
+ BACKUP_COUNT                                                                                                               NUMBER
+ ARCHIVAL_THREAD#                                                                                                           NUMBER
+ ACTIVATION#                                                                                                                NUMBER
+ IS_RECOVERY_DEST_FILE                                                                                                      VARCHAR2(3)
+ COMPRESSED                                                                                                                 VARCHAR2(3)
+ FAL                                                                                                                        VARCHAR2(3)
+ END_OF_REDO_TYPE                                                                                                           VARCHAR2(10)
+ BACKED_BY_VSS                                                                                                              VARCHAR2(3)
+ CON_ID                                                                                                                     NUMBER
+
+SYS@orcl:SQL> col name for a100
+SELECT THREAD#, SEQUENCE#, NAME, REGISTRAR, STANDBY_DEST, FIRST_CHANGE#, NEXT_CHANGE#
+FROM V$ARCHIVED_LOG
+ORDER BY SEQUENCE#;SYS@orcl:SQL>   2    3
+
+   THREAD#  SEQUENCE# NAME                                                                                                 REGISTR STA FIRST_CHANGE# NEXT_CHANGE#
+---------- ---------- ---------------------------------------------------------------------------------------------------- ------- --- ------------- ------------
+         1          0 /u01/app/oracle/oradata/ORCL/REDO4_1.LOG                                                             RMAN    NO              0            0
+         1          0 /u01/app/oracle/oradata/ORCL/REDO3_2.LOG                                                             RMAN    NO              0            0
+         1          0 /u01/app/oracle/oradata/ORCL/REDO3_1.LOG                                                             RMAN    NO              0            0
+         1          0 /u01/app/oracle/oradata/ORCL/REDO2_2.LOG                                                             RMAN    NO              0            0
+         1          0 /u01/app/oracle/oradata/ORCL/REDO2_1.LOG                                                             RMAN    NO              0            0
+         1          0 /u01/app/oracle/oradata/ORCL/REDO4_2.LOG                                                             RMAN    NO              0            0
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229007010.dbf                                   ARCH    NO        2771594      2772334
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229007746.dbf                                   FGRD    NO        2772383      2773289
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229249761.dbf                                   FGRD    NO        2989925      3006369
+         1          1 /u01/app/oracle/oradata/ORCL/REDO1_1.LOG                                                             RMAN    NO        3006370   1.8447E+19
+         1          1 /u01/app/oracle/oradata/ORCL/REDO1_2.LOG                                                             RMAN    NO        3006370   1.8447E+19
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229005337.dbf                                   FGRD    NO        2770659      2771457
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229004375.dbf                                   FGRD    NO        2769758      2770536
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1228997259.dbf                                   FGRD    NO        2764182      2765172
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1228993842.dbf                                   FGRD    NO        2762688      2764129
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1228919136.dbf                                   RMAN    NO        2349579      2449589
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1228917890.dbf                                   ARCH    NO        2347696      2349715
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1228921464.dbf                                   ARCH    NO        2350713      2553987
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1228917890.dbf                                   ARCH    NO        2349715      2349718
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1228921464.dbf                                   ARCH    NO        2553987      2654858
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1228993842.dbf                                   ARCH    NO        2764129      2764181
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1228997259.dbf                                   FGRD    NO        2765172      2765218
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1229004375.dbf                                   ARCH    NO        2770536      2770583
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1229005337.dbf                                   ARCH    NO        2771457      2771505
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1229007010.dbf                                   FGRD    NO        2772334      2772382
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1229007746.dbf                                   ARCH    NO        2773289      2773339
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1228917890.dbf                                   ARCH    NO        2349718      2349721
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1228921464.dbf                                   ARCH    NO        2654858      2756949
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1228997259.dbf                                   ARCH    NO        2765218      2765258
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1229004375.dbf                                   ARCH    NO        2770583      2770621
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1229005337.dbf                                   ARCH    NO        2771505      2771593
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1229007746.dbf                                   ARCH    NO        2773339      2773627
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1228917890.dbf                                   ARCH    NO        2349721      2349725
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1228921464.dbf                                   ARCH    NO        2756949      2759664
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1228997259.dbf                                   ARCH    NO        2765258      2765281
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1229004375.dbf                                   ARCH    NO        2770621      2770624
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1229005337.dbf                                   ARCH    NO        2771593      2771597
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1229007746.dbf                                   ARCH    NO        2773627      2773630
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1225040460.dbf                                   ARCH    NO        2015637      2141621
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1228917890.dbf                                   ARCH    NO        2349725      2349728
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1228921464.dbf                                   ARCH    NO        2759664      2759670
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1228997259.dbf                                   FGRD    NO        2765281      2769501
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1229004375.dbf                                   ARCH    NO        2770624      2770627
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1229005337.dbf                                   ARCH    NO        2771597      2771600
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1229007746.dbf                                   ARCH    NO        2773630      2773633
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1225040460.dbf                                   ARCH    NO        2141621      2144202
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1228917890.dbf                                   ARCH    NO        2349728      2350702
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1228921464.dbf                                   ARCH    NO        2759670      2759776
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1228997259.dbf                                   ARCH    NO        2769501      2769545
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1229004375.dbf                                   ARCH    NO        2770627      2770630
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1229007746.dbf                                   ARCH    NO        2773633      2773636
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1225040460.dbf                                   ARCH    NO        2144202      2144205
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1228917890.dbf                                   ARCH    NO        2350702      2350705
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1228921464.dbf                                   ARCH    NO        2759776      2759779
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1228997259.dbf                                   ARCH    NO        2769545      2769729
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1229004375.dbf                                   ARCH    NO        2770630      2770633
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1229007746.dbf                                   ARCH    NO        2773636      2773639
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1225040460.dbf                                   ARCH    NO        2144205      2144208
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1228917890.dbf                                   ARCH    NO        2350705      2350708
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1228921464.dbf                                   ARCH    NO        2759779      2761693
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1228997259.dbf                                   ARCH    NO        2769729      2769736
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1229004375.dbf                                   FGRD    NO        2770633      2772061
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1229007746.dbf                                   ARCH    NO        2773639      2773642
+         1          9 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_9_1225040460.dbf                                   ARCH    NO        2144208      2144211
+         1          9 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_9_1228917890.dbf                                   ARCH    NO        2350708      2350712
+         1          9 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_9_1228921464.dbf                                   ARCH    NO        2761693      2761696
+         1          9 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_9_1228997259.dbf                                   ARCH    NO        2769736      2769739
+         1          9 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_9_1229007746.dbf                                   ARCH    NO        2773642      2773645
+         1         10 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_10_1225040460.dbf                                  ARCH    NO        2144211      2144214
+         1         10 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_10_1228921464.dbf                                  FGRD    NO        2761696      2762295
+         1         10 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_10_1228997259.dbf                                  ARCH    NO        2769739      2769901
+         1         10 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_10_1229007746.dbf                                  ARCH    NO        2773645      2885463
+         1         11 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_11_1225040460.dbf                                  ARCH    NO        2144214      2144217
+         1         11 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_11_1228921464.dbf                                  FGRD    NO        2762295      2762332
+         1         11 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_11_1228997259.dbf                                  FGRD    NO        2769901      2770365
+         1         11 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_11_1229007746.dbf                                  ARCH    NO        2885463      2987959
+         1         12 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_12_1225040460.dbf                                  ARCH    NO        2144217      2144220
+         1         12 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_12_1228921464.dbf                                  FGRD    NO        2762332      2762396
+         1         12 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_12_1229007746.dbf                                  ARCH    NO        2987959      2989764
+         1         13 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_13_1225040460.dbf                                  ARCH    NO        2144220      2145221
+         1         13 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_13_1228921464.dbf                                  FGRD    NO        2762396      2762545
+         1         13 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_13_1229007746.dbf                                  FGRD    NO        2989764      2989924
+         1         14 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_14_1225040460.dbf                                  ARCH    NO        2145221      2145224
+         1         14 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_14_1228921464.dbf                                  RMAN    NO        2762545      2762667
+         1         14 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_14_1229007746.dbf                                  RMAN    NO        2989924      2990053
+         1         15 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_15_1225040460.dbf                                  ARCH    NO        2145224      2145227
+         1         15 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_15_1228921464.dbf                                  RMAN    NO        2762667      2762670
+         1         15 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_15_1229007746.dbf                                  RMAN    NO        2990053      2990056
+         1         16 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_16_1225040460.dbf                                  ARCH    NO        2145227      2145230
+         1         16 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_16_1228921464.dbf                                  RMAN    NO        2762670      2762673
+         1         16 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_16_1229007746.dbf                                  RMAN    NO        2990056      2990198
+         1         17 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_17_1225040460.dbf                                  ARCH    NO        2145230      2145235
+         1         17 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_17_1228921464.dbf                                  RMAN    NO        2762673      2762687
+         1         17 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_17_1229007746.dbf                                  RMAN    NO        2990198      2990201
+         1         18 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_18_1225040460.dbf                                  ARCH    NO        2145235      2145423
+         1         18 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_18_1229007746.dbf                                  RMAN    NO        2990201      2990204
+         1         19 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_19_1225040460.dbf                                  ARCH    NO        2145423      2145426
+
+   THREAD#  SEQUENCE# NAME                                                                                                 REGISTR STA FIRST_CHANGE# NEXT_CHANGE#
+---------- ---------- ---------------------------------------------------------------------------------------------------- ------- --- ------------- ------------
+         1         19 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_19_1229007746.dbf                                  RMAN    NO        2990204      2990207
+         1         20 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_20_1225040460.dbf                                  ARCH    NO        2145426      2145430
+         1         20 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_20_1229007746.dbf                                  RMAN    NO        2990207      2990222
+         1         21 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_21_1225040460.dbf                                  ARCH    NO        2145430      2145433
+         1         21 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_21_1229007746.dbf                                  RMAN    NO        2990222      3190225
+         1         22 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_22_1225040460.dbf                                  ARCH    NO        2145433      2145436
+         1         23 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_23_1225040460.dbf                                  ARCH    NO        2145436      2145462
+         1         24 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_24_1225040460.dbf                                  ARCH    NO        2145462      2145465
+         1         25 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_25_1225040460.dbf                                  ARCH    NO        2145465      2145468
+         1         26 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_26_1225040460.dbf                                  ARCH    NO        2145468      2245490
+         1         27 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_27_1225040460.dbf                                  ARCH    NO        2245490      2346400
+         1         28 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_28_1225040460.dbf                                  RMAN    NO        2346400      2352113
+         1         29 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_29_1225040460.dbf                                  RMAN    NO        2352113      2353344
+         1         30 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_30_1225040460.dbf                                  RMAN    NO        2353344      2353355
+         1         31 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_31_1225040460.dbf                                  RMAN    NO        2353355      2353409
+         1         32 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_32_1225040460.dbf                                  RMAN    NO        2353409      2353647
+
+113 rows selected.
+
+SYS@orcl:SQL>
+SYS@orcl:SQL>
+SYS@orcl:SQL> RECOVER DATABASE USING BACKUP CONTROLFILE UNTIL CANCEL;
+ORA-00279: change 3006370 generated at 03/30/2026 11:34:13 needed for thread 1
+ORA-00289: suggestion : /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229254453.dbf
+ORA-00280: change 3006370 for thread 1 is in sequence #1
+
+
+Specify log: {<RET>=suggested | filename | AUTO | CANCEL}
+/u01/app/oracle/oradata/ORCL/REDO1_1.LOG
+Log applied.
+Media recovery complete.
+SYS@orcl:SQL> ALTER DATABASE OPEN RESETLOGS;
+
+
+Database altered.
+
+SYS@orcl:SQL> SYS@orcl:SQL> alter database open resetlogs;
+alter database open resetlogs
+*
+ERROR at line 1:
+ORA-01531: a database already open by the instance
+
+
+SYS@orcl:SQL> @i
+
+INSTANCE_NAME    STATUS
+---------------- ------------
+orcl             OPEN
+
+SYS@orcl:SQL> select * from emp;
+select * from emp
+              *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SYS@orcl:SQL> @arch
+
+   THREAD#  SEQUENCE# NAME                                                                                                 REGISTR STA
+---------- ---------- ---------------------------------------------------------------------------------------------------- ------- ---
+         1          0 /u01/app/oracle/oradata/ORCL/REDO2_1.LOG                                                             RMAN    NO
+         1          0 /u01/app/oracle/oradata/ORCL/REDO2_2.LOG                                                             RMAN    NO
+         1          0 /u01/app/oracle/oradata/ORCL/REDO4_2.LOG                                                             RMAN    NO
+         1          0 /u01/app/oracle/oradata/ORCL/REDO3_2.LOG                                                             RMAN    NO
+         1          0 /u01/app/oracle/oradata/ORCL/REDO4_1.LOG                                                             RMAN    NO
+         1          0 /u01/app/oracle/oradata/ORCL/REDO3_1.LOG                                                             RMAN    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1228917890.dbf                                   ARCH    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1228921464.dbf                                   ARCH    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1228919136.dbf                                   RMAN    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1228993842.dbf                                   FGRD    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1228997259.dbf                                   FGRD    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229004375.dbf                                   FGRD    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229005337.dbf                                   FGRD    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229007010.dbf                                   ARCH    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229007746.dbf                                   FGRD    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229249761.dbf                                   FGRD    NO
+         1          1 /u01/app/oracle/oradata/ORCL/REDO1_1.LOG                                                             RMAN    NO
+         1          1 /u01/app/oracle/oradata/ORCL/REDO1_2.LOG                                                             RMAN    NO
+         1          1 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_1_1229254453.dbf                                   FGRD    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1228917890.dbf                                   ARCH    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1228921464.dbf                                   ARCH    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1228993842.dbf                                   ARCH    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1228997259.dbf                                   FGRD    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1229004375.dbf                                   ARCH    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1229005337.dbf                                   ARCH    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1229007010.dbf                                   FGRD    NO
+         1          2 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_2_1229007746.dbf                                   ARCH    NO
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1228917890.dbf                                   ARCH    NO
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1228921464.dbf                                   ARCH    NO
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1228997259.dbf                                   ARCH    NO
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1229004375.dbf                                   ARCH    NO
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1229005337.dbf                                   ARCH    NO
+         1          3 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_3_1229007746.dbf                                   ARCH    NO
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1228917890.dbf                                   ARCH    NO
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1228921464.dbf                                   ARCH    NO
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1228997259.dbf                                   ARCH    NO
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1229004375.dbf                                   ARCH    NO
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1229005337.dbf                                   ARCH    NO
+         1          4 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_4_1229007746.dbf                                   ARCH    NO
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1225040460.dbf                                   ARCH    NO
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1228917890.dbf                                   ARCH    NO
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1228921464.dbf                                   ARCH    NO
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1228997259.dbf                                   FGRD    NO
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1229004375.dbf                                   ARCH    NO
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1229005337.dbf                                   ARCH    NO
+         1          5 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_5_1229007746.dbf                                   ARCH    NO
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1225040460.dbf                                   ARCH    NO
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1228917890.dbf                                   ARCH    NO
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1228921464.dbf                                   ARCH    NO
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1228997259.dbf                                   ARCH    NO
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1229004375.dbf                                   ARCH    NO
+         1          6 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_6_1229007746.dbf                                   ARCH    NO
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1225040460.dbf                                   ARCH    NO
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1228917890.dbf                                   ARCH    NO
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1228921464.dbf                                   ARCH    NO
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1228997259.dbf                                   ARCH    NO
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1229004375.dbf                                   ARCH    NO
+         1          7 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_7_1229007746.dbf                                   ARCH    NO
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1225040460.dbf                                   ARCH    NO
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1228917890.dbf                                   ARCH    NO
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1228921464.dbf                                   ARCH    NO
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1228997259.dbf                                   ARCH    NO
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1229004375.dbf                                   FGRD    NO
+         1          8 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_8_1229007746.dbf                                   ARCH    NO
+         1          9 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_9_1225040460.dbf                                   ARCH    NO
+         1          9 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_9_1228917890.dbf                                   ARCH    NO
+         1          9 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_9_1228921464.dbf                                   ARCH    NO
+         1          9 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_9_1228997259.dbf                                   ARCH    NO
+         1          9 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_9_1229007746.dbf                                   ARCH    NO
+         1         10 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_10_1225040460.dbf                                  ARCH    NO
+         1         10 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_10_1228921464.dbf                                  FGRD    NO
+         1         10 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_10_1228997259.dbf                                  ARCH    NO
+         1         10 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_10_1229007746.dbf                                  ARCH    NO
+         1         11 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_11_1225040460.dbf                                  ARCH    NO
+         1         11 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_11_1228921464.dbf                                  FGRD    NO
+         1         11 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_11_1228997259.dbf                                  FGRD    NO
+         1         11 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_11_1229007746.dbf                                  ARCH    NO
+         1         12 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_12_1225040460.dbf                                  ARCH    NO
+         1         12 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_12_1228921464.dbf                                  FGRD    NO
+         1         12 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_12_1229007746.dbf                                  ARCH    NO
+         1         13 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_13_1225040460.dbf                                  ARCH    NO
+         1         13 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_13_1228921464.dbf                                  FGRD    NO
+         1         13 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_13_1229007746.dbf                                  FGRD    NO
+         1         14 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_14_1225040460.dbf                                  ARCH    NO
+         1         14 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_14_1228921464.dbf                                  RMAN    NO
+         1         14 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_14_1229007746.dbf                                  RMAN    NO
+         1         15 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_15_1225040460.dbf                                  ARCH    NO
+         1         15 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_15_1228921464.dbf                                  RMAN    NO
+         1         15 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_15_1229007746.dbf                                  RMAN    NO
+         1         16 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_16_1225040460.dbf                                  ARCH    NO
+         1         16 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_16_1228921464.dbf                                  RMAN    NO
+         1         16 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_16_1229007746.dbf                                  RMAN    NO
+         1         17 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_17_1225040460.dbf                                  ARCH    NO
+         1         17 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_17_1228921464.dbf                                  RMAN    NO
+         1         17 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_17_1229007746.dbf                                  RMAN    NO
+         1         18 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_18_1225040460.dbf                                  ARCH    NO
+         1         18 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_18_1229007746.dbf                                  RMAN    NO
+
+   THREAD#  SEQUENCE# NAME                                                                                                 REGISTR STA
+---------- ---------- ---------------------------------------------------------------------------------------------------- ------- ---
+         1         19 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_19_1225040460.dbf                                  ARCH    NO
+         1         19 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_19_1229007746.dbf                                  RMAN    NO
+         1         20 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_20_1225040460.dbf                                  ARCH    NO
+         1         20 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_20_1229007746.dbf                                  RMAN    NO
+         1         21 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_21_1225040460.dbf                                  ARCH    NO
+         1         21 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_21_1229007746.dbf                                  RMAN    NO
+         1         22 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_22_1225040460.dbf                                  ARCH    NO
+         1         23 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_23_1225040460.dbf                                  ARCH    NO
+         1         24 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_24_1225040460.dbf                                  ARCH    NO
+         1         25 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_25_1225040460.dbf                                  ARCH    NO
+         1         26 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_26_1225040460.dbf                                  ARCH    NO
+         1         27 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_27_1225040460.dbf                                  ARCH    NO
+         1         28 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_28_1225040460.dbf                                  RMAN    NO
+         1         29 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_29_1225040460.dbf                                  RMAN    NO
+         1         30 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_30_1225040460.dbf                                  RMAN    NO
+         1         31 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_31_1225040460.dbf                                  RMAN    NO
+         1         32 /u01/app/oracle/product/19.3.0/dbhome_1/dbs/arch1_32_1225040460.dbf                                  RMAN    NO
+
+114 rows selected.
+
+SYS@orcl:SQL>

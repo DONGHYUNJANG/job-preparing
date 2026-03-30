@@ -1,0 +1,40 @@
+-- 1. ts7000 tablespace 생성
+SYS @ orcl > create tablespace ts7000
+             datafile '/u01/app/oracle/oradata/ORCL/ts7000.dbf' size 50m;
+
+-- 2. hr 계정의 employees, departments 테이블을 ts7000 에 생성
+SYS @ orcl > connect hr/hr
+
+HR @ orcl > create table employees7000
+            tablespace ts7000
+            as select * from employees;
+
+HR @ orcl > create table departments7000
+            tablespace ts7000
+            as select * from departments;
+
+-- 3. RMAN으로 ts7000 backup
+RMAN> backup tablespace ts7000;
+
+-- 4. 손상시킬 블록 번호 확인
+SYS @ orcl > select file_id, block_id
+             from dba_extents
+             where segment_name = 'EMPLOYEES7000';
+
+-- 5. 블록 강제 손상
+[oracle@ora19c ~]$ ./lab_07_02.sh [datafile경로] [block_id] 8192
+
+-- 6. flush 후 에러 확인
+SYS @ orcl > alter system flush shared_pool;
+SYS @ orcl > alter system flush buffer_cache;
+
+HR @ orcl > select * from employees7000;  -- ORA-01578 에러 확인
+
+-- 7. dbv로 손상 블록 번호 확인
+$ dbv file=[datafile경로] blocksize=8192
+
+-- 8. RMAN blockrecover 로 복구
+RMAN> blockrecover datafile [파일번호] block [블록번호,...];
+
+-- 9. 복구 확인
+HR @ orcl > select * from employees7000;  -- 정상 조회 확인 후 캡쳐하여 제출
