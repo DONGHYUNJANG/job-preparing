@@ -1,2 +1,2 @@
- select tablespace_name from dba_tablespaces
+ select tablespace_name, STATUS from dba_tablespaces
 /

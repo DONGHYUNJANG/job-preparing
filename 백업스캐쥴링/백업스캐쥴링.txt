@@ -1,0 +1,2 @@
+0 10 * * 0-5 /home/oracle/scripts/rman_incre1.sh
+0 10 * * 6 /home/oracle/scripts/rman_incre0.sh

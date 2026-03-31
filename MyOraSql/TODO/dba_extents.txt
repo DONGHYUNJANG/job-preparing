@@ -1,0 +1,8 @@
+
+SYS@orcl:SQL> select file_id, block_id
+  2  from dba_extents
+  3  where segment_name='EMP600B';
+
+   FILE_ID   BLOCK_ID
+---------- ----------
+         8        128

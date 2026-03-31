@@ -1,0 +1,13 @@
+SYS @ ORCL > alter tablespace ts600 begin backup;
+
+SYS @ ORCL > select * from v$backup;
+-- FILE# 8: STATUS = ACTIVE (백업 중 상태 확인)
+
+SYS @ ORCL > !cp /u01/app/oracle/oradata/ORCL/ts600.dbf /home/oracle/ts600.dbf_backup
+
+SYS @ ORCL > alter tablespace ts600 end backup;
+
+SYS @ ORCL > select * from v$backup;
+-- FILE# 8: STATUS = NOT ACTIVE (백업 완료 확인)
+
+이걸 모든파일에 적용?

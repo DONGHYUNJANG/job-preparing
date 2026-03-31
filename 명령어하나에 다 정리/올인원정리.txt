@@ -388,3 +388,67 @@ SELECT job_name, operation, state, degree
 FROM dba_datapump_jobs;
 
 # * 여기서 'DEGREE' 컬럼의 숫자가 현재 작동 중인 병렬도(Parallel)입니다.
+
+
+# ============================================================
+# ⚡ 16. 이미지 카피 - 데이터파일 단위
+# ============================================================
+RUN {
+  # 1. 병렬 처리를 위해 채널 할당 (I/O 분산)
+  ALLOCATE CHANNEL c1 DEVICE TYPE DISK;
+  ALLOCATE CHANNEL c2 DEVICE TYPE DISK;
+
+  # 2. 이미지 카피 생성 (핵심 옵션 조합)
+  BACKUP AS COPY 
+    DATAFILE 12                                      -- 대상: 데이터파일 12번 (ts700)
+    FORMAT '/u01/app/oracle/oradata/ORCL/backup/df12_%U.copy' -- 저장 경로 및 포맷
+    TAG 'IMG_COPY_TS700_LAB'                         -- 식별용 태그 이름
+    CHECK LOGICAL                                    -- 내부 논리적 손상까지 검사
+    SECTION SIZE 100M;                               -- 대용량 파일 병렬 카피 (멀티섹션)
+
+  # 3. 생성된 카피본 정보 확인
+  LIST COPY OF DATAFILE 12;
+
+  RELEASE CHANNEL c1;
+  RELEASE CHANNEL c2;
+}
+
+# ============================================================
+# ⚡ 17. 이미지 카피 - 전체 단위
+# ============================================================
+RUN {
+  # 1. 채널 할당
+  ALLOCATE CHANNEL c1 DEVICE TYPE DISK;
+  ALLOCATE CHANNEL c2 DEVICE TYPE DISK;
+
+  # 2. 전체 DB 이미지 카피 생성
+  BACKUP AS COPY 
+    DATABASE                                         -- 대상: 전체 데이터베이스
+    FORMAT '/u01/app/oracle/oradata/ORCL/backup/db_full_%U.copy'
+    TAG 'FULL_IMG_COPY_MAR_31'
+    CHECK LOGICAL                                    -- 무결성 보장 옵션
+    SECTION SIZE 100M;                               -- 전체 파일 병렬 처리 최적화
+
+  # 3. 제어 파일 및 SPFILE 수동 카피 (선택 사항)
+  BACKUP AS COPY CURRENT CONTROLFILE;
+  BACKUP AS COPY SPFILE;
+
+  RELEASE CHANNEL c1;
+  RELEASE CHANNEL c2;
+}
+
+
+# ============================================================
+# ⚡ 18. SPFILE 복구
+# ============================================================
+
+SET DBID 12345678; -- 사용자의 DBID를 알고 있어야 함
+STARTUP NOMOUNT;
+
+RESTORE SPFILE FROM AUTOBACKUP;
+또는
+RESTORE SPFILE FROM 'SPFILE 백업파일 경로';
+
+SHUTDOWN IMMEDIATE;
+
+STARTUP;
