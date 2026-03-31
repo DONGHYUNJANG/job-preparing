@@ -243,8 +243,9 @@ COMPRESSION=ALL;
 # - TABLE_EXISTS_ACTION: 테이블이 이미 있을 때 처리 (APPEND, REPLACE, TRUNCATE)
 impdp system/password@orcl \
 DIRECTORY=dpump_dir \
-DUMPFILE=hr_full_01.dmp \
+DUMPFILE=hr_full_%U.dmp \
 LOGFILE=imp_hr.log \
+PARALLEL=4 \
 REMAP_SCHEMA=hr:scott \
 REMAP_TABLESPACE=users:ts_data \
 TABLE_EXISTS_ACTION=REPLACE;
@@ -303,7 +304,7 @@ DROP DATABASE LINK remote_link;
 ### [생성] 디렉토리 생성 및 경로 지정
 # - CREATE OR REPLACE: 기존에 같은 이름이 있으면 덮어씁니다.
 # - 반드시 실제 서버에 해당 OS 경로가 존재해야 합니다.
-CREATE OR REPLACE DIRECTORY dpump_dir AS '/u01/app/oracle/admin/orcl/dpdump';
+CREATE DIRECTORY dpump_dir AS '/u01/app/oracle/admin/orcl/dpdump';
 
 ### [권한] 특정 유저에게 디렉토리 사용 권한 부여
 # - 생성은 SYSDBA가 하지만, 사용은 작업 유저(HR 등)가 해야 합니다.
@@ -452,3 +453,22 @@ RESTORE SPFILE FROM 'SPFILE 백업파일 경로';
 SHUTDOWN IMMEDIATE;
 
 STARTUP;
+
+
+
+# ============================================================
+# ⚡ 19. INDEX REBUILD
+# ============================================================
+
+#일반
+ALTER INDEX "HR"."DEPT_ID_PK" REBUILD ONLINE;
+
+#병렬
+ALTER INDEX "HR"."DEPT_ID_PK" REBUILD PARALLEL 4;
+-- 작업 완료 후 다시 단일 프로세스 모드로 돌려주는 것이 좋습니다.
+ALTER INDEX "HR"."DEPT_ID_PK" NOPARALLEL;
+
+#모든 Unusable 인덱스 한 번에 리빌드
+SELECT 'ALTER INDEX ' || owner || '.' || index_name || ' REBUILD;'
+FROM dba_indexes
+WHERE status = 'UNUSABLE' AND owner = 'HR';

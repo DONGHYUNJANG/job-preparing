@@ -1,0 +1,287 @@
+/**********************************************************
+  Oracle 알기쉬운 데이터 백업 2부(IMPDP) 
+   Oracle 19c 기준으로 작성되었습니다. 
+   리눅스는 꼭 (vi) 편집기 사용을 익려두셔야합니다. (매우 중요해요!!!)
+   DB보다 영상 Linux  Oracle DB를 설치하시면 똑같이 따라하시기 좋아요~ 
+     1.VirtualBox를 이용해서 리눅스8.5, 오라클19c 설치(리눅스편)
+     2.VirtualBox를 이용해서 리눅스8.5, 오라클19c 설치(오라클편)
+     3.개발자를 위한 무료 SQL툴 SQL Developer 활용 꿀팁
+     4. 맥북(macOS) & Windows 오라클 접속 단축키 환경 설정(꿀팁)
+**********************************************************/
+
+
+
+
+/**********************************************************
+  TDE 테이블, CUST 테이블 삭제 스크립트
+    리눅스 서버 접속(oracle 계정)
+**********************************************************/
+
+-- TDE, CUST 테이블 상태 확인
+-- SQL Developer 실행(SYS 접속)
+SELECT 
+    OWNER,
+    OBJECT_TYPE,
+    OBJECT_NAME,
+    CREATED,
+    'DROP '||OBJECT_TYPE||' '||OWNER||'.'||OBJECT_NAME||';' AS "DROP_SCRIPT"
+FROM DBA_OBJECTS
+WHERE OBJECT_TYPE IN ('TABLE','INDEX')
+AND OBJECT_NAME IN ('CUST','CUST_IDX1','TDE_TEST3','TDE_TEST4')
+ORDER BY 1,2,3;
+
+
+
+cd /home/oracle
+vi drop_object_user.sql
+
+PROMPT <<DROP OBJECT>>
+DROP INDEX STR.CUST_IDX1;
+DROP TABLE STR.CUST;
+DROP TABLE SYSTEM.TDE_TEST3;
+DROP TABLE SYSTEM.TDE_TEST4;
+DROP USER STR CASCADE;
+
+
+
+
+/**********************************************************
+  OBJECT CHECK 스크립트
+    리눅스 서버 접속(oracle 계정)
+**********************************************************/
+
+cd /home/oracle
+vi object_check.sql
+
+COL OWNER FOR A15;
+COL SEGMENT_TYPE FOR A20;
+COL SEGMENT_NAME FOR A20;
+COL "SIZE(MB)" FOR 999999999;
+COL USERNAME FOR A20;
+COL DEFAULT_TABLESPACE FOR A20;
+
+PROMPT <<OBJECT STATUS CHECK>>
+SELECT 
+    OWNER,
+    SEGMENT_TYPE,
+    SEGMENT_NAME,
+    ROUND(BYTES/1024/1024) AS "SIZE(MB)"
+FROM DBA_SEGMENTS
+WHERE SEGMENT_TYPE IN ('TABLE','INDEX')
+AND SEGMENT_NAME IN ('CUST','CUST_IDX1','TDE_TEST3','TDE_TEST4')
+ORDER BY 1,2,3;
+
+PROMPT <<USER STATUS CHECK>>
+SELECT 
+    USERNAME, 
+    ACCOUNT_STATUS, 
+    DEFAULT_TABLESPACE 
+FROM DBA_USERS
+WHERE USERNAME = 'STR';
+	
+
+
+
+/**********************************************************
+  Datapump 전체 복구
+    리눅스 서버 접속(oracle 계정)
+**********************************************************/
+
+-- DATAPUMP 상태 확인
+-- SQL Developer 확인(SYS계정)
+SELECT * FROM DBA_DATAPUMP_JOBS;
+
+
+cd /home/oracle/oracle_dump
+
+
+
+-- 전체 복구(기본)
+
+ls -lh EXPDP_STR_FULL_20221003*
+
+impdp system/oracle DIRECTORY=STR_DUMP FULL=YES \
+DUMPFILE=EXPDP_STR_FULL_20221003.DMP \
+LOGFILE=IMPDP_STR_FULL_20221005.log
+
+
+-- 전체 복구(기본+TDE)
+
+ls -lh EXPDP_STR_FULL_TDE_20221003*
+
+impdp system/oracle DIRECTORY=STR_DUMP FULL=YES \
+ENCRYPTION_PASSWORD=oracle123 \
+DUMPFILE=EXPDP_STR_FULL_TDE_20221003.DMP \
+LOGFILE=IMPDP_STR_FULL_TDE_20221005.log
+
+
+-- 전체 복구(압축+TDE)
+
+ls -lh EXPDP_STR_FULL_COMP_20221003*
+
+impdp system/oracle DIRECTORY=STR_DUMP FULL=YES \
+ENCRYPTION_PASSWORD=oracle123 \
+DUMPFILE=EXPDP_STR_FULL_COMP_20221003.DMP \
+LOGFILE=IMPDP_STR_FULL_COMP_20221005.log
+
+
+-- 전체 복구(백업 파일 100M 분할)
+
+ls -lh EXPDP_STR_FULL_DIV_20221003*
+
+impdp system/oracle DIRECTORY=STR_DUMP FULL=YES \
+ENCRYPTION_PASSWORD=oracle123 \
+DUMPFILE=EXPDP_STR_FULL_DIV_20221003_%U.DMP \
+LOGFILE=IMPDP_STR_FULL_DIV_20221005.log
+
+
+-- 전체 복구(Parallel+압축+TDE)
+
+ls -lh EXPDP_STR_FULL_PCOMP_20221003*
+
+impdp system/oracle DIRECTORY=STR_DUMP \
+PARALLEL=4 FULL=YES ENCRYPTION_PASSWORD=oracle123 \
+DUMPFILE=EXPDP_STR_FULL_PCOMP_20221003_%U.DMP \
+LOGFILE=IMPDP_STR_STR_FULL_PCOMP_20221005.log
+
+
+
+
+
+
+/**********************************************************
+  Datapump 스키마(유저) 복구
+    리눅스 서버 접속(oracle 계정)
+**********************************************************/
+
+
+
+-- STR계정 복구(Parallel+압축)
+
+ls -lh EXPDP_STR_STR_P_20221003*
+
+impdp system/oracle DIRECTORY=STR_DUMP SCHEMAS=STR \
+PARALLEL=4 \
+ENCRYPTION_PASSWORD=oracle123 \
+DUMPFILE=EXPDP_STR_STR_P_20221003_%U.dmp \
+LOGFILE=IMPDP_STR_STR_P_20221005.log
+
+
+
+
+/**********************************************************
+  Datapump 테이블 복구
+    리눅스 서버 접속(oracle 계정)
+**********************************************************/
+
+-- 테이블 단위 복구
+-- 계정명: STR
+-- 테이블명: CUST
+
+ls -lh EXPDP_STR_CUST_20221003*
+
+impdp system/oracle DIRECTORY=STR_DUMP \
+DUMPFILE= EXPDP_STR_CUST_20221003.DMP  \
+LOGFILE=IMPDP_STR_CUST_20221005.log \
+TABLES=STR.CUST
+
+
+
+
+
+/**********************************************************
+  Datapump 테이블 복구
+    테이블스페이스 위치 변경: TS_STR_D, TS_STR_I  -->  SYSTEM
+    리눅스 서버 접속(oracle 계정)
+**********************************************************/
+
+ls -lh EXPDP_STR_CUST_20221003*
+
+impdp system/oracle DIRECTORY=STR_DUMP \
+DUMPFILE= EXPDP_STR_CUST_20221003.DMP  \
+LOGFILE=IMPDP_STR_CUST_20221005.log \
+TABLES=STR.CUST \
+REMAP_TABLESPACE=TS_STR_D:SYSTEM \
+REMAP_TABLESPACE=TS_STR_I:SYSTEM
+
+
+
+-- sqlplus / as sysdba 실행
+COL OWNER FOR A15;
+COL SEGMENT_TYPE FOR A20;
+COL SEGMENT_NAME FOR A20;
+COL TABLESPACE_NAME FOR A20;
+
+SELECT 
+    OWNER, 
+    SEGMENT_TYPE, 
+    SEGMENT_NAME,
+    TABLESPACE_NAME
+FROM DBA_SEGMENTS
+WHERE  SEGMENT_NAME IN ('CUST','CUST_IDX1');
+
+ALTER DATABASE DATAFILE '/oracle/app/oracle/oradata/STR/system01.dbf' RESIZE 2048M;
+ALTER DATABASE DATAFILE '/oracle/app/oracle/oradata/STR/system02.dbf' RESIZE 2048M;
+
+
+
+/**********************************************************
+  Datapump 테이블 복구
+    테이블명 변경: CUST  -->  CUST_BACKUP_20221003
+    리눅스 서버 접속(oracle 계정)
+**********************************************************/
+
+ls -lh EXPDP_STR_CUST_20221003*
+
+impdp system/oracle DIRECTORY=STR_DUMP \
+DUMPFILE= EXPDP_STR_CUST_20221003.DMP  \
+LOGFILE=IMPDP_STR_CUST_20221005.log \
+TABLES=STR.CUST \
+REMAP_TABLE=CUST:CUST_BACKUP_20221003
+
+
+-- sqlplus / as sysdba 실행
+COL OWNER FOR A15;
+COL SEGMENT_TYPE FOR A20;
+COL SEGMENT_NAME FOR A20;
+COL TABLESPACE_NAME FOR A20;
+
+SELECT 
+    OWNER, 
+    SEGMENT_TYPE, 
+    SEGMENT_NAME,
+    TABLESPACE_NAME
+FROM DBA_SEGMENTS
+WHERE  SEGMENT_NAME IN ('CUST','CUST_IDX1', 'CUST_BACKUP_20221003')
+ORDER BY 1,2,3;
+
+
+
+
+
+
+
+/**********************************************************
+  TDE 테이블스페이스, 테이블 상태 확인
+    SQL Developer 실행(SYS 접속)
+**********************************************************/
+
+
+--TDE Check
+-- Tablespace Level
+SELECT 
+    TABLESPACE_NAME,
+    ENCRYPTED,
+    STATUS 
+FROM DBA_TABLESPACES;
+
+
+-- Table Level
+SELECT * 
+FROM DBA_ENCRYPTED_COLUMNS;
+
+
+
+
+
+

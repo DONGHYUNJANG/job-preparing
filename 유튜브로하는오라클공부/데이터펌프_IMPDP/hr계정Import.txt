@@ -1,0 +1,311 @@
+[oracle@orcl ~]$ expdp system/oracle DIRECTORY=STR_DUMP SCHEMAS=HR COMPRESSION=ALL PARALLEL=4 \
+> DUMPFILE=EXPDP_HR_P_20260331_%U.dmp LOGFILE=EXPDP_HR_P_20260331_%U.log
+
+Export: Release 19.0.0.0.0 - Production on Mon Mar 30 10:44:45 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Starting "SYSTEM"."SYS_EXPORT_SCHEMA_01":  system/******** DIRECTORY=STR_DUMP SCHEMAS=HR COMPRESSION=ALL PARALLEL=4 DUMPFILE=EXPDP_HR_P_20260331_%U.dmp LOGFILE=EXPDP_HR_P_20260331_%U.log
+Processing object type SCHEMA_EXPORT/USER
+Processing object type SCHEMA_EXPORT/SYSTEM_GRANT
+Processing object type SCHEMA_EXPORT/TABLE/STATISTICS/TABLE_STATISTICS
+Processing object type SCHEMA_EXPORT/ROLE_GRANT
+Processing object type SCHEMA_EXPORT/TABLE/INDEX/STATISTICS/INDEX_STATISTICS
+Processing object type SCHEMA_EXPORT/DEFAULT_ROLE
+Processing object type SCHEMA_EXPORT/TABLESPACE_QUOTA
+Processing object type SCHEMA_EXPORT/PRE_SCHEMA/PROCACT_SCHEMA
+Processing object type SCHEMA_EXPORT/SEQUENCE/SEQUENCE
+Processing object type SCHEMA_EXPORT/TABLE/TABLE_DATA
+Processing object type SCHEMA_EXPORT/TABLE/COMMENT
+Processing object type SCHEMA_EXPORT/PROCEDURE/PROCEDURE
+Processing object type SCHEMA_EXPORT/PROCEDURE/ALTER_PROCEDURE
+Processing object type SCHEMA_EXPORT/STATISTICS/MARKER
+Processing object type SCHEMA_EXPORT/TABLE/CONSTRAINT/CONSTRAINT
+Processing object type SCHEMA_EXPORT/VIEW/VIEW
+Processing object type SCHEMA_EXPORT/TABLE/INDEX/INDEX
+Processing object type SCHEMA_EXPORT/TABLE/TRIGGER
+Processing object type SCHEMA_EXPORT/TABLE/CONSTRAINT/REF_CONSTRAINT
+. . exported "HR"."EMPLOYEES"                            8.781 KB     107 rows
+. . exported "HR"."LOCATIONS"                            6.046 KB      23 rows
+. . exported "HR"."JOB_HISTORY"                          5.343 KB      10 rows
+. . exported "HR"."JOBS"                                 5.437 KB      19 rows
+. . exported "HR"."DEPARTMENTS"                          5.445 KB      27 rows
+. . exported "HR"."REGIONS"                              4.851 KB       4 rows
+Processing object type SCHEMA_EXPORT/TABLE/TABLE
+. . exported "HR"."COUNTRIES"                            5.234 KB      25 rows
+Master table "SYSTEM"."SYS_EXPORT_SCHEMA_01" successfully loaded/unloaded
+******************************************************************************
+Dump file set for SYSTEM.SYS_EXPORT_SCHEMA_01 is:
+  /home/oracle/str_dump/EXPDP_HR_P_20260331_01.dmp
+  /home/oracle/str_dump/EXPDP_HR_P_20260331_02.dmp
+  /home/oracle/str_dump/EXPDP_HR_P_20260331_03.dmp
+  /home/oracle/str_dump/EXPDP_HR_P_20260331_04.dmp
+Job "SYSTEM"."SYS_EXPORT_SCHEMA_01" successfully completed at Mon Mar 30 10:45:34 2026 elapsed 0 00:00:48
+
+[oracle@orcl ~]$ cd str_dump/
+[oracle@orcl str_dump]$ ls -l
+합계 276
+-rw-r--r--. 1 oracle oinstall   2641  3월 30 10:45 EXPDP_HR_P_20260331_%U.log
+-rw-r-----. 1 oracle oinstall 106496  3월 30 10:45 EXPDP_HR_P_20260331_01.dmp
+-rw-r-----. 1 oracle oinstall  40960  3월 30 10:45 EXPDP_HR_P_20260331_02.dmp
+-rw-r-----. 1 oracle oinstall  86016  3월 30 10:45 EXPDP_HR_P_20260331_03.dmp
+-rw-r-----. 1 oracle oinstall  45056  3월 30 10:45 EXPDP_HR_P_20260331_04.dmp
+[oracle@orcl str_dump]$ impdp system/oracle
+
+Import: Release 19.0.0.0.0 - Production on Mon Mar 30 10:47:15 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+d
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production                                                                                         ORA-39001: invalid argument value
+ORA-39000: bad dump file specification
+ORA-31640: unable to open dump file "/u01/app/oracle/admin/orcl/dpdump/expdat.dmp" for read
+ORA-27037: unable to obtain file status
+Linux-x86_64 Error: 2: No such file or directory
+Additional information: 7
+
+^C
+[oracle@orcl str_dump]$
+[oracle@orcl str_dump]$ impdp system/oracle \
+> directory
+
+Import: Release 19.0.0.0.0 - Production on Mon Mar 30 10:47:39 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+UDI-00014: invalid value for parameter, 'attach'
+
+
+
+s[oracle@orcl str_dump]$
+[oracle@orcl str_dump]$
+[oracle@orcl str_dump]$ sys
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Mon Mar 30 10:47:41 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+SQL> drop user hr cascade
+  2  ;
+
+User dropped.
+
+SQL> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[oracle@orcl str_dump]$ impdp system/oracle \
+> directory=STR_DUMP \
+> dumpfile=EXPDP_HR_P_20260331_01.dmp
+
+Import: Release 19.0.0.0.0 - Production on Mon Mar 30 10:50:11 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+^CUDI-00001: user requested cancel of current operation
+
+
+[oracle@orcl str_dump]$ impdp system/oracle \
+> directory=STR_DUMP \
+> dumpfile=EXPDP_HR_P_20260331_01.dmp \
+> logfile=imp_hr_20260331_01.log \
+> ;
+
+Import: Release 19.0.0.0.0 - Production on Mon Mar 30 10:51:04 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+ORA-39002: invalid operation
+ORA-39059: dump file set is incomplete
+
+
+[oracle@orcl str_dump]$
+[oracle@orcl str_dump]$ cat imp_hr_20260331_01.log
+;;;
+Import: Release 19.0.0.0.0 - Production on Mon Mar 30 10:51:04 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+;;;
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Master table "SYSTEM"."SYS_IMPORT_FULL_01" successfully loaded/unloaded
+ORA-39245: import job requires export dump file "EXPDP_HR_P_20260331_02.dmp"
+ORA-39245: import job requires export dump file "EXPDP_HR_P_20260331_03.dmp"
+ORA-39245: import job requires export dump file "EXPDP_HR_P_20260331_04.dmp"
+ORA-39059: dump file set is incomplete
+Job "SYSTEM"."SYS_IMPORT_FULL_01" successfully completed at Mon Mar 30 10:51:07 2026 elapsed 0 00:00:01
+[oracle@orcl str_dump]$ str_dump]$ impdp system/oracle \
+> directory=STR_DUMP \
+> dumpfile=EXPDP_HR_P_20260331_%U.dmp \
+> parallel=4 \
+> logfile=imp_hr_20260331_02.log;
+bash: str_dump]$: 명령을 찾을 수 없습니다...
+[oracle@orcl str_dump]$ impdp system/oracle \
+> directory=STR_DUMP \
+> dumpfile=EXPDP_HR_P_20260331_%U.dmp \
+> parallel=4 \
+> logfile=imp_hr_20260331_02.log \
+> ;
+
+Import: Release 19.0.0.0.0 - Production on Mon Mar 30 10:57:47 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+Connected to: Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Master table "SYSTEM"."SYS_IMPORT_FULL_01" successfully loaded/unloaded
+Starting "SYSTEM"."SYS_IMPORT_FULL_01":  system/******** directory=STR_DUMP dumpfile=EXPDP_HR_P_20260331_%U.dmp parallel=4 logfile=imp_hr_20260331_02.log
+Processing object type SCHEMA_EXPORT/USER
+Processing object type SCHEMA_EXPORT/SYSTEM_GRANT
+Processing object type SCHEMA_EXPORT/ROLE_GRANT
+Processing object type SCHEMA_EXPORT/DEFAULT_ROLE
+Processing object type SCHEMA_EXPORT/TABLESPACE_QUOTA
+Processing object type SCHEMA_EXPORT/PRE_SCHEMA/PROCACT_SCHEMA
+Processing object type SCHEMA_EXPORT/SEQUENCE/SEQUENCE
+Processing object type SCHEMA_EXPORT/TABLE/TABLE
+Processing object type SCHEMA_EXPORT/TABLE/TABLE_DATA
+. . imported "HR"."EMPLOYEES"                            8.781 KB     107 rows
+. . imported "HR"."LOCATIONS"                            6.046 KB      23 rows
+. . imported "HR"."JOB_HISTORY"                          5.343 KB      10 rows
+. . imported "HR"."JOBS"                                 5.437 KB      19 rows
+. . imported "HR"."DEPARTMENTS"                          5.445 KB      27 rows
+. . imported "HR"."COUNTRIES"                            5.234 KB      25 rows
+. . imported "HR"."REGIONS"                              4.851 KB       4 rows
+Processing object type SCHEMA_EXPORT/TABLE/COMMENT
+Processing object type SCHEMA_EXPORT/PROCEDURE/PROCEDURE
+Processing object type SCHEMA_EXPORT/PROCEDURE/ALTER_PROCEDURE
+Processing object type SCHEMA_EXPORT/VIEW/VIEW
+Processing object type SCHEMA_EXPORT/TABLE/INDEX/INDEX
+Processing object type SCHEMA_EXPORT/TABLE/CONSTRAINT/CONSTRAINT
+Processing object type SCHEMA_EXPORT/TABLE/INDEX/STATISTICS/INDEX_STATISTICS
+Processing object type SCHEMA_EXPORT/TABLE/CONSTRAINT/REF_CONSTRAINT
+Processing object type SCHEMA_EXPORT/TABLE/TRIGGER
+Processing object type SCHEMA_EXPORT/TABLE/STATISTICS/TABLE_STATISTICS
+Processing object type SCHEMA_EXPORT/STATISTICS/MARKER
+Job "SYSTEM"."SYS_IMPORT_FULL_01" successfully completed at Mon Mar 30 10:58:19 2026 elapsed 0 00:00:31
+
+[oracle@orcl str_dump]$ sys
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Mon Mar 30 10:58:27 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+SQL> conn hr/hr
+Connected.
+SQL> @user_idx_f
+
+IDX_NAME                       TBL_NAME                       UNI STATUS       BLEVEL     LEAF_B LAST_AN
+------------------------------ ------------------------------ --- ------------ ------ ---------- -------------------
+DEPT_LOCATION_IX               DEPARTMENTS                    NON VALID             0          1 2026-03-30 10:33:51
+                                                              UNI
+                                                              QUE
+
+EMP_DEPARTMENT_IX              EMPLOYEES                      NON VALID             0          1 2026-03-30 10:33:51
+                                                              UNI
+                                                              QUE
+
+EMP_EMP_ID_PK                  EMPLOYEES                      UNI VALID             0          1 2026-03-30 10:33:51
+                                                              QUE
+
+EMP_JOB_IX                     EMPLOYEES                      NON VALID             0          1 2026-03-30 10:33:51
+                                                              UNI
+                                                              QUE
+
+EMP_MANAGER_IX                 EMPLOYEES                      NON VALID             0          1 2026-03-30 10:33:51
+                                                              UNI
+                                                              QUE
+
+EMP_NAME_IX                    EMPLOYEES                      NON VALID             0          1 2026-03-30 10:33:51
+                                                              UNI
+                                                              QUE
+
+EMP_EMAIL_UK                   EMPLOYEES                      UNI VALID             0          1 2026-03-30 10:33:31
+                                                              QUE
+
+DEPT_ID_PK                     DEPARTMENTS                    UNI VALID             0          1 2026-03-30 10:29:38
+                                                              QUE
+
+COUNTRY_C_ID_PK                COUNTRIES                      UNI VALID             0          1 2026-02-12 17:03:29
+                                                              QUE
+
+JHIST_DEPARTMENT_IX            JOB_HISTORY                    NON VALID             0          1 2026-02-12 17:03:29
+                                                              UNI
+                                                              QUE
+
+JHIST_EMPLOYEE_IX              JOB_HISTORY                    NON VALID             0          1 2026-02-12 17:03:29
+                                                              UNI
+                                                              QUE
+
+JHIST_EMP_ID_ST_DATE_PK        JOB_HISTORY                    UNI VALID             0          1 2026-02-12 17:03:29
+                                                              QUE
+
+JHIST_JOB_IX                   JOB_HISTORY                    NON VALID             0          1 2026-02-12 17:03:29
+                                                              UNI
+                                                              QUE
+
+JOB_ID_PK                      JOBS                           UNI VALID             0          1 2026-02-12 17:03:29
+                                                              QUE
+
+LOC_CITY_IX                    LOCATIONS                      NON VALID             0          1 2026-02-12 17:03:29
+                                                              UNI
+                                                              QUE
+
+LOC_COUNTRY_IX                 LOCATIONS                      NON VALID             0          1 2026-02-12 17:03:29
+                                                              UNI
+                                                              QUE
+
+LOC_ID_PK                      LOCATIONS                      UNI VALID             0          1 2026-02-12 17:03:29
+                                                              QUE
+
+LOC_STATE_PROVINCE_IX          LOCATIONS                      NON VALID             0          1 2026-02-12 17:03:29
+                                                              UNI
+                                                              QUE
+
+REG_ID_PK                      REGIONS                        UNI VALID             0          1 2026-02-12 17:03:29
+                                                              QUE
+
+SQL> @user_idx
+TABLE_NAME (blank=all): DEPARTMENTS
+
+IDX_NAME                       TBL_NAME                       UNI STATUS       BLEVEL     LEAF_B LAST_AN
+------------------------------ ------------------------------ --- ------------ ------ ---------- -------------------
+DEPT_LOCATION_IX               DEPARTMENTS                    NON VALID             0          1 2026-03-30 10:33:51
+                                                              UNI
+                                                              QUE
+
+DEPT_ID_PK                     DEPARTMENTS                    UNI VALID             0          1 2026-03-30 10:29:38
+                                                              QUE
+
+SQL> @usr_tbs_f
+SP2-0310: unable to open file "usr_tbs_f.sql"
+SQL> @user_tbs_f
+
+TBS_NAME                       TBS_SPACE            STATUS       PART IOT_TYPE       PCT_FREE PCT_USED      NUM_ROWS        BLOCKS LAST_AN
+------------------------------ -------------------- ------------ ---- -------------- -------- -------- ------------- ------------- -------------------
+DEPARTMENTS                    TS100                VALID        NO                        10                     27             5 2026-02-12 17:03:29
+EMPLOYEES                      TS100                VALID        NO                        10                    107             5 2026-02-12 17:03:29
+JOBS                           SYSAUX               VALID        NO                        10                     19             5 2026-02-12 17:03:29
+JOB_HISTORY                    SYSAUX               VALID        NO                        10                     10             5 2026-02-12 17:03:29
+LOCATIONS                      SYSAUX               VALID        NO                        10                     23             5 2026-02-12 17:03:29
+REGIONS                        SYSAUX               VALID        NO                        10                      4             5 2026-02-12 17:03:29
+COUNTRIES                                           VALID        NO   IOT                   0        0            25               2026-02-12 17:03:28
+SQL>

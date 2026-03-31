@@ -1,0 +1,43 @@
+import중에 아래와 같은 에러가 발생하였다.
+DUMP로그나 ALERT로그를 찾아도 원인을 알수 없었으나 
+결국 원인은 처음부터 INVALID상태에서 EXPORT된거이었다.
+알수없는 원인으로 이런일이 생길땐 처음부터 INVALID가 아니었는지 의심해볼만하다.
+
+Failing sql is:
+ALTER TABLE "HR"."DEPARTMENTS" ADD CONSTRAINT "DEPT_ID_PK" PRIMARY KEY ("DEPARTMENT_ID") USING INDEX "HR"."DEPT_ID_PK"  ENABLE
+ORA-39083: Object type CONSTRAINT:"HR"."EMP_EMP_ID_PK" failed to create with error:
+ORA-14063: Unusable index exists on unique/primary constraint key
+
+Failing sql is:
+ALTER TABLE "HR"."EMPLOYEES" ADD CONSTRAINT "EMP_EMP_ID_PK" PRIMARY KEY ("EMPLOYEE_ID") USING INDEX "HR"."EMP_EMP_ID_PK"  ENABLE
+Processing object type DATABASE_EXPORT/SCHEMA/TABLE/INDEX/STATISTICS/INDEX_STATISTICS
+Processing object type DATABASE_EXPORT/SCHEMA/TABLE/CONSTRAINT/REF_CONSTRAINT
+ORA-39083: Object type REF_CONSTRAINT:"HR"."JHIST_DEPT_FK" failed to create with error:
+ORA-02270: no matching unique or primary key for this column-list
+
+Failing sql is:
+ALTER TABLE "HR"."JOB_HISTORY" ADD CONSTRAINT "JHIST_DEPT_FK" FOREIGN KEY ("DEPARTMENT_ID") REFERENCES "HR"."DEPARTMENTS" ("DEPARTMENT_ID") ENABLE
+ORA-39083: Object type REF_CONSTRAINT:"HR"."JHIST_EMP_FK" failed to create with error:
+ORA-02270: no matching unique or primary key for this column-list
+
+Failing sql is:
+ALTER TABLE "HR"."JOB_HISTORY" ADD CONSTRAINT "JHIST_EMP_FK" FOREIGN KEY ("EMPLOYEE_ID") REFERENCES "HR"."EMPLOYEES" ("EMPLOYEE_ID") ENABLE
+ORA-39083: Object type REF_CONSTRAINT:"HR"."DEPT_MGR_FK" failed to create with error:
+ORA-02270: no matching unique or primary key for this column-list
+
+Failing sql is:
+ALTER TABLE "HR"."DEPARTMENTS" ADD CONSTRAINT "DEPT_MGR_FK" FOREIGN KEY ("MANAGER_ID") REFERENCES "HR"."EMPLOYEES" ("EMPLOYEE_ID") ENABLE
+ORA-39083: Object type REF_CONSTRAINT:"HR"."EMP_MANAGER_FK" failed to create with error:
+ORA-02270: no matching unique or primary key for this column-list
+
+Failing sql is:
+ALTER TABLE "HR"."EMPLOYEES" ADD CONSTRAINT "EMP_MANAGER_FK" FOREIGN KEY ("MANAGER_ID") REFERENCES "HR"."EMPLOYEES" ("EMPLOYEE_ID") ENABLE
+ORA-39083: Object type REF_CONSTRAINT:"HR"."EMP_DEPT_FK" failed to create with error:
+ORA-02270: no matching unique or primary key for this column-list
+
+Failing sql is:
+ALTER TABLE "HR"."EMPLOYEES" ADD CONSTRAINT "EMP_DEPT_FK" FOREIGN KEY ("DEPARTMENT_ID") REFERENCES "HR"."DEPARTMENTS" ("DEPARTMENT_ID") ENABLE
+Processing object type DATABASE_EXPORT/SCHEMA/TABLE/STATISTICS/TABLE_STATISTICS
+Processing object type DATABASE_EXPORT/STATISTICS/MARKER
+Processing object type DATABASE_EXPORT/SCHEMA/TABLE/TRIGGER
+Job "SYSTEM"."SYS_IMPORT_SCHEMA_01" completed with 7 error(s) at Tue Mar 31 19:57:28 2026 elapsed 0 00:00:20
