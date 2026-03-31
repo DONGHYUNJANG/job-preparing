@@ -1,0 +1,289 @@
+
+SQL>
+SQL> @line
+SQL> SELECT
+    TO_CHAR(event_timestamp, 'YYYY-MM-DD HH24:MI:SS') AS "범행시간",
+    dbusername AS "실행계정",
+    os_username AS "OS사용자",
+  2    3    4    5      userhost AS "접속장비",
+    terminal AS "터미널정보",
+    return_code AS "성공여부"
+FROM
+  6    7    8    9      unified_audit_trail
+WHERE
+    action_name = 'DROP USER'  10   11  ;
+
+범행시간            실행계정
+------------------- --------------------------------------------------------------------------------------------------------------------------------
+OS사용자
+--------------------------------------------------------------------------------------------------------------------------------
+접속장비                                                                                                                         터미널정보                       성공여부
+-------------------------------------------------------------------------------------------------------------------------------- ------------------------------ ----------
+2026-03-30 11:40:21 SCOTT
+oracle
+orcl                                                                                                                             pts/1                                   0
+
+
+SQL> select db_user, event_time from sys.critical_ddl_log where sql_text like '%drop%';
+
+DB_USER                        EVENT_TIME
+------------------------------ ---------------------------------------------------------------------------
+SCOTT                          30-MAR-26 11.40.19.126282 AM
+SCOTT                          30-MAR-26 11.40.19.153710 AM
+SCOTT                          30-MAR-26 11.40.19.176302 AM
+SCOTT                          30-MAR-26 11.40.19.192467 AM
+SCOTT                          30-MAR-26 11.40.19.211558 AM
+SCOTT                          30-MAR-26 11.40.19.229757 AM
+SCOTT                          30-MAR-26 11.40.19.266923 AM
+SCOTT                          30-MAR-26 11.40.19.720864 AM
+SCOTT                          30-MAR-26 11.40.19.912317 AM
+SCOTT                          30-MAR-26 11.40.20.335140 AM
+SCOTT                          30-MAR-26 11.40.20.478739 AM
+SCOTT                          30-MAR-26 11.40.20.678964 AM
+SCOTT                          30-MAR-26 11.40.20.842888 AM
+SCOTT                          30-MAR-26 11.40.20.913818 AM
+SCOTT                          30-MAR-26 11.40.20.938141 AM
+
+15 rows selected.
+
+SQL> exot
+SP2-0042: unknown command "exot" - rest of line ignored.
+SQL> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[oracle@orcl str_dump]$ rman target / nocatalog
+
+Recovery Manager: Release 19.0.0.0.0 - Production on Mon Mar 30 11:46:49 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+connected to target database: ORCL (DBID=1752821194)
+using target database control file instead of recovery catalog
+
+RMAN> run {
+2> set until time=
+3>
+4> ^C
+user interrupt received
+
+
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-00558: error encountered while parsing input commands
+RMAN-01009: syntax error: found "end-of-file": expecting one of: "double-quoted-string, single-quoted-string"
+RMAN-01007: at line 4 column 1 file: standard input
+
+RMAN> alter session set NLS_DATE_FORMAT='RRRR/MM/DD:HH24:MI:SS';
+
+Statement processed
+
+RMAN> run {
+2> set until time='2026/03/30:11:39:00';
+3> restore database;
+4> recover database;
+5> }
+
+executing command: SET until clause
+
+Starting restore at 30-MAR-26
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=394 device type=DISK
+
+channel ORA_DISK_1: starting datafile backup set restore
+channel ORA_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_DISK_1: restoring datafile 00001 to /u01/app/oracle/oradata/ORCL/system01.dbf
+channel ORA_DISK_1: restoring datafile 00002 to /u01/app/oracle/oradata/ORCL/ts300.dbf
+channel ORA_DISK_1: restoring datafile 00003 to /u01/app/oracle/oradata/ORCL/sysaux01.dbf
+channel ORA_DISK_1: restoring datafile 00004 to /u01/app/oracle/oradata/ORCL/undotbs01.dbf
+channel ORA_DISK_1: restoring datafile 00005 to /u01/app/oracle/oradata/ORCL/ts100.dbf
+channel ORA_DISK_1: restoring datafile 00007 to /u01/app/oracle/oradata/ORCL/users01.dbf
+channel ORA_DISK_1: restoring datafile 00008 to /u01/app/oracle/oradata/ORCL/rc_ts01.dbf
+channel ORA_DISK_1: reading from backup piece /u01/app/oracle/product/19.3.0/dbhome_1/dbs/5q4k9nao_1_1
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of restore command at 03/30/2026 11:48:59
+ORA-19870: error while restoring backup piece /u01/app/oracle/product/19.3.0/dbhome_1/dbs/5q4k9nao_1_1
+ORA-19573: cannot obtain exclusive enqueue for datafile 1
+ORA-19890: data file already in use
+ORA-45909: restore, recover or block media recovery may be in progress
+
+RMAN> exit
+
+
+Recovery Manager complete.
+[oracle@orcl str_dump]$ sys
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Mon Mar 30 11:49:55 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+SQL> shutdown immediate;
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+SQL> alter database mount;
+alter database mount
+*
+ERROR at line 1:
+ORA-01034: ORACLE not available
+Process ID: 0
+Session ID: 0 Serial number: 0
+
+
+SQL> startup mount;
+ORACLE instance started.
+
+Total System Global Area 2415917880 bytes
+Fixed Size                  8899384 bytes
+Variable Size             553648128 bytes
+Database Buffers         1845493760 bytes
+Redo Buffers                7876608 bytes
+Database mounted.
+SQL> run {
+  1* alter database mount
+alter database mount
+*
+ERROR at line 1:
+ORA-01100: database already mounted
+
+
+SQL> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+r[oracle@orcl str_dump]$ rman target / nocatalog
+
+Recovery Manager: Release 19.0.0.0.0 - Production on Mon Mar 30 11:51:20 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+connected to target database: ORCL (DBID=1752821194, not open)
+using target database control file instead of recovery catalog
+
+RMAN>
+
+RMAN>
+
+RMAN>  run {
+2> set until time='2026/03/30:11:39:00';
+3> restore database;
+4> recover database;
+5> }
+
+executing command: SET until clause
+
+Starting restore at 30-MAR-26
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=138 device type=DISK
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of restore command at 03/30/2026 11:51:51
+ORA-01861: literal does not match format string
+
+RMAN> run {
+2>
+3>
+
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-00558: error encountered while parsing input commands
+RMAN-01009: syntax error: found "end-of-file": expecting one of: "advise, allocate, alter, analyze, associate statistics, audit, backup, begin, @, call, catalog, change, comment, commit, configure, convert, copy, create, crosscheck, declare, delete, delete from, describe, describe catalog, disassociate statistics, drop, drop database, duplicate, execute, explain plan, flashback, flashback table, grant, host, insert, lock, merge, mount, noaudit, open, purge, recover, release, rename, repair, report, reset, restore, resync, revoke, rollback, savepoint, select, send, set, set constraint, set role, set transaction, show, shutdown, sql, startup, switch, "
+RMAN-01007: at line 3 column 1 file: standard input
+
+RMAN>
+
+RMAN> ^C
+user interrupt received
+alter session set NLS_DATE_FORMAT='RRRR/MM/DD:HH24:MI:SS';
+
+Statement processed
+
+RMAN> run {
+2> set until time='2026/03/30:11:39:00';
+3> restore database;
+4> recover database;
+5> }
+
+executing command: SET until clause
+
+Starting restore at 30-MAR-26
+using channel ORA_DISK_1
+
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of restore command at 03/30/2026 11:52:52
+ORA-01013: user requested cancel of current operation
+
+RMAN> run {
+2> set until time='2026/03/30:11:39:00';
+3> restore database;
+4> recover database;
+5> }
+
+executing command: SET until clause
+
+Starting restore at 30-MAR-26
+using channel ORA_DISK_1
+
+channel ORA_DISK_1: starting datafile backup set restore
+channel ORA_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_DISK_1: restoring datafile 00001 to /u01/app/oracle/oradata/ORCL/system01.dbf
+channel ORA_DISK_1: restoring datafile 00002 to /u01/app/oracle/oradata/ORCL/ts300.dbf
+channel ORA_DISK_1: restoring datafile 00003 to /u01/app/oracle/oradata/ORCL/sysaux01.dbf
+channel ORA_DISK_1: restoring datafile 00004 to /u01/app/oracle/oradata/ORCL/undotbs01.dbf
+channel ORA_DISK_1: restoring datafile 00005 to /u01/app/oracle/oradata/ORCL/ts100.dbf
+channel ORA_DISK_1: restoring datafile 00007 to /u01/app/oracle/oradata/ORCL/users01.dbf
+channel ORA_DISK_1: restoring datafile 00008 to /u01/app/oracle/oradata/ORCL/rc_ts01.dbf
+channel ORA_DISK_1: reading from backup piece /u01/app/oracle/product/19.3.0/dbhome_1/dbs/5q4k9nao_1_1
+channel ORA_DISK_1: piece handle=/u01/app/oracle/product/19.3.0/dbhome_1/dbs/5q4k9nao_1_1 tag=TAG20260330T101800
+channel ORA_DISK_1: restored backup piece 1
+channel ORA_DISK_1: restore complete, elapsed time: 00:00:45
+Finished restore at 30-MAR-26
+
+Starting recover at 30-MAR-26
+using channel ORA_DISK_1
+
+starting media recovery
+media recovery complete, elapsed time: 00:00:08
+
+Finished recover at 30-MAR-26
+
+RMAN> alter database open resetlogs;
+
+Statement processed
+
+RMAN> exit
+
+
+Recovery Manager complete.
+[oracle@orcl str_dump]$ sys
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Mon Mar 30 11:59:26 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+SQL> @dba_users;
+USERNAME (blank=all): HR
+
+USERNAME                  ACCOUNT_STATUS            DEFAULT_TABLESPACE   TEMPORARY_TABLESPACE    USER_ID
+------------------------- ------------------------- -------------------- -------------------- ----------
+HR                        OPEN                      SYSAUX               TEMP                        110
+SQL>

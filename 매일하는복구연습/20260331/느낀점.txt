@@ -1,0 +1,130 @@
+AUDIT은 SYS계정의 기록이 남지 않기 때문에 불안하다고 생각했다.
+그러므로 DROP이나 TRUNCATTE감시는 TRIGGER가 더 좋을것 같다는 생각을 했다.
+
+CREATE TABLE sys.critical_ddl_log (
+    log_id       NUMBER GENERATED ALWAYS AS IDENTITY,
+    event_time   TIMESTAMP,
+    db_user      VARCHAR2(30),
+    os_user      VARCHAR2(64),
+    host         VARCHAR2(128),
+    ip_address   VARCHAR2(64),
+    event_type   VARCHAR2(30),
+    obj_owner    VARCHAR2(30),
+    obj_name     VARCHAR2(128),
+    obj_type     VARCHAR2(30),
+    sql_text     CLOB
+);
+
+# 올바른 트리거 문법
+
+다음처럼 작성하면 정상 컴파일됩니다.
+
+```sql
+CREATE OR REPLACE TRIGGER sys.audit_drop_truncate_trg
+AFTER DDL ON DATABASE
+DECLARE
+    v_sql_text  ora_name_list_t;
+    v_stmt      CLOB := '';
+    v_n         NUMBER;
+BEGIN
+
+    IF ora_sysevent IN ('DROP','TRUNCATE') 
+	AND ora_dict_obj_owner IS NOT NULL THEN
+
+        v_n := ora_sql_txt(v_sql_text);
+
+        IF v_n > 0 THEN
+            FOR i IN 1..v_n LOOP
+                v_stmt := v_stmt || v_sql_text(i);
+            END LOOP;
+        END IF;
+
+        INSERT INTO sys.critical_ddl_log (
+            event_time,
+            db_user,
+            os_user,
+            host,
+            ip_address,
+            event_type,
+            obj_owner,
+            obj_name,
+            obj_type,
+            sql_text
+        )
+        VALUES (
+            SYSTIMESTAMP,
+            ora_login_user,
+            sys_context('USERENV','OS_USER'),
+            sys_context('USERENV','HOST'),
+            sys_context('USERENV','IP_ADDRESS'),
+            ora_sysevent,
+            ora_dict_obj_owner,
+            ora_dict_obj_name,
+            ora_dict_obj_type,
+            v_stmt
+        );
+
+    END IF;
+
+EXCEPTION
+    WHEN OTHERS THEN
+        NULL;
+END;
+/
+```
+
+---
+
+# 생성 후 반드시 확인
+
+```sql
+SELECT trigger_name, status
+FROM dba_triggers
+WHERE trigger_name='AUDIT_DROP_TRUNCATE_TRG';
+```
+
+정상 결과
+
+```
+STATUS
+------
+ENABLED
+```
+
+---
+
+# 하나 중요한 팁 (SYS 트리거)
+
+SYS에서 `AFTER DDL ON DATABASE` 트리거를 만들면 다음도 전부 잡힙니다.
+
+* Data Pump 내부 DROP
+* dictionary maintenance
+* patch script
+* recursive SQL
+
+그래서 보통 운영에서는 필터를 하나 넣습니다.
+
+```sql
+IF ora_dict_obj_owner IS NOT NULL THEN
+```
+
+안 그러면 **로그가 폭발적으로 쌓일 수 있습니다.**
+
+---
+
+💡 참고로
+Oracle에서 **DROP/TRUNCATE 감시를 위해 트리거 만드는 방식은 옛날 방식**이고
+19c에서는 보통 **Unified Auditing**을 사용합니다.
+
+예를 들면 단 한 줄로 됩니다.
+
+```sql
+AUDIT DROP ANY TABLE BY ACCESS;
+```
+
+이건 **SYS 포함 전체 DROP을 자동 기록**합니다.
+
+---
+
+원하면 제가 **DBA들이 실제 운영에서 쓰는 “완성형 DROP 감시 방법 3가지”**를 설명해 드릴게요.
+(DDL trigger / Unified auditing / FGA 중 어떤 게 가장 안전한지도 같이요.)
