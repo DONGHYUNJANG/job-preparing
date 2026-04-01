@@ -472,3 +472,68 @@ ALTER INDEX "HR"."DEPT_ID_PK" NOPARALLEL;
 SELECT 'ALTER INDEX ' || owner || '.' || index_name || ' REBUILD;'
 FROM dba_indexes
 WHERE status = 'UNUSABLE' AND owner = 'HR';
+
+
+# ============================================================
+# 💡 20. RMAN 결과를 파일로 저장하는 방법
+# ============================================================
+
+
+### 1. RMAN 실행 시 `LOG` 옵션 사용 (가장 권장됨)
+
+RMAN에 접속할 때부터 로그 파일을 지정하는 방법입니다. 이 방법은 접속부터 종료까지의 모든 기록이 파일에 남습니다.
+
+Bash
+
+`rman target / log = 'listbackup_0401.log'`
+
+- **특징**: 화면에는 아무것도 나오지 않고 모든 결과가 파일로만 들어갑니다.
+- **추가**: 만약 화면에도 보고 파일에도 저장하고 싶다면 `append` 옵션을 붙일 수 있지만, 보통은 파일로 보낼 때 위 방식을 씁니다.
+
+### 2. RMAN 내부에서 `SPOOL` 명령 사용
+
+RMAN에 이미 접속한 상태라면 SQL*Plus의 spool과 유사한 명령어를 사용할 수 있습니다.
+
+코드 스니펫
+
+RMAN> SPOOL LOG TO 'listbackup_0401.log';
+RMAN> LIST BACKUP;
+RMAN> SPOOL LOG OFF;`
+
+# ============================================================
+# 💡 21. 백업 보존기간 관련 명령어
+# ============================================================
+
+① 백업 생성 시 적용 (Backup time)
+-- 1년 동안 보관하는 백업 (이 기간 동안 아카이브 로그도 함께 보관됨)
+RMAN> BACKUP DATABASE TAG 'YEARLY_2026' KEEP UNTIL TIME 'SYSDATE+365' RESTORE POINT 'RP_2026';
+
+-- 영구 보관 백업 (반드시 Recovery Catalog를 사용할 때만 가능)
+RMAN> BACKUP DATABASE TAG 'LEGAL_HOLD' KEEP FOREVER;
+
+② 기존 백업의 보존 속성 변경 (Change time)
+-- 170번 백업 세트를 영구 보관으로 변경
+RMAN> CHANGE BACKUPSET 170 KEEP FOREVER;
+
+-- 197번 백업 세트의 예외 설정을 해제 (이제 보존 정책에 따라 삭제 대상이 될 수 있음)
+RMAN> CHANGE BACKUPSET 197 NOKEEP;
+
+-- tag를 지정하여 보존정책 삭제
+RMAN> change backup tag '2026_04_01_fullbackup'  nokeep;
+
+③ 보존 예외 백업 확인
+
+-- KEEP 옵션이 걸린 백업들만 골라 보기
+RMAN> LIST BACKUP KEEP;
+
+
+# ============================================================
+# 💡 22. OS에서 백업 파일 삭제 후 CROSSCHECK 확인
+# ============================================================
+
+crosscheck backup;
+crosscheck archivelog all;
+delete expired backup;
+delete expired archivelog all;
+report obsolete;
+delete obsolete;
