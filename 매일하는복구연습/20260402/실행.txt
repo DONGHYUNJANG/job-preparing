@@ -1,0 +1,84 @@
+SQL> shutdown abort
+ORACLE 인스턴스가 종료되었습니다.
+SQL>
+
+
+ASMCMD> cd datafile
+ASMCMD> ls
+SYSAUX.257.1227029505
+SYSTEM.256.1227029471
+TS01.273.1229507525
+TS01.274.1229507829
+TS01.275.1229507847
+UNDOTBS1.258.1227029531
+USERS.259.1227029531
+ASMCMD>
+ASMCMD> rm TS01.273.1229507525
+ASMCMD> rm TS01.274.1229507829
+ASMCMD> rm TS01.275.1229507847
+ASMCMD>
+
+
+SQL> startup
+ORACLE 인스턴스가 시작되었습니다.
+
+Total System Global Area 2365586088 bytes
+Fixed Size                  8899240 bytes
+Variable Size             520093696 bytes
+Database Buffers         1828716544 bytes
+Redo Buffers                7876608 bytes
+데이터베이스가 마운트되었습니다.
+ORA-01157: 데이터 2 파일을 식별 또는 잠금 할 수 없습니  다- DBWR 추적 파일을
+보십시오
+ORA-01110: 2 데이터 파일: '+DATA/ORCL/DATAFILE/ts01.274  .1229507829'
+
+
+SQL> select file#
+       from v$recover_file
+       where error='FILE NOT FOUND';
+
+     FILE#
+----------
+         2
+         5
+         8
+
+SQL> save recover.sql
+file recover.sql(이)가 생성되었습니다
+SQL>
+
+SQL> @recover
+
+     FILE# NAME
+---------- ---------------------------------------------
+         2 +DATA/ORCL/DATAFILE/ts01.274.1229507829
+         5 +DATA/ORCL/DATAFILE/ts01.273.1229507525
+         8 +DATA/ORCL/DATAFILE/ts01.275.1229507847
+
+SQL> l
+     select r.file#, d.name
+       from v$recover_file r, v$datafile d
+      where r.file#=d.file# and  r.error='FILE NOT FOUND'
+
+
+SQL> alter database datafile 2,5,8 offline;
+
+데이타베이스가 변경되었습니다.
+
+SQL> alter database open;
+
+[oracle@asmtest ~]$ rman target / nocatalog
+
+RMAN> restore datafile 2,5,8;
+
+RMAN> recover datafile 2,5,8;
+
+RMAN> alter database datafile 2,5,8 online;
+
+[oracle@asmtest ~]$ sqlplus scott/tiger
+
+SQL> select * from emp01;
+
+     EMPNO ENAME                       SAL
+---------- -------------------- ----------
+      1111 aaa                        3000

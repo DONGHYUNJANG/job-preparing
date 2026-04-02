@@ -1,0 +1,37 @@
+prod
+ SQL> @$ORACLE_HOME/rdbms/admin/catalog.sql 완료
+
+  SQL> @$ORACLE_HOME/rdbms/admin/catproc.sql 완료
+
+  SQL>  connect  system/oracle 완료
+
+  SQL> @$ORACLE_HOME/sqlplus/admin/pupbld.sql 완료
+
+sdbd
+ SQL> @$ORACLE_HOME/rdbms/admin/catalog.sql  완료
+
+  SQL> @$ORACLE_HOME/rdbms/admin/catproc.sql 완료
+
+  SQL>  connect  system/oracle
+
+  SQL> @$ORACLE_HOME/sqlplus/admin/pupbld.sql 완료
+
+
+mira 
+ SQL> @$ORACLE_HOME/rdbms/admin/catalog.sql  완료
+
+  SQL> @$ORACLE_HOME/rdbms/admin/catproc.sql 완료
+
+  SQL>  connect  system/oracle 완료
+
+  SQL> @$ORACLE_HOME/sqlplus/admin/pupbld.sql 완료
+
+mirastby
+ SQL> @$ORACLE_HOME/rdbms/admin/catalog.sql  완료
+
+  SQL> @$ORACLE_HOME/rdbms/admin/catproc.sql 완료
+
+  SQL>  connect  system/oracle완료
+
+  SQL> @$ORACLE_HOME/sqlplus/admin/pupbld.sql 완료
+

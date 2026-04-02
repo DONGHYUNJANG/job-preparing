@@ -1,0 +1,24 @@
+/**********************************************************
+ ORA-09925
+**********************************************************/
+
+ERROR:
+ORA-09925: Unable to create audit trail file
+Linux-x86_64 Error: 2: No such file or directory
+Additional information: 9925
+ORA-09925: Unable to create audit trail file
+Linux-x86_64 Error: 2: No such file or directory
+Additional information: 9925
+
+
+# 1. 디렉토리 생성 (상위 폴더까지 한꺼번에 생성)
+mkdir -p /u01/app/oracle/admin/PROD/adump
+
+# 2. 권한 설정 (생성한 폴더에 쓸 수 있도록 755 권한 부여)
+chmod 755 /u01/app/oracle/admin/PROD/adump
+
+# 3. 다시 접속 시도
+sqlplus / as sysdba
+
+
+

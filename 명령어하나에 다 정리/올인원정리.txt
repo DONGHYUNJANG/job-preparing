@@ -537,3 +537,438 @@ delete expired backup;
 delete expired archivelog all;
 report obsolete;
 delete obsolete;
+
+# ============================================================
+# 💡 23. 백업파일에서 어떤 데이터 파일이 어떤 백업에 들어있는지 확인하는 방법
+# ============================================================
+
+
+RMAN> list backup summary;
+
+RMAN> list backup of datafile 7;
+
+# ============================================================
+# 💡 24. 아카이브로그 백업
+# ============================================================
+1. 기본적인 아카이브 로그 백업
+현재까지 생성된 모든 아카이브 로그를 백업합니다.
+
+SQL
+RMAN> backup archivelog all;
+2. 백업 후 원본 삭제 (가장 권장되는 방식)
+로그를 백업 세트로 저장한 뒤, 성공적으로 백업된 원본 아카이브 파일들을 디스크에서 삭제하여 용량을 확보합니다.
+
+SQL
+RMAN> backup archivelog all delete input;
+Tip: delete input 옵션은 백업이 완료된 파일만 골라서 삭제해주므로 안전합니다.
+
+3. 특정 범위 지정 백업
+특정 시간대나 로그 시퀀스 번호를 지정하여 백업할 수도 있습니다.
+
+시간 기준:
+
+SQL
+RMAN> backup archivelog from time 'sysdate-1'; -- 최근 24시간 동안의 로그만 백업
+시퀀스 번호 기준:
+
+SQL
+RMAN> backup archivelog from sequence 10 until sequence 20;
+4. 태그(Tag)를 활용한 백업
+나중에 찾기 쉽도록 이름을 붙여 백업하는 방법입니다.
+
+SQL
+RMAN> backup archivelog all tag 'DAILY_ARCH_BACKUP' delete input;
+
+
+# ============================================================
+# 💡 24. alertlog찾는법
+# ============================================================
+
+adrci;
+
+show home;
+
+show alert;
+
+
+# ============================================================
+## 💡 개념 설명: ASMCMD (ASM Command-Line Utility)
+# ============================================================
+
+
+**ASMCMD**는 Oracle ASM(Automatic Storage Management) 인스턴스를 관리하기 위한 명령줄 툴입니다. SQL*Plus에서 SQL 문으로 ASM을 관리할 수도 있지만, `asmcmd`는 마치 리눅스의 셸(Shell)처럼 파일 시스템을 탐색하고 관리할 수 있게 해줍니다.
+
+데이터베이스 엔지니어(DBA)가 ASM 디스크 그룹 내의 파일 구조를 확인하거나, 디렉토리를 생성하고, 디스크 상태를 점검할 때 가장 빈번하게 사용합니다.
+
+
+## 🛠 자주 사용되는 ASMCMD 명령어
+
+`asmcmd`를 실행한 후 사용할 수 있는 주요 명령어들을 기능별로 정리해 드립니다.
+
+### 1. 파일 및 디렉토리 관리 (Linux 유사 명령어)
+ASM 내부를 일반 파일 시스템처럼 탐색할 때 사용합니다.
+* `ls`: 디렉토리나 파일 목록을 확인합니다. (옵션 `-l`로 상세 정보 확인 가능)
+* `cd`: 디렉토리를 이동합니다. (예: `cd +DATA/ORCL/CONTROLFILE`)
+* `pwd`: 현재 위치한 ASM 경로를 보여줍니다.
+* `mkdir`: 새로운 디렉토리를 생성합니다.
+* `rm`: 파일이나 빈 디렉토리를 삭제합니다. (주의: `-r` 옵션은 하위 항목까지 모두 삭제)
+
+### 2. 디스크 그룹 관리 및 상태 확인
+ASM의 핵심인 디스크 그룹의 상태를 파악할 때 필수적입니다.
+* `lsdg`: 모든 디스크 그룹의 이름, 상태, 총 용량, 사용량을 확인합니다. (가장 많이 사용됨)
+* `lsattr`: 디스크 그룹의 속성(Attribute)을 확인합니다.
+* `chdg`: 디스크 그룹의 설정을 변경합니다.
+* `mount` / `umount`: 특정 디스크 그룹을 마운트하거나 해제합니다.
+
+### 3. 디스크 및 장치 정보
+물리적인 디스크 상태를 확인할 때 사용합니다.
+* `lsdsk`: ASM 디스크의 경로, 상태, 용량 등을 나열합니다. (옵션 `-p`나 `-k`를 주로 사용)
+* `iostat`: ASM 디스크의 I/O 통계를 실시간으로 확인합니다.
+
+### 4. 기타 유용한 명령어
+* `du`: 특정 디렉토리가 점유하고 있는 실제 용량을 확인합니다.
+* `cp`: ASM과 일반 OS 파일 시스템 간에 파일을 복사합니다. (예: `cp +DATA/temp.dbf /home/oracle/`)
+* `help`: 특정 명령어의 사용법이 기억나지 않을 때 `help [명령어]` 형식으로 사용합니다.
+
+---
+
+### ⚠️ 실무 팁
+* `asmcmd`를 실행하기 전에 반드시 **Grid Infrastructure 환경 변수**(`ORACLE_HOME` 및 `ORACLE_SID`)가 ASM 인스턴스에 맞춰 설정되어 있어야 합니다.
+* 일반적으로 `ORACLE_SID`는 `+ASM` 또는 `+ASM1`(RAC의 경우)입니다.
+
+
+# ============================================================
+## 💡 FRA (Fast Recovery Area)와 ASM 경로
+# ============================================================
+
+현재 설정된 db_recovery_file_dest의 값인 +DATA는 일반 OS 디렉토리가 아니라 Oracle ASM(Automatic Storage Management) 내의 디스크 그룹(Disk Group) 이름입니다.
+
+Oracle은 FRA(Fast Recovery Area)를 ASM에 저장할 때, 사용자가 일일이 경로를 지정하지 않아도 OMF(Oracle Managed Files) 규칙에 따라 자동으로 구조화된 디렉토리를 생성하여 파일을 관리합니다. 따라서 단순히 +DATA라고만 표시되어도 그 하위에 정해진 규칙대로 파일들이 숨어 있습니다.
+
+🛠 문제 해설: 실제 위치 찾는 방법
++DATA 내에서 아카이브 로그나 백업 파일이 정확히 어디 있는지 확인하려면 ASMCMD 툴을 사용하거나 V$ 뷰를 조회해야 합니다.
+
+1. ASMCMD를 이용한 탐색 (가장 직관적인 방법)
+터미널에서 asmcmd에 접속하여 리눅스처럼 디렉토리를 타고 들어가 봅니다. 보통 아래와 같은 구조로 생성됩니다.
++데이터그룹명/DB이름/ARCHIVELOG/날짜/파일명
+
+Bash
+# 1. ASMCMD 접속 (Grid 유저 또는 oracle 유저)
+asmcmd
+
+# 2. 경로 이동 (보통 DB명이 하위 폴더로 존재합니다)
+ASMCMD> cd +DATA/ORCL/ARCHIVELOG
+ASMCMD> ls -al
+위에서 ORCL은 본인의 DB_UNIQUE_NAME입니다.
+
+2. SQL을 이용한 확인 (현재 아카이브 로그 위치 조회)
+현재 실제로 기록되고 있는 아카이브 파일들의 전체 경로를 SQL*Plus에서 바로 확인할 수 있습니다.
+
+SQL
+SELECT name FROM v$archived_log WHERE completion_time > sysdate - 1;
+이 쿼리를 실행하면 +DATA/ORCL/ARCHIVELOG/2026_04_01/thread_1_seq_16... 와 같은 실제 풀 경로가 출력됩니다.
+
+3. 디스크 그룹 내 사용량 확인
++DATA 그룹 내에서 FRA가 얼마나 공간을 차지하고 있는지 확인하려면 다음 뷰를 조회하세요.
+
+SQL
+SELECT * FROM v$recovery_area_usage;
+
+# ============================================================
+## 💡 ASMCMD의 시간 표시 제한
+# ============================================================
+
+-- SQL*Plus 접속 후 실행
+SELECT SEQUENCE#, 
+       name,
+       FIRST_TIME, 
+       COMPLETION_TIME,
+       TO_CHAR(COMPLETION_TIME, 'YYYY-MM-DD HH24:MI:SS') AS REAL_TIME
+FROM V$ARCHIVED_LOG
+WHERE COMPLETION_TIME > TRUNC(SYSDATE)
+ORDER BY SEQUENCE#;
+
+# ============================================================
+## 💡 ASMCMD에 있는 파일을 리눅스로 가져오기
+# ============================================================
+
+# ASMCMD 내부에서 실행 (ASM -> OS)
+ASMCMD> cp +DATA/ORCL/ARCHIVELOG/2026_04_01/thread_1_seq_27... /tmp/my_arch.log
+
+# ============================================================
+## 💡 컨트롤 파일 백업
+# ============================================================
+
+RMAN> backup current controlfile;
+
+# ============================================================
+## 💡 ASM 컨트롤 파일 다중화  
+# ============================================================
+
+## 반드시 사전에 백업된
+backup current controlfile tag 'XXXXXXXX';
+
+# 1. 셧다운 (SHUTDOWN)
+SQL> shutdown immediate;
+Database closed.
+Database dismounted.
+ORACLE instance shut down.
+
+SQL> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.26.0.0.0
+[oracle@asmtest trace]$ rman target / nocatalog
+
+Recovery Manager: Release 19.0.0.0.0 - Production on Wed Apr 1 15:17:42 2026
+Version 19.26.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+connected to target database (not started)
+
+# 2. 노마운트 (NOMOUNT)
+RMAN> startup nomount;
+startup nomount;
+Oracle instance started
+
+Total System Global Area    2365584096 bytes
+
+Fixed Size                     8942304 bytes
+Variable Size                637534208 bytes
+Database Buffers            1711276032 bytes
+Redo Buffers                   7831552 bytes
+
+
+# 3. Restore 컨트롤파일 (RESTORE CONTROLFILE)
+RMAN> restore controlfile to '+RECO' from '+DATA/ORCL/CONTROLFILE/Current.260.1227191887';
+restore controlfile to '+RECO' from '+DATA/ORCL/CONTROLFILE/Current.260.1227191887';
+Starting restore at 01-APR-26
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=23 device type=DISK
+
+channel ORA_DISK_1: copied control file copy
+Finished restore at 01-APR-26
+
+
+RMAN> restore controlfile to '+RECO' from '+DATA/ORCL/CONTROLFILE/Current.260.1227191887';
+restore controlfile to '+RECO' from '+DATA/ORCL/CONTROLFILE/Current.260.1227191887';
+Starting restore at 01-APR-26
+using channel ORA_DISK_1
+
+channel ORA_DISK_1: copied control file copy
+Finished restore at 01-APR-26
+
+
+# 4.  ASMCMD에서 실제 생성된 이름 확인 (Check Name)
+
+ASMCMD> pwd
++RECO/ORCL/CONTROLFILE
+ASMCMD> ls
+current.256.1229440795
+current.257.1229440793
+ASMCMD> pwd
+
+# 5. RMAN에서 파라미터 수정 (ALTER SYSTEM SET)
+
+RMAN> alter system set control_files='+DATA/ORCL/CONTROLFILE/current.260.1227191887',
+'+DATA/ORCL/CONTROLFILE/current.261.1227191887',
+'+RECO/ORCL/CONTROLFILE/current.256.1229440795',
+'+RECO/ORCL/CONTROLFILE/current.257.1229440793'
+scope=spfile;alter system set control_files='+DATA/ORCL/CONTROLFILE/current.260.1227191887',
+2> '+DATA/ORCL/CONTROLFILE/current.261.1227191887',
+3> '+RECO/ORCL/CONTROLFILE/current.256.1229440795',
+4> '+RECO/ORCL/CONTROLFILE/current.257.1229440793'
+5>
+scope=spfile;
+Statement processed
+
+# 6. 재기동 (RESTART)
+RMAN> shutdown immediate
+shutdown immediate
+
+Oracle instance shut down
+
+RMAN> startup
+startup
+
+connected to target database (not started)
+Oracle instance started
+database mounted
+database opened
+
+Total System Global Area    2365584096 bytes
+
+Fixed Size                     8942304 bytes
+Variable Size                637534208 bytes
+Database Buffers            1711276032 bytes
+Redo Buffers                   7831552 bytes
+
+RMAN> exit
+exit
+
+RMAN Client Diagnostic Trace file : /app/oracle/diag/clients/user_oracle/host_3381026084_110/trace/ora_10918_140213311711744.trc
+
+Recovery Manager complete.
+[oracle@asmtest trace]$ sys
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Wed Apr 1 15:22:57 2026
+Version 19.26.0.0.0
+
+Copyright (c) 1982, 2024, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.26.0.0.0
+
+SQL> select name from v$controlfile;
+
+NAME
+--------------------------------------------------------------------------------
++DATA/ORCL/CONTROLFILE/current.260.1227191887
++DATA/ORCL/CONTROLFILE/current.261.1227191887
++RECO/ORCL/CONTROLFILE/current.256.1229440795
++RECO/ORCL/CONTROLFILE/current.257.1229440793
+
+SQL> @i
+
+INSTANCE_NAME    STATUS
+---------------- ------------
+orcl             OPEN
+
+SQL>
+
+
+# ============================================================
+## 💡 REDO LOG 파일 다중화 일반
+# ============================================================
+
+# RedoLog다중화
+
+1. 리두 로그 그룹이 몇개 인지 확인합니다.
+
+```sql
+select group#, status, members, sequence#, bytes/1024/1024
+      from v$log
+
+```
+
+2. 리두 로그 그룹에 속해 있는 멤버가 뭔지 확인합니다.
+
+```sql
+col member for a45
+
+select group#, member
+   from v$logfile
+   order by 1 asc;
+
+```
+
+3. 리두 로그 그룹을 하나 더 추가합니다.
+
+```sql
+alter database add logfile group 4
+    '/u01/app/oracle/oradata/ORCL/redo04.log' size 200m;
+```
+
+4. 리두 로그 그룹 1번에 멤버를 추가합니다.
+
+```sql
+ alter database add logfile member
+         '/u01/app/oracle/oradata/ORCL/redo01b.log' to group 1;
+         
+```
+# ============================================================
+## 💡 REDO LOG 파일 다중화 ASM
+# ============================================================
+
+> ASM
+> 
+
+SQL> @logfile
+
+```
+GROUP# MEMBER
+```
+
+---
+
+```
+     1 +DATA/ORCL/ONLINELOG/group_1.263.1227029597
+     1 +DATA/ORCL/ONLINELOG/group_1.266.1227029615
+     2 +DATA/ORCL/ONLINELOG/group_2.262.1227029597
+     2 +DATA/ORCL/ONLINELOG/group_2.265.1227029615
+     3 +DATA/ORCL/ONLINELOG/group_3.264.1227029597
+     3 +DATA/ORCL/ONLINELOG/group_3.267.1227029617
+```
+
+6 행이 선택되었습니다.
+
+SQL> alter database add logfile group 4 ('+DATA', '+DATA') size 50m;
+
+데이타베이스가 변경되었습니다.
+
+SQL> @logfile
+
+```
+GROUP# MEMBER
+```
+
+---
+
+```
+     1 +DATA/ORCL/ONLINELOG/group_1.266.1227029615
+     1 +DATA/ORCL/ONLINELOG/group_1.263.1227029597
+     2 +DATA/ORCL/ONLINELOG/group_2.262.1227029597
+     2 +DATA/ORCL/ONLINELOG/group_2.265.1227029615
+     3 +DATA/ORCL/ONLINELOG/group_3.267.1227029617
+     3 +DATA/ORCL/ONLINELOG/group_3.264.1227029597
+     4 +DATA/ORCL/ONLINELOG/group_4.271.1229441223
+     4 +DATA/ORCL/ONLINELOG/group_4.272.1229441223
+```
+
+8 행이 선택되었습니다.
+
+SQL> select group#, status, sequence#, archived
+from v$log;
+
+```
+GROUP# STATUS            SEQUENCE# ARC
+```
+
+---
+
+```
+     1 CURRENT                   7 NO
+     2 INACTIVE                  5 YES
+     3 INACTIVE                  6 YES
+     4 UNUSED                    0 YES
+```
+
+SQL> save log.sql
+file log.sql(이)가 생성되었습니다
+SQL>
+SQL> alter system switch logfile;
+
+시스템이 변경되었습니다.
+
+SQL> alter system switch logfile;
+
+시스템이 변경되었습니다.
+
+SQL> @log
+
+```
+GROUP# STATUS            SEQUENCE# ARC
+```
+
+---
+
+```
+     1 ACTIVE                    7 YES
+     2 CURRENT                   9 NO
+     3 INACTIVE                  6 YES
+     4 ACTIVE                    8 YES
+```
+
+SQL>

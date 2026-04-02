@@ -1,0 +1,99 @@
+ASM환경에서 여러개의 data file이 삭제가 되었다.
+
+-- 1. ts01 테이블 스페이스를 만들고 여기에 테이블을 생성합니다.
+
+SQL> select file_name from dba_data_files;
+
+FILE_NAME
+--------------------------------------------------------------------------------
++DATA/ORCL/DATAFILE/users.259.1227029531
++DATA/ORCL/DATAFILE/undotbs1.258.1227029531
++DATA/ORCL/DATAFILE/system.256.1227029471
++DATA/ORCL/DATAFILE/sysaux.257.1227029505
+
+SQL>
+SQL> create  tablespace ts01
+  2  ;
+
+테이블스페이스가 생성되었습니다.
+
+SQL> select file_name from dba_data_files;
+
+FILE_NAME
+--------------------------------------------------------------------------------
++DATA/ORCL/DATAFILE/users.259.1227029531
++DATA/ORCL/DATAFILE/undotbs1.258.1227029531
++DATA/ORCL/DATAFILE/system.256.1227029471
++DATA/ORCL/DATAFILE/sysaux.257.1227029505
++DATA/ORCL/DATAFILE/ts01.273.1229507525
+
+
+SQL> create user scott
+      identified by tiger;
+
+사용자가 생성되었습니다.
+
+SQL> grant dba to scott;
+
+권한이 부여되었습니다.
+
+SQL> connect scott/tiger
+연결되었습니다.
+SQL>
+SQL> create  table emp01
+     ( empno  number(10),
+       ename  varchar2(20),
+       sal   number(10) )
+       tablespace  ts01;
+
+테이블이 생성되었습니다.
+
+SQL> insert into emp01 values( 1111,'aaa', 3000);
+
+1 개의 행이 만들어졌습니다.
+
+SQL> commit;
+
+커밋이 완료되었습니다.
+
+SQL> alter system switch logfile;
+
+시스템이 변경되었습니다.
+
+-- 2. 알맨으로 접속해서 백업합니다. 
+
+[oracle@asmtest ~]$ rman target / nocatalog
+
+
+RMAN> backup database;
+
+-- 3. ts01 테이블 스페이스에 여러개의 데이터 파일을 추가합니다. 
+
+SQL> alter tablespace ts01 add datafile;
+
+테이블스페이스가 변경되었습니다.
+
+SQL> alter tablespace ts01 add datafile size 100m;
+
+테이블스페이스가 변경되었습니다.
+
+SQL> select file_name from dba_data_files;
+
+FILE_NAME
+--------------------------------------------------------------------------------
++DATA/ORCL/DATAFILE/users.259.1227029531
++DATA/ORCL/DATAFILE/undotbs1.258.1227029531
++DATA/ORCL/DATAFILE/system.256.1227029471
++DATA/ORCL/DATAFILE/sysaux.257.1227029505
++DATA/ORCL/DATAFILE/ts01.273.1229507525
++DATA/ORCL/DATAFILE/ts01.274.1229507829
++DATA/ORCL/DATAFILE/ts01.275.1229507847
+
+7 행이 선택되었습니다.
+
+[oracle@asmtest ~]$ rman target / nocatalog
+
+
+RMAN> backup tablespace  ts01;
+
+-- 4. 장애를 일으키고 복구 합니다.
