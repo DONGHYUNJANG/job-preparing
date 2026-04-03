@@ -1,0 +1,77 @@
+shutdown immeidate 실행 후 hang상태
+DIA0 Critical Database Process As Root: Hang ID 1 blocks 1 sessions
+     Final blocker is session ID 237 serial# 58332 OSPID 3688 on Instance 1
+     No resolution will be attempted by Hang Manager
+2026-04-03T20:38:45.841421+09:00
+sculkget: failed to lock /app/oracle/product/19.0.0/db_1/dbs/lkinstorcl exclusive
+sculkget: lock held by PID: 3701
+Oracle Instance Shutdown operation failed. Another process may be attempting to startup or shutdown this Instance.
+Failed to acquire instance startup/shutdown serialization primitive
+
+1. 에러 로그 상세 분석
+① Hang Manager 감지
+로그: DIA0 Critical Database Process... Hang ID 1 blocks 1 sessions
+
+의미: DIA0(진단 프로세스)가 세션 간의 블로킹 현상을 감지했습니다. 특정 세션(ID 237)이 종료 작업을 붙잡고 있어 더 이상 진행되지 않는 상태입니다.
+
+② 인스턴스 락(Lock) 획득 실패
+로그: sculkget: failed to lock .../dbs/lkinstorcl exclusive
+
+로그: lock held by PID: 3701
+
+의미: 오라클 인스턴스를 제어하기 위한 파일(lkinstorcl)의 독점권(Exclusive Lock)을 얻으려 했으나, 이미 PID 3701이 이 락을 쥐고 있어 실패했습니다. 3701번 프로세스가 종료되지 않고 좀비처럼 남아있는 상태입니다.
+
+해결: 강제 프로세스 종료
+
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.26.0.0.0
+[oracle@asmtest ~]$ ps -ef | grep ora_ | grep orcl
+oracle    3576     1  0 20:34 ?        00:00:00 ora_pmon_orcl
+oracle    3580     1  0 20:34 ?        00:00:00 ora_clmn_orcl
+oracle    3585     1  0 20:34 ?        00:00:00 ora_psp0_orcl
+oracle    3589     1  9 20:34 ?        00:00:30 ora_vktm_orcl
+oracle    3596     1  0 20:34 ?        00:00:00 ora_gen0_orcl
+oracle    3602     1  0 20:34 ?        00:00:00 ora_mman_orcl
+oracle    3606     1  0 20:34 ?        00:00:00 ora_gen1_orcl
+oracle    3609     1  0 20:34 ?        00:00:00 ora_diag_orcl
+oracle    3611     1  0 20:34 ?        00:00:00 ora_ofsd_orcl
+oracle    3614     1  0 20:34 ?        00:00:00 ora_dbrm_orcl
+oracle    3618     1  0 20:34 ?        00:00:00 ora_vkrm_orcl
+oracle    3620     1  0 20:34 ?        00:00:00 ora_svcb_orcl
+oracle    3622     1  0 20:34 ?        00:00:00 ora_pman_orcl
+oracle    3626     1  0 20:34 ?        00:00:00 ora_dia0_orcl
+oracle    3628     1  0 20:34 ?        00:00:00 ora_dbw0_orcl
+oracle    3632     1  0 20:34 ?        00:00:00 ora_lgwr_orcl
+oracle    3637     1  0 20:34 ?        00:00:00 ora_lg00_orcl
+oracle    3639     1  0 20:34 ?        00:00:00 ora_ckpt_orcl
+oracle    3643     1  0 20:34 ?        00:00:00 ora_lg01_orcl
+oracle    3645     1  0 20:34 ?        00:00:00 ora_smon_orcl
+oracle    3649     1  0 20:34 ?        00:00:00 ora_smco_orcl
+oracle    3651     1  0 20:34 ?        00:00:00 ora_w000_orcl
+oracle    3653     1  0 20:34 ?        00:00:00 ora_reco_orcl
+oracle    3655     1  0 20:34 ?        00:00:00 ora_w001_orcl
+oracle    3657     1  0 20:34 ?        00:00:00 ora_lreg_orcl
+oracle    3661     1  0 20:34 ?        00:00:00 ora_pxmn_orcl
+oracle    3663     1  0 20:34 ?        00:00:00 ora_rbal_orcl
+oracle    3667     1  0 20:34 ?        00:00:00 ora_asmb_orcl
+oracle    3671     1  0 20:34 ?        00:00:00 ora_fenc_orcl
+oracle    3677     1  0 20:34 ?        00:00:00 ora_mmon_orcl
+oracle    3679     1  0 20:34 ?        00:00:00 ora_mmnl_orcl
+oracle    3681     1  0 20:34 ?        00:00:00 ora_d000_orcl
+oracle    3683     1  0 20:34 ?        00:00:00 ora_s000_orcl
+oracle    3685     1  0 20:34 ?        00:00:00 ora_tmon_orcl
+oracle    3696     1  0 20:34 ?        00:00:00 ora_mark_orcl
+oracle    3733     1  0 20:34 ?        00:00:00 ora_p000_orcl
+oracle    3735     1  0 20:34 ?        00:00:00 ora_p001_orcl
+oracle    3741     1  0 20:34 ?        00:00:00 ora_tt00_orcl
+oracle    3743     1  0 20:34 ?        00:00:00 ora_arc0_orcl
+oracle    3745     1  0 20:34 ?        00:00:00 ora_tt01_orcl
+oracle    3747     1  0 20:34 ?        00:00:00 ora_arc1_orcl
+oracle    3749     1  0 20:34 ?        00:00:00 ora_arc2_orcl
+oracle    3751     1  0 20:34 ?        00:00:00 ora_arc3_orcl
+oracle    3754     1  0 20:34 ?        00:00:00 ora_tt02_orcl
+oracle    3761     1  0 20:34 ?        00:00:00 ora_w002_orcl
+oracle    3766     1  0 20:34 ?        00:00:00 ora_w003_orcl
+oracle    3771     1  0 20:34 ?        00:00:00 ora_w004_orcl
+[oracle@asmtest ~]$ kill -9 3645
+[oracle@asmtest ~]$

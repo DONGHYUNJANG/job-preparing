@@ -1,0 +1,81 @@
+```sql
+1. RMAN 으로 full backup 을 합니다. 
+
+[oracle@asmtest ~]$ rman target / nocatalog
+
+RMAN> backup database;
+
+26/04/03에서 backup을(를) 시작하는 중입니다.
+채널을 할당했습니다: ORA_DISK_1
+채널 ORA_DISK_1: SID=54 장치 유형=DISK
+ORA_DISK_1 채널: 전체 데이터 파일 백업 집합을 시작하는 중입니다.
+ORA_DISK_1 채널: 백업 집합에서 데이터 파일을 지정하는 중입니다.
+입력 데이터 파일 번호=00001 이름=+DATA/ORCL/DATAFILE/system.275.1229523865
+입력 데이터 파일 번호=00003 이름=+DATA/ORCL/DATAFILE/sysaux.274.1229523865
+입력 데이터 파일 번호=00004 이름=+DATA/ORCL/DATAFILE/undotbs1.273.1229523865
+입력 데이터 파일 번호=00005 이름=+DATA/ORCL/DATAFILE/ts02.270.1229523865
+입력 데이터 파일 번호=00002 이름=+DATA/ORCL/DATAFILE/ts100.261.1229523865
+입력 데이터 파일 번호=00007 이름=+DATA/ORCL/DATAFILE/users.260.1229523865
+채널 ORA_DISK_1: 26/04/03에서 1 조각을 시작하는 중입니다.
+
+2. .bash_profile 에 nls_date_format 를 수정해서 시분초도 볼 수 있게 셋팅을 합니다.
+
+NLS_LANG=american_america.we8iso8859p15
+NLS_DATE_FORMAT='RRRR/MM/DD:HH24:MI:SS'
+export NLS_LANG
+export NLS_DATE_FORMAT
+
+[oracle@asmtest ~]$ source .bash_profile
+[oracle@asmtest ~]$ sys
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Fri Apr 3 10:01:46 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+SQL> select sysdate from dual;
+
+SYSDATE
+-------------------
+2026/04/03:10:01:53
+
+3. 로그 스위치를 여러번 일으키고 체크 포인트를 일으킵니다.
+
+SQL> alter system switch logfile;
+
+System altered.
+
+SQL> alter system switch logfile;
+
+System altered.
+
+SQL> alter system switch logfile;
+
+System altered.
+
+SQL> alter system checkpoint;
+
+System altered.
+
+SQL>
+
+4. 유져를 drop 합니다.
+
+SQL> drop user scott cascade
+
+SQL> alter system switch logfile;
+
+System altered.
+
+SQL> alter system switch logfile;
+
+System altered.
+
+SQL> alter system checkpoint;
+
+System altered.
+

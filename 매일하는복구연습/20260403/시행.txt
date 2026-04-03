@@ -1,0 +1,42 @@
+5. 알맨으로 time base 불완전 복구를 수행합니다.
+
+SQL> shutdown immediate
+
+SQL> startup mount
+
+[oracle@asmtest ~]$ rman target / nocatalog
+
+RMAN> run { set until time='2026/04/03:10:01:53';
+            restore database;
+            recover database;
+     }
+     
+     
+RMAN> alter database open resetlogs;
+
+SQL> alter system switch logfile;
+
+System altered.
+
+SQL> alter system switch logfile;
+
+System altered.
+
+SQL> alter system switch logfile;
+
+System altered.
+
+SQL> alter system checkpoint;
+
+System altered.
+
+[oracle@asmtest ~]$ rman target / nocatalog
+
+RMAN> configure controlfile autobackup on;
+
+RMAN> backup database;
+
+```
+
+
+

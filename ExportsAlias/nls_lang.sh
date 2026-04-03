@@ -1,0 +1,4 @@
+NLS_LANG=american_america.we8iso8859p15
+NLS_DATE_FORMAT='RRRR/MM/DD:HH24:MI:SS'
+export NLS_LANG
+export NLS_DATE_FORMAT
