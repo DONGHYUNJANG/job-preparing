@@ -879,7 +879,7 @@ alter database add logfile group 4
          
 ```
 # ============================================================
-## 💡 REDO LOG 파일 다중화 ASM
+## 💡 REDO LOG 파일 다중화 (ASM)
 # ============================================================
 
 > ASM
@@ -972,3 +972,138 @@ GROUP# STATUS            SEQUENCE# ARC
 ```
 
 SQL>
+
+# =================================================
+# 로그마이너 사용법
+# =================================================
+
+
+기본 리두 로그에는 데이터 변경 시 '최소한의 정보'만 기록된다.
+이 최소한의 정보는 RMAN이 복구를 수행하기에는 문제가 없지만 사람이 이해할 수 있는 정보로 
+전환하기에는 부족하다. 결국 로그마이너에서 조회할수 없는 데이터가 생기게 된다.
+로그마이너가 UPDATE나 DELETE된 행을 정확히 식별하려면 추가적인 정보를 기록하도록 설정해야한다.
+
+# 아카이브로그 설정 필수
+
+ALTER DATABASE ARCHIVELOG;
+ALTER DATABASE OPEN;
+
+
+# 데이터베이스 레벨의 보충 로깅 확인
+SELECT supplemental_log_data_min, 
+       supplemental_log_data_pk, 
+       supplemental_log_data_ui 
+FROM v$database;
+
+ALTER DATABASE ADD SUPPLEMENTAL LOG DATA;
+ALTER DATABASE ADD SUPPLEMENTAL LOG DATA (UNIQUE) COLUMNS;
+ALTER DATABASE ADD SUPPLEMENTAL LOG DATA (PRIMARY KEY) COLUMNS;
+-> 여기까지는 실무 권장
+
+ALTER DATABASE ADD SUPPLEMENTAL LOG DATA (ALL) COLUMNS;
+-> 부하가 많으니 잘 생각해서 완벽한 복구를 위해서는 필요.
+
+# 특정 테이블에만 SPPLEMENTAL LOG 설정
+
+① 특정 컬럼들만 로그에 남기기 (가장 효율적)
+모든 컬럼이 아니라, 분석에 꼭 필요한 컬럼(예: ID, 이름)만 지정해서 로그를 남깁니다.
+
+SQL
+ALTER TABLE SCOTT.EMP ADD SUPPLEMENTAL LOG GROUP log_grp_emp (EMPNO, ENAME) ALWAYS;
+② 해당 테이블의 모든 컬럼 남기기 (PK 없을 때 추천)
+오늘 사용자님을 괴롭혔던 PK 없는 테이블은 이 명령어로 해당 테이블만 '무적'으로 만들면 됩니다.
+
+SQL
+ALTER TABLE SCOTT.EMP ADD SUPPLEMENTAL LOG DATA (ALL) COLUMNS;
+주의: DATABASE LEVEL 설정과 문법이 거의 비슷하지만, 앞에 TABLE명이 들어갑니다.
+
+③ PK/Unique/Foreign Key 기반 설정
+SQL
+-- 테이블의 PK 컬럼들을 로그에 남김
+ALTER TABLE SCOTT.EMP ADD SUPPLEMENTAL LOG DATA (PRIMARY KEY) COLUMNS;
+
+-- 테이블의 Unique Index 컬럼들을 로그에 남김
+ALTER TABLE SCOTT.EMP ADD SUPPLEMENTAL LOG DATA (UNIQUE) COLUMNS;
+
+2. 설정 확인하는 방법 (딕셔너리 뷰)
+설정을 마친 후에는 V$DATABASE가 아니라 ALL_LOG_GROUPS 또는 ALL_LOG_GROUP_COLUMNS 뷰를 조회해야 합니다.
+
+SQL
+-- 어떤 테이블에 어떤 로그 그룹이 설정되어 있는지 확인
+SELECT OWNER, TABLE_NAME, LOG_GROUP_NAME, LOG_GROUP_TYPE
+FROM ALL_LOG_GROUPS
+WHERE OWNER = 'SCOTT';
+
+-- 로그 그룹에 포함된 상세 컬럼 확인
+SELECT OWNER, TABLE_NAME, COLUMN_NAME
+FROM ALL_LOG_GROUP_COLUMNS
+WHERE TABLE_NAME = 'EMP';
+
+3. 설정 삭제하는 방법 (원복)
+테스트가 끝났거나 부하가 너무 심해져서 설정을 지우고 싶을 때는 DROP을 사용합니다.
+
+SQL
+-- 특정 로그 그룹 삭제
+ALTER TABLE SCOTT.EMP DROP SUPPLEMENTAL LOG GROUP log_grp_emp;
+
+-- ALL COLUMNS 등 데이터 레벨 옵션 삭제
+ALTER TABLE SCOTT.EMP DROP SUPPLEMENTAL LOG DATA (ALL) COLUMNS;
+
+
+
+
+PK가 없는 테이블의 DELETE 이력을 보려면 아래 명령어를 실행해야 합니다.
+
+SQL
+-- 테이블의 모든 컬럼 정보를 리두 로그에 강제로 남기도록 설정
+ALTER DATABASE ADD SUPPLEMENTAL LOG DATA (ALL) COLUMNS;
+
+
+# 왜 EMP테이블의 DELETE 로그가 안 남았었나? (정리)
+
+PK가 있는 경우: 오라클이 "PK=10번인 놈 지웠음"이라고 짧게 기록함. (성공)
+
+PK가 없는 경우 + PK 옵션만 켠 경우: 오라클이 "지우긴 지웠는데... 식별할 PK가 없네? 그럼 기록 안 해!" 하고 넘어가 버림. (실패)
+-> 정확히는 기록은있으나 로그마이너가 표시할수있을 정도의 정보가 기록되지 않는다.
+
+ALL 옵션을 켠 경우: "PK고 뭐고 모르겠고, 그냥 이 줄에 있던 모든 값을 다 로그에 적어둘게!" (성공)
+
+
+# 현재 로그마이너 강제 종료
+이미 종료된 상태더라도 한 번 더 명확하게 명령을 내려서 메모리를 비웁니다.
+EXEC DBMS_LOGMNR.END_LOGMNR;
+등록된 파일 목록 재확인 (비어 있어야 함)
+이 쿼리를 날렸을 때 아무 로우도 나오지 않아야 정상적으로 초기화된 것입니다.
+SELECT FILENAME FROM V$LOGMNR_LOGS;
+
+# 날짜별 아카이브로그 한번에 로그마이너에 추가하는 방법
+
+# 1. 아카이브 경로로 이동 (사용자 환경에 맞춰 수정)
+cd /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/
+
+# 2. 첫 번째 파일은 .NEW 옵션으로 생성
+ls -1 *.arc | head -1 | awk '{print "exec DBMS_LOGMNR.ADD_LOGFILE(logfilename => \x27" ENVIRON["PWD"] "/" $1 "\x27, options => DBMS_LOGMNR.NEW);"}' > add_logs.sql
+
+# 3. 나머지 파일들은 .ADDFILE 옵션으로 추가
+ls -1 *.arc | tail -n +2 | awk '{print "exec DBMS_LOGMNR.ADD_LOGFILE(logfilename => \x27" ENVIRON["PWD"] "/" $1 "\x27, options => DBMS_LOGMNR.ADDFILE);"}' >> add_logs.sql
+
+SQL> @add_logs.sql
+
+
+SELECT THREAD_ID, THREAD_SQN, LOW_SCN, NEXT_SCN, FILENAME, STATUS
+FROM V$LOGMNR_LOGS;
+
+# 분석 시작하기
+
+EXEC DBMS_LOGMNR.START_LOGMNR(OPTIONS => DBMS_LOGMNR.DICT_FROM_ONLINE_CATALOG);
+
+# 결과조회
+SELECT timestamp, username, sql_redo
+            FROM v$logmnr_contents
+            WHERE operation = 'DDL';
+
+
+
+
+
+

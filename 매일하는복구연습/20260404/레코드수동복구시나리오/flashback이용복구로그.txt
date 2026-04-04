@@ -1,0 +1,179 @@
+SQL> @line
+SQL> select * from emp
+  2  ;
+
+     EMPNO ENAME      JOB              MGR HIREDATE                   SAL       COMM     DEPTNO
+---------- ---------- --------- ---------- ------------------- ---------- ---------- ----------
+      7839 KING       PRESIDENT            1981/11/17:00:00:00       5000                    10
+      7698 BLAKE      MANAGER         7839 1981/05/01:00:00:00       2850                    30
+      7782 CLARK      MANAGER         7839 1981/05/09:00:00:00       2450                    10
+      7566 JONES      MANAGER         7839 1981/04/01:00:00:00       2975                    20
+      7654 MARTIN     SALESMAN        7698 1981/09/10:00:00:00       1250       1400         30
+      7499 ALLEN      SALESMAN        7698 1981/02/11:00:00:00       1600        300         30
+      7844 TURNER     SALESMAN        7698 1981/08/21:00:00:00       1500          0         30
+      7900 JAMES      CLERK           7698 1981/12/11:00:00:00        950                    30
+      7521 WARD       SALESMAN        7698 1981/02/23:00:00:00       1250        500         30
+      7902 FORD       ANALYST         7566 1981/12/11:00:00:00       3000                    20
+      7369 SMITH      CLERK           7902 1980/12/09:00:00:00        800                    20
+      7788 SCOTT      ANALYST         7566 1982/12/22:00:00:00       3000                    20
+      7876 ADAMS      CLERK           7788 1983/01/15:00:00:00       1100                    20
+      7934 MILLER     CLERK           7782 1982/01/11:00:00:00       1300                    10
+
+14 rows selected.
+
+SQL> delete from emp where deptno=10;
+
+3 rows deleted.
+
+SQL> select count(*) from emp;
+
+  COUNT(*)
+----------
+        11
+
+SQL> SELECT * FROM SCOTT.DEPT
+AS OF TIMESTAMP (SYSTIMESTAMP - INTERVAL '5' MINUTE);  2
+
+    DEPTNO DNAME          LOC
+---------- -------------- -------------
+        10 ACCOUNTING     NEW YORK
+        20 RESEARCH       DALLAS
+        30 SALES          CHICAGO
+        40 OPERATIONS     BOSTON
+
+SQL> SELECT * FROM SCOTT.EMP
+AS OF TIMESTAMP (SYSTIMESTAMP - INTERVAL '5' MINUTE);  2
+
+     EMPNO ENAME      JOB              MGR HIREDATE                   SAL       COMM     DEPTNO
+---------- ---------- --------- ---------- ------------------- ---------- ---------- ----------
+      7839 KING       PRESIDENT            1981/11/17:00:00:00       5000                    10
+      7698 BLAKE      MANAGER         7839 1981/05/01:00:00:00       2850                    30
+      7782 CLARK      MANAGER         7839 1981/05/09:00:00:00       2450                    10
+      7566 JONES      MANAGER         7839 1981/04/01:00:00:00       2975                    20
+      7654 MARTIN     SALESMAN        7698 1981/09/10:00:00:00       1250       1400         30
+      7499 ALLEN      SALESMAN        7698 1981/02/11:00:00:00       1600        300         30
+      7844 TURNER     SALESMAN        7698 1981/08/21:00:00:00       1500          0         30
+      7900 JAMES      CLERK           7698 1981/12/11:00:00:00        950                    30
+      7521 WARD       SALESMAN        7698 1981/02/23:00:00:00       1250        500         30
+      7902 FORD       ANALYST         7566 1981/12/11:00:00:00       3000                    20
+      7369 SMITH      CLERK           7902 1980/12/09:00:00:00        800                    20
+      7788 SCOTT      ANALYST         7566 1982/12/22:00:00:00       3000                    20
+      7876 ADAMS      CLERK           7788 1983/01/15:00:00:00       1100                    20
+      7934 MILLER     CLERK           7782 1982/01/11:00:00:00       1300                    10
+
+14 rows selected.
+
+SQL> CREATE TABLE EMP_RECOVERD AS
+SELECT * FROM SCOTT.EMP
+AS OF TIMESTAMP (SYSTIMESTAMP - INTERVAL '5' MINUTE);  2    3
+
+Table created.
+
+SQL> select * from emp_recovered;
+select * from emp_recovered
+              *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL> select * from EMP_RECOVERD
+  2  ;
+
+     EMPNO ENAME      JOB              MGR HIREDATE                   SAL       COMM     DEPTNO
+---------- ---------- --------- ---------- ------------------- ---------- ---------- ----------
+      7839 KING       PRESIDENT            1981/11/17:00:00:00       5000                    10
+      7698 BLAKE      MANAGER         7839 1981/05/01:00:00:00       2850                    30
+      7782 CLARK      MANAGER         7839 1981/05/09:00:00:00       2450                    10
+      7566 JONES      MANAGER         7839 1981/04/01:00:00:00       2975                    20
+      7654 MARTIN     SALESMAN        7698 1981/09/10:00:00:00       1250       1400         30
+      7499 ALLEN      SALESMAN        7698 1981/02/11:00:00:00       1600        300         30
+      7844 TURNER     SALESMAN        7698 1981/08/21:00:00:00       1500          0         30
+      7900 JAMES      CLERK           7698 1981/12/11:00:00:00        950                    30
+      7521 WARD       SALESMAN        7698 1981/02/23:00:00:00       1250        500         30
+      7902 FORD       ANALYST         7566 1981/12/11:00:00:00       3000                    20
+      7369 SMITH      CLERK           7902 1980/12/09:00:00:00        800                    20
+      7788 SCOTT      ANALYST         7566 1982/12/22:00:00:00       3000                    20
+      7876 ADAMS      CLERK           7788 1983/01/15:00:00:00       1100                    20
+      7934 MILLER     CLERK           7782 1982/01/11:00:00:00       1300                    10
+
+14 rows selected.
+
+SQL> INSERT INTO SCOTT.EMP
+SELECT * FROM SCOTT.EMP
+AS OF TIMESTAMP (SYSTIMESTAMP - INTERVAL '10' MINUTE);
+
+COMMIT;  2    3
+14 rows created.
+
+SQL> SQL>
+
+Commit complete.
+
+SQL>
+SQL>
+SQL> select * from emp;
+
+     EMPNO ENAME      JOB              MGR HIREDATE                   SAL       COMM     DEPTNO
+---------- ---------- --------- ---------- ------------------- ---------- ---------- ----------
+      7839 KING       PRESIDENT            1981/11/17:00:00:00       5000                    10
+      7698 BLAKE      MANAGER         7839 1981/05/01:00:00:00       2850                    30
+      7782 CLARK      MANAGER         7839 1981/05/09:00:00:00       2450                    10
+      7566 JONES      MANAGER         7839 1981/04/01:00:00:00       2975                    20
+      7654 MARTIN     SALESMAN        7698 1981/09/10:00:00:00       1250       1400         30
+      7499 ALLEN      SALESMAN        7698 1981/02/11:00:00:00       1600        300         30
+      7844 TURNER     SALESMAN        7698 1981/08/21:00:00:00       1500          0         30
+      7900 JAMES      CLERK           7698 1981/12/11:00:00:00        950                    30
+      7521 WARD       SALESMAN        7698 1981/02/23:00:00:00       1250        500         30
+      7902 FORD       ANALYST         7566 1981/12/11:00:00:00       3000                    20
+      7369 SMITH      CLERK           7902 1980/12/09:00:00:00        800                    20
+      7788 SCOTT      ANALYST         7566 1982/12/22:00:00:00       3000                    20
+      7876 ADAMS      CLERK           7788 1983/01/15:00:00:00       1100                    20
+      7934 MILLER     CLERK           7782 1982/01/11:00:00:00       1300                    10
+      7698 BLAKE      MANAGER         7839 1981/05/01:00:00:00       2850                    30
+      7566 JONES      MANAGER         7839 1981/04/01:00:00:00       2975                    20
+      7654 MARTIN     SALESMAN        7698 1981/09/10:00:00:00       1250       1400         30
+      7499 ALLEN      SALESMAN        7698 1981/02/11:00:00:00       1600        300         30
+      7844 TURNER     SALESMAN        7698 1981/08/21:00:00:00       1500          0         30
+      7900 JAMES      CLERK           7698 1981/12/11:00:00:00        950                    30
+      7521 WARD       SALESMAN        7698 1981/02/23:00:00:00       1250        500         30
+      7902 FORD       ANALYST         7566 1981/12/11:00:00:00       3000                    20
+      7369 SMITH      CLERK           7902 1980/12/09:00:00:00        800                    20
+      7788 SCOTT      ANALYST         7566 1982/12/22:00:00:00       3000                    20
+      7876 ADAMS      CLERK           7788 1983/01/15:00:00:00       1100                    20
+
+25 rows selected.
+
+SQL> ALTER TABLE SCOTT.DEPT ENABLE ROW MOVEMENT;
+
+Table altered.
+
+SQL> ALTER TABLE SCOTT.EMP ENABLE ROW MOVEMENT;
+
+Table altered.
+
+SQL> FLASHBACK TABLE SCOTT.EMP TO TIMESTAMP (SYSTIMESTAMP - INTERVAL '10' MINUTE);
+
+Flashback complete.
+
+SQL> select * from emp;
+
+     EMPNO ENAME      JOB              MGR HIREDATE                   SAL       COMM     DEPTNO
+---------- ---------- --------- ---------- ------------------- ---------- ---------- ----------
+      7839 KING       PRESIDENT            1981/11/17:00:00:00       5000                    10
+      7698 BLAKE      MANAGER         7839 1981/05/01:00:00:00       2850                    30
+      7782 CLARK      MANAGER         7839 1981/05/09:00:00:00       2450                    10
+      7566 JONES      MANAGER         7839 1981/04/01:00:00:00       2975                    20
+      7654 MARTIN     SALESMAN        7698 1981/09/10:00:00:00       1250       1400         30
+      7499 ALLEN      SALESMAN        7698 1981/02/11:00:00:00       1600        300         30
+      7844 TURNER     SALESMAN        7698 1981/08/21:00:00:00       1500          0         30
+      7900 JAMES      CLERK           7698 1981/12/11:00:00:00        950                    30
+      7521 WARD       SALESMAN        7698 1981/02/23:00:00:00       1250        500         30
+      7902 FORD       ANALYST         7566 1981/12/11:00:00:00       3000                    20
+      7369 SMITH      CLERK           7902 1980/12/09:00:00:00        800                    20
+      7788 SCOTT      ANALYST         7566 1982/12/22:00:00:00       3000                    20
+      7876 ADAMS      CLERK           7788 1983/01/15:00:00:00       1100                    20
+      7934 MILLER     CLERK           7782 1982/01/11:00:00:00       1300                    10
+
+14 rows selected.
+
+SQL>

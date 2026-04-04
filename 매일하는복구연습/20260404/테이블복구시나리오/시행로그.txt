@@ -1,0 +1,1486 @@
+QL> EXEC DBMS_LOGMNR.START_LOGMNR( -
+   OPTIONS => DBMS_LOGMNR.DICT_FROM_ONLINE_CATALOG + -
+              DBMS_LOGMNR.CONTINUOUS_MINE + -
+              DBMS_LOGMNR.COMMITTED_DATA_ONLY -
+);> > > >
+BEGIN DBMS_LOGMNR.START_LOGMNR(     OPTIONS => DBMS_LOGMNR.DICT_FROM_ONLINE_CATALOG +                DBMS_LOGMNR.CONTINUOUS_MINE +                DBMS_LOGMNR.COMMITTED_DATA_ONLY  ); END;
+
+*
+ERROR at line 1:
+ORA-01286: start interval required
+ORA-06512: at "SYS.DBMS_LOGMNR", line 72
+ORA-06512: at line 1
+
+
+SQL> EXEC DBMS_LOGMNR.ADD_LOGFILE( -
+   LogFileName => '/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_3_nx0xt7dp_.arc', -
+   Options => DBMS_LOGMNR.NEW -
+);> > >
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT SCN,
+       TO_CHAR(TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS') AS TIME,
+       SEG_OWNER,
+       OPERATION,
+       SQL_REDO
+FROM V$LOGMNR_CONTENTS
+WHERE SEG_OWNER NOT IN ('SYS', 'SYSTEM') -- 시스템 로그는 제외하고 내 것만!
+ORDER BY SCN DESC;  2    3    4    5    6    7    8
+FROM V$LOGMNR_CONTENTS
+     *
+ERROR at line 6:
+ORA-01306: dbms_logmnr.start_logmnr() must be invoked before selecting from v$logmnr_contents
+
+
+SQL> EXEC DBMS_LOGMNR.START_LOGMNR( -
+   OPTIONS => DBMS_LOGMNR.DICT_FROM_ONLINE_CATALOG -
+);> >
+
+PL/SQL procedure successfully completed.
+
+SQL> +SELECT SCN,
+       TO_CHAR(TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS') AS TIME,
+       SEG_OWNER,
+       OPERATION,
+       SQL_REDO
+FROM V$LOGMNR_CONTENTS
+WHERE SEG_OWNER NOT IN ('SYS', 'SYSTEM') -- 시스템 로그는 제외하고 내 것만!
+ORDER BY SCN DESC;SP2-0734: unknown command beginning "+SELECT SC..." - rest of line ignored.
+SQL> SP2-0734: unknown command beginning "TO_CHAR(TI..." - rest of line ignored.
+SQL> SP2-0042: unknown command "SEG_OWNER," - rest of line ignored.
+SQL> SP2-0042: unknown command "OPERATION," - rest of line ignored.
+SP2-0044: For a list of known commands enter HELP
+and to leave enter EXIT.
+SQL> SP2-0042: unknown command "SQL_REDO" - rest of line ignored.
+SQL> SP2-0734: unknown command beginning "FROM V$LOG..." - rest of line ignored.
+SQL> SP2-0734: unknown command beginning "WHERE SEG_..." - rest of line ignored.
+SQL>
+SP2-0734: unknown command beginning "ORDER BY S..." - rest of line ignored.
+SP2-0044: For a list of known commands enter HELP
+and to leave enter EXIT.
+SQL> SELECT SCN,
+       TO_CHAR(TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS') AS TIME,
+       SEG_OWNER,
+       OPERATION,
+       SQL_REDO
+FROM V$LOGMNR_CONTENTS
+WHERE SEG_OWNER NOT IN ('SYS', 'SYSTEM') -- 시스템 로그는 제외하고 내 것만!
+ORDER BY SCN DESC;  2    3    4    5    6    7    8
+
+       SCN TIME
+---------- -------------------
+SEG_OWNER
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+OPERATION
+--------------------------------
+SQL_REDO
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   2840615 2026-04-04 10:16:54
+SCOTT
+DDL
+drop table dept purge;
+
+
+SQL> @line
+SQL> col seg_owner for a20
+SQL> col sql_redo for a30
+SQL> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[oracle@ora19c ~]$ sys
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Sat Apr 4 11:39:41 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+
+PL/SQL procedure successfully completed.
+
+SQL> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[oracle@ora19c ~]$ rman target / nocatalog
+
+Recovery Manager: Release 19.0.0.0.0 - Production on Sat Apr 4 11:39:48 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+connected to target database: ORA19 (DBID=725837126)
+using target database control file instead of recovery catalog
+
+RMAN> exit
+
+
+Recovery Manager complete.
+[oracle@ora19c ~]$ mkdir -p /u01/app/oracle/oradata/temp_recovery
+[oracle@ora19c ~]$ list backup of table scott.dept;
+bash: list: 명령을 찾을 수 없습니다...
+[oracle@ora19c ~]$ rman target / nocatalog
+
+Recovery Manager: Release 19.0.0.0.0 - Production on Sat Apr 4 11:40:34 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+connected to target database: ORA19 (DBID=725837126)
+using target database control file instead of recovery catalog
+
+RMAN> list backup of table scott.dept;
+
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-00558: error encountered while parsing input commands
+RMAN-01009: syntax error: found "table": expecting one of: "application, archivelog, controlfile, database, database root, datafile, foreign, pluggable, spfile, tablespace"
+RMAN-01007: at line 1 column 16 file: standard input
+
+RMAN> -- RMAN이 아닌 SQL 창(SQL*Plus 등)에서 실행하세요.
+SELECT CHECKPOINT_CHANGE#, TO_CHAR(CHECKPOINT_TIME, 'YYYY-MM-DD HH24:MI:SS')
+FROM V$DATAFILE;
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-00558: error encountered while parsing input commands
+RMAN-01006: error signaled during parse
+RMAN-02001: unrecognized punctuation symbol "-"
+
+RMAN> 2>
+
+CHECKPOINT_CHANGE# TO_CHAR(CHECKPOINT_
+------------------ -------------------
+           2842175 2026-04-04 11:28:23
+           2842175 2026-04-04 11:28:23
+           2842175 2026-04-04 11:28:23
+           2842175 2026-04-04 11:28:23
+           2842175 2026-04-04 11:28:23
+           2842175 2026-04-04 11:28:23
+
+RMAN> LIST BACKUP SUMMARY;
+
+
+List of Backups
+===============
+Key     TY LV S Device Type Completion Time     #Pieces #Copies Compressed Tag
+------- -- -- - ----------- ------------------- ------- ------- ---------- ---
+27      B  F  A DISK        2026/03/28:17:10:45 4       1       YES        FULL_BACKUP_P4_300M_20260328
+28      B  F  A DISK        2026/03/28:17:11:43 4       1       YES        FULL_BACKUP_P4_300M_20260328
+29      B  F  A DISK        2026/03/28:17:12:06 2       1       YES        FULL_BACKUP_P4_300M_20260328
+30      B  F  A DISK        2026/03/28:17:12:19 1       1       YES        FULL_BACKUP_P4_300M_20260328
+31      B  F  A DISK        2026/03/28:17:12:25 2       1       YES        FULL_BACKUP_P4_300M_20260328
+32      B  F  A DISK        2026/03/28:17:12:27 1       1       NO         TAG20260328T171226
+33      B  A  A DISK        2026/03/28:17:12:34 1       1       YES        TAG20260328T171232
+34      B  A  A DISK        2026/03/28:17:12:36 1       1       YES        TAG20260328T171232
+35      B  A  A DISK        2026/03/28:17:12:38 1       1       YES        TAG20260328T171232
+36      B  F  A DISK        2026/03/28:17:12:40 1       1       NO         TAG20260328T171239
+37      B  F  A DISK        2026/03/29:20:43:34 1       1       NO         TAG20260329T204333
+38      B  F  A DISK        2026/03/29:20:45:26 1       1       NO         TAG20260329T204407
+39      B  F  A DISK        2026/03/29:20:45:38 1       1       NO         TAG20260329T204536
+40      B  F  A DISK        2026/03/29:21:20:02 1       1       NO         TAG20260329T212001
+41      B  A  A DISK        2026/03/29:21:27:34 1       1       YES        TAG20260329T212728
+42      B  A  A DISK        2026/03/29:21:27:44 1       1       YES        TAG20260329T212728
+43      B  A  A DISK        2026/03/29:21:27:46 1       1       YES        TAG20260329T212728
+44      B  A  A DISK        2026/03/29:21:27:47 1       1       YES        TAG20260329T212728
+45      B  A  A DISK        2026/03/29:21:27:49 1       1       YES        TAG20260329T212728
+46      B  A  A DISK        2026/03/29:21:27:50 1       1       YES        TAG20260329T212728
+47      B  F  A DISK        2026/03/29:21:28:28 1       1       YES        TAG20260329T212751
+48      B  A  A DISK        2026/03/29:21:28:37 1       1       YES        TAG20260329T212837
+49      B  F  A DISK        2026/03/29:21:28:39 1       1       NO         TAG20260329T212838
+50      B  F  A DISK        2026/03/29:22:05:40 1       1       NO         TAG20260329T220540
+
+
+RMAN> RECOVER TABLE SCOTT.DEPT
+    UNTIL SCN 2840614
+    AUXILIARY DESTINATION '/u01/app/oracle/oradata/temp_recovery'
+    REMAP TABLE 'SCOTT'.'DEPT':'DEPT_RECOVERED';2> 3> 4>
+
+Starting recover at 2026/04/04:11:45:14
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=22 device type=DISK
+RMAN-05026: warning: presuming following set of tablespaces applies to specified point-in-time
+
+List of tablespaces expected to have UNDO segments
+Tablespace SYSTEM
+Tablespace UNDOTBS1
+
+Creating automatic instance, with SID='kAwv'
+
+initialization parameters used for automatic instance:
+db_name=ORA19
+db_unique_name=kAwv_pitr_ORA19
+compatible=19.0.0
+db_block_size=8192
+db_files=200
+diagnostic_dest=/u01/app/oracle
+_system_trig_enabled=FALSE
+sga_target=508M
+processes=200
+db_create_file_dest=/u01/app/oracle/oradata/temp_recovery
+log_archive_dest_1='location=/u01/app/oracle/oradata/temp_recovery'
+#No auxiliary parameter file used
+
+
+starting up automatic instance ORA19
+
+Oracle instance started
+
+Total System Global Area     532674560 bytes
+
+Fixed Size                     8898560 bytes
+Variable Size                171966464 bytes
+Database Buffers             343932928 bytes
+Redo Buffers                   7876608 bytes
+Automatic instance created
+
+contents of Memory Script:
+{
+# set requested point in time
+set until  scn 2840614;
+# restore the controlfile
+restore clone controlfile;
+
+# mount the controlfile
+sql clone 'alter database mount clone database';
+
+# archive current online log
+sql 'alter system archive log current';
+}
+executing Memory Script
+
+executing command: SET until clause
+
+Starting restore at 2026/04/04:11:45:54
+allocated channel: ORA_AUX_DISK_1
+channel ORA_AUX_DISK_1: SID=10 device type=DISK
+
+channel ORA_AUX_DISK_1: starting datafile backup set restore
+channel ORA_AUX_DISK_1: restoring control file
+channel ORA_AUX_DISK_1: reading from backup piece /u01/app/oracle/fast_recovery_area/ORA19/autobackup/2026_03_29/o1_mf_s_1229205940_nwl8x4mk_.bkp
+channel ORA_AUX_DISK_1: piece handle=/u01/app/oracle/fast_recovery_area/ORA19/autobackup/2026_03_29/o1_mf_s_1229205940_nwl8x4mk_.bkp tag=TAG20260329T220540
+channel ORA_AUX_DISK_1: restored backup piece 1
+channel ORA_AUX_DISK_1: restore complete, elapsed time: 00:00:01
+output file name=/u01/app/oracle/oradata/temp_recovery/ORA19/controlfile/o1_mf_nx0yv3hx_.ctl
+Finished restore at 2026/04/04:11:45:56
+
+sql statement: alter database mount clone database
+
+sql statement: alter system archive log current
+
+contents of Memory Script:
+{
+# set requested point in time
+set until  scn 2840614;
+# set destinations for recovery set and auxiliary set datafiles
+set newname for clone datafile  1 to new;
+set newname for clone datafile  4 to new;
+set newname for clone datafile  3 to new;
+set newname for clone tempfile  1 to new;
+# switch all tempfiles
+switch clone tempfile all;
+# restore the tablespaces in the recovery set and the auxiliary set
+restore clone datafile  1, 4, 3;
+
+switch clone datafile all;
+}
+executing Memory Script
+
+executing command: SET until clause
+
+executing command: SET NEWNAME
+
+executing command: SET NEWNAME
+
+executing command: SET NEWNAME
+
+executing command: SET NEWNAME
+
+renamed tempfile 1 to /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_temp_%u_.tmp in control file
+
+Starting restore at 2026/04/04:11:46:01
+using channel ORA_AUX_DISK_1
+
+channel ORA_AUX_DISK_1: starting datafile backup set restore
+channel ORA_AUX_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_AUX_DISK_1: restoring datafile 00001 to /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_system_%u_.dbf
+channel ORA_AUX_DISK_1: restoring datafile 00004 to /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_undotbs1_%u_.dbf
+channel ORA_AUX_DISK_1: restoring datafile 00003 to /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_sysaux_%u_.dbf
+channel ORA_AUX_DISK_1: reading from backup piece /u01/app/oracle/fast_recovery_area/ORA19/backupset/2026_03_29/o1_mf_nnndf_TAG20260329T212751_nwl6p7s9_.bkp
+channel ORA_AUX_DISK_1: piece handle=/u01/app/oracle/fast_recovery_area/ORA19/backupset/2026_03_29/o1_mf_nnndf_TAG20260329T212751_nwl6p7s9_.bkp tag=TAG20260329T212751
+channel ORA_AUX_DISK_1: restored backup piece 1
+channel ORA_AUX_DISK_1: restore complete, elapsed time: 00:00:55
+Finished restore at 2026/04/04:11:46:57
+
+datafile 1 switched to datafile copy
+input datafile copy RECID=4 STAMP=1229687218 file name=/u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_system_nx0yvbgm_.dbf
+datafile 4 switched to datafile copy
+input datafile copy RECID=5 STAMP=1229687218 file name=/u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_undotbs1_nx0yvbhx_.dbf
+datafile 3 switched to datafile copy
+input datafile copy RECID=6 STAMP=1229687218 file name=/u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_sysaux_nx0yvbhn_.dbf
+
+contents of Memory Script:
+{
+# set requested point in time
+set until  scn 2840614;
+# online the datafiles restored or switched
+sql clone "alter database datafile  1 online";
+sql clone "alter database datafile  4 online";
+sql clone "alter database datafile  3 online";
+# recover and open database read only
+recover clone database tablespace  "SYSTEM", "UNDOTBS1", "SYSAUX";
+sql clone 'alter database open read only';
+}
+executing Memory Script
+
+executing command: SET until clause
+
+sql statement: alter database datafile  1 online
+
+sql statement: alter database datafile  4 online
+
+sql statement: alter database datafile  3 online
+
+Starting recover at 2026/04/04:11:46:58
+using channel ORA_AUX_DISK_1
+
+starting media recovery
+
+archived log for thread 1 with sequence 2 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_2_nwl6qod4_.arc
+archived log for thread 1 with sequence 3 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_3_nwl8wr63_.arc
+archived log for thread 1 with sequence 1 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_30/o1_mf_1_1_nwo20tbc_.arc
+archived log for thread 1 with sequence 2 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_2_nx0rvx8w_.arc
+archived log for thread 1 with sequence 3 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_3_nx0xt7dp_.arc
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_2_nwl6qod4_.arc thread=1 sequence=2
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_3_nwl8wr63_.arc thread=1 sequence=3
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_30/o1_mf_1_1_nwo20tbc_.arc thread=1 sequence=1
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_2_nx0rvx8w_.arc thread=1 sequence=2
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_3_nx0xt7dp_.arc thread=1 sequence=3
+media recovery complete, elapsed time: 00:00:13
+Finished recover at 2026/04/04:11:47:13
+
+sql statement: alter database open read only
+
+contents of Memory Script:
+{
+   sql clone "create spfile from memory";
+   shutdown clone immediate;
+   startup clone nomount;
+   sql clone "alter system set  control_files =
+  ''/u01/app/oracle/oradata/temp_recovery/ORA19/controlfile/o1_mf_nx0yv3hx_.ctl'' comment=
+ ''RMAN set'' scope=spfile";
+   shutdown clone immediate;
+   startup clone nomount;
+# mount database
+sql clone 'alter database mount clone database';
+}
+executing Memory Script
+
+sql statement: create spfile from memory
+
+database closed
+database dismounted
+Oracle instance shut down
+
+connected to auxiliary database (not started)
+Oracle instance started
+
+Total System Global Area     532674560 bytes
+
+Fixed Size                     8898560 bytes
+Variable Size                171966464 bytes
+Database Buffers             343932928 bytes
+Redo Buffers                   7876608 bytes
+
+sql statement: alter system set  control_files =   ''/u01/app/oracle/oradata/temp_recovery/ORA19/controlfile/o1_mf_nx0yv3hx_.ctl'' comment= ''RMAN set'' scope=spfile
+
+Oracle instance shut down
+
+connected to auxiliary database (not started)
+Oracle instance started
+
+Total System Global Area     532674560 bytes
+
+Fixed Size                     8898560 bytes
+Variable Size                171966464 bytes
+Database Buffers             343932928 bytes
+Redo Buffers                   7876608 bytes
+
+sql statement: alter database mount clone database
+
+contents of Memory Script:
+{
+# set requested point in time
+set until  scn 2840614;
+# set destinations for recovery set and auxiliary set datafiles
+set newname for datafile  5 to new;
+set newname for datafile  7 to new;
+# restore the tablespaces in the recovery set and the auxiliary set
+restore clone datafile  5, 7;
+
+switch clone datafile all;
+}
+executing Memory Script
+
+executing command: SET until clause
+
+executing command: SET NEWNAME
+
+executing command: SET NEWNAME
+
+Starting restore at 2026/04/04:11:48:29
+allocated channel: ORA_AUX_DISK_1
+channel ORA_AUX_DISK_1: SID=10 device type=DISK
+
+channel ORA_AUX_DISK_1: starting datafile backup set restore
+channel ORA_AUX_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_AUX_DISK_1: restoring datafile 00005 to /u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/datafile/o1_mf_users_%u_.dbf
+channel ORA_AUX_DISK_1: restoring datafile 00007 to /u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/datafile/o1_mf_users_%u_.dbf
+channel ORA_AUX_DISK_1: reading from backup piece /u01/app/oracle/fast_recovery_area/ORA19/backupset/2026_03_29/o1_mf_nnndf_TAG20260329T212751_nwl6p7s9_.bkp
+channel ORA_AUX_DISK_1: piece handle=/u01/app/oracle/fast_recovery_area/ORA19/backupset/2026_03_29/o1_mf_nnndf_TAG20260329T212751_nwl6p7s9_.bkp tag=TAG20260329T212751
+channel ORA_AUX_DISK_1: restored backup piece 1
+channel ORA_AUX_DISK_1: restore complete, elapsed time: 00:00:15
+Finished restore at 2026/04/04:11:48:46
+
+datafile 5 switched to datafile copy
+input datafile copy RECID=9 STAMP=1229687326 file name=/u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/datafile/o1_mf_users_nx0yzz29_.dbf
+datafile 7 switched to datafile copy
+input datafile copy RECID=10 STAMP=1229687326 file name=/u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/datafile/o1_mf_users_nx0yzyz5_.dbf
+
+contents of Memory Script:
+{
+# set requested point in time
+set until  scn 2840614;
+# online the datafiles restored or switched
+sql clone "alter database datafile  5 online";
+sql clone "alter database datafile  7 online";
+# recover and open resetlogs
+recover clone database tablespace  "USERS", "SYSTEM", "UNDOTBS1", "SYSAUX" delete archivelog;
+alter clone database open resetlogs;
+}
+executing Memory Script
+
+executing command: SET until clause
+
+sql statement: alter database datafile  5 online
+
+sql statement: alter database datafile  7 online
+
+Starting recover at 2026/04/04:11:48:47
+using channel ORA_AUX_DISK_1
+
+starting media recovery
+
+archived log for thread 1 with sequence 2 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_2_nwl6qod4_.arc
+archived log for thread 1 with sequence 3 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_3_nwl8wr63_.arc
+archived log for thread 1 with sequence 1 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_30/o1_mf_1_1_nwo20tbc_.arc
+archived log for thread 1 with sequence 2 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_2_nx0rvx8w_.arc
+archived log for thread 1 with sequence 3 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_3_nx0xt7dp_.arc
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_2_nwl6qod4_.arc thread=1 sequence=2
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_3_nwl8wr63_.arc thread=1 sequence=3
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_30/o1_mf_1_1_nwo20tbc_.arc thread=1 sequence=1
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_2_nx0rvx8w_.arc thread=1 sequence=2
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_3_nx0xt7dp_.arc thread=1 sequence=3
+media recovery complete, elapsed time: 00:00:02
+Finished recover at 2026/04/04:11:48:51
+
+database opened
+
+contents of Memory Script:
+{
+# create directory for datapump import
+sql "create or replace directory TSPITR_DIROBJ_DPDIR as ''
+/u01/app/oracle/oradata/temp_recovery''";
+# create directory for datapump export
+sql clone "create or replace directory TSPITR_DIROBJ_DPDIR as ''
+/u01/app/oracle/oradata/temp_recovery''";
+}
+executing Memory Script
+
+sql statement: create or replace directory TSPITR_DIROBJ_DPDIR as ''/u01/app/oracle/oradata/temp_recovery''
+
+sql statement: create or replace directory TSPITR_DIROBJ_DPDIR as ''/u01/app/oracle/oradata/temp_recovery''
+
+Performing export of tables...
+   EXPDP> Starting "SYS"."TSPITR_EXP_kAwv_vqCx":
+   EXPDP> Processing object type TABLE_EXPORT/TABLE/TABLE_DATA
+   EXPDP> Processing object type TABLE_EXPORT/TABLE/STATISTICS/TABLE_STATISTICS
+   EXPDP> Processing object type TABLE_EXPORT/TABLE/STATISTICS/MARKER
+   EXPDP> Processing object type TABLE_EXPORT/TABLE/TABLE
+   EXPDP> . . exported "SCOTT"."DEPT"                              6.031 KB       4 rows
+   EXPDP> Master table "SYS"."TSPITR_EXP_kAwv_vqCx" successfully loaded/unloaded
+   EXPDP> ******************************************************************************
+   EXPDP> Dump file set for SYS.TSPITR_EXP_kAwv_vqCx is:
+   EXPDP>   /u01/app/oracle/oradata/temp_recovery/tspitr_kAwv_72122.dmp
+   EXPDP> Job "SYS"."TSPITR_EXP_kAwv_vqCx" successfully completed at Sat Apr 4 11:50:47 2026 elapsed 0 00:00:46
+Export completed
+
+
+contents of Memory Script:
+{
+# shutdown clone before import
+shutdown clone abort
+}
+executing Memory Script
+
+Oracle instance shut down
+
+Performing import of tables...
+   IMPDP> Master table "SYS"."TSPITR_IMP_kAwv_EAEl" successfully loaded/unloaded
+   IMPDP> Starting "SYS"."TSPITR_IMP_kAwv_EAEl":
+   IMPDP> Processing object type TABLE_EXPORT/TABLE/TABLE
+   IMPDP> Processing object type TABLE_EXPORT/TABLE/TABLE_DATA
+   IMPDP> . . imported "SCOTT"."DEPT_RECOVERED"                    6.031 KB       4 rows
+   IMPDP> Processing object type TABLE_EXPORT/TABLE/STATISTICS/TABLE_STATISTICS
+   IMPDP> Processing object type TABLE_EXPORT/TABLE/STATISTICS/MARKER
+   IMPDP> Job "SYS"."TSPITR_IMP_kAwv_EAEl" successfully completed at Sat Apr 4 11:51:49 2026 elapsed 0 00:00:42
+Import completed
+
+
+Removing automatic instance
+Automatic instance removed
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_temp_nx0yxlqq_.tmp deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/onlinelog/o1_mf_3_nx0z0nhr_.log deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/onlinelog/o1_mf_2_nx0z0ng1_.log deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/onlinelog/o1_mf_1_nx0z0n84_.log deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/datafile/o1_mf_users_nx0yzyz5_.dbf deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/datafile/o1_mf_users_nx0yzz29_.dbf deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_sysaux_nx0yvbhn_.dbf deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_undotbs1_nx0yvbhx_.dbf deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_system_nx0yvbgm_.dbf deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/ORA19/controlfile/o1_mf_nx0yv3hx_.ctl deleted
+auxiliary instance file tspitr_kAwv_72122.dmp deleted
+Finished recover at 2026/04/04:11:51:56
+
+oracle@192.168.56.10's password:
+    ┌──────────────────────────────────────────────────────────────────────┐
+    │                 • MobaXterm Personal Edition v26.1 •                 │
+    │               (SSH client, X server and network tools)               │
+    │                                                                      │
+    │ ⮞ SSH session to oracle@192.168.56.10                                │
+    │   • Direct SSH      :  ✓                                             │
+    │   • SSH compression :  ✓                                             │
+    │   • SSH-browser     :  ✓                                             │
+    │   • X11-forwarding  :  ✓  (remote display is forwarded through SSH)  │
+    │                                                                      │
+    │ ⮞ For more info, ctrl+click on help or visit our website.            │
+    └──────────────────────────────────────────────────────────────────────┘
+
+Last login: Sat Apr  4 09:28:07 2026 from 192.168.56.1
+[oracle@ora19c ~]$ source alias.sh
+[oracle@ora19c ~]$ sys
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Sat Apr 4 10:14:41 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+
+PL/SQL procedure successfully completed.
+
+SQL> conn scott/tiger
+Connected.
+BEGIN check_backup_status; END;
+
+      *
+ERROR at line 1:
+ORA-06550: line 1, column 7:
+PLS-00201: identifier 'CHECK_BACKUP_STATUS' must be declared
+ORA-06550: line 1, column 7:
+PL/SQL: Statement ignored
+
+
+SQL> connect scott/tiger
+Connected.
+BEGIN check_backup_status; END;
+
+      *
+ERROR at line 1:
+ORA-06550: line 1, column 7:
+PLS-00201: identifier 'CHECK_BACKUP_STATUS' must be declared
+ORA-06550: line 1, column 7:
+PL/SQL: Statement ignored
+
+
+SQL> @i
+select instance_name, status from v$instance
+                                  *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[oracle@ora19c ~]$ sys
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Sat Apr 4 10:15:17 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+
+PL/SQL procedure successfully completed.
+
+SQL> conn scott/tiger
+Connected.
+BEGIN check_backup_status; END;
+
+      *
+ERROR at line 1:
+ORA-06550: line 1, column 7:
+PLS-00201: identifier 'CHECK_BACKUP_STATUS' must be declared
+ORA-06550: line 1, column 7:
+PL/SQL: Statement ignored
+
+
+SQL> select * from emp;
+
+     EMPNO ENAME      JOB              MGR HIREDATE                   SAL
+---------- ---------- --------- ---------- ------------------- ----------
+      COMM     DEPTNO
+---------- ----------
+      7839 KING       PRESIDENT            1981/11/17:00:00:00       5000
+                   10
+
+      7698 BLAKE      MANAGER         7839 1981/05/01:00:00:00       2850
+                   30
+
+      7782 CLARK      MANAGER         7839 1981/05/09:00:00:00       2450
+                   10
+
+
+     EMPNO ENAME      JOB              MGR HIREDATE                   SAL
+---------- ---------- --------- ---------- ------------------- ----------
+      COMM     DEPTNO
+---------- ----------
+      7566 JONES      MANAGER         7839 1981/04/01:00:00:00       2975
+                   20
+
+      7654 MARTIN     SALESMAN        7698 1981/09/10:00:00:00       1250
+      1400         30
+
+      7499 ALLEN      SALESMAN        7698 1981/02/11:00:00:00       1600
+       300         30
+
+
+     EMPNO ENAME      JOB              MGR HIREDATE                   SAL
+---------- ---------- --------- ---------- ------------------- ----------
+      COMM     DEPTNO
+---------- ----------
+      7844 TURNER     SALESMAN        7698 1981/08/21:00:00:00       1500
+         0         30
+
+      7900 JAMES      CLERK           7698 1981/12/11:00:00:00        950
+                   30
+
+      7521 WARD       SALESMAN        7698 1981/02/23:00:00:00       1250
+       500         30
+
+
+     EMPNO ENAME      JOB              MGR HIREDATE                   SAL
+---------- ---------- --------- ---------- ------------------- ----------
+      COMM     DEPTNO
+---------- ----------
+      7902 FORD       ANALYST         7566 1981/12/11:00:00:00       3000
+                   20
+
+      7369 SMITH      CLERK           7902 1980/12/09:00:00:00        800
+                   20
+
+      7788 SCOTT      ANALYST         7566 1982/12/22:00:00:00       3000
+                   20
+
+
+     EMPNO ENAME      JOB              MGR HIREDATE                   SAL
+---------- ---------- --------- ---------- ------------------- ----------
+      COMM     DEPTNO
+---------- ----------
+      7876 ADAMS      CLERK           7788 1983/01/15:00:00:00       1100
+                   20
+
+      7934 MILLER     CLERK           7782 1982/01/11:00:00:00       1300
+                   10
+
+
+14 rows selected.
+
+SQL> @line
+SQL> ls -l
+SP2-0042: unknown command "ls -l" - rest of line ignored.
+SQL> select * from emp;
+
+     EMPNO ENAME      JOB              MGR HIREDATE                   SAL       COMM     DEPTNO
+---------- ---------- --------- ---------- ------------------- ---------- ---------- ----------
+      7839 KING       PRESIDENT            1981/11/17:00:00:00       5000                    10
+      7698 BLAKE      MANAGER         7839 1981/05/01:00:00:00       2850                    30
+      7782 CLARK      MANAGER         7839 1981/05/09:00:00:00       2450                    10
+      7566 JONES      MANAGER         7839 1981/04/01:00:00:00       2975                    20
+      7654 MARTIN     SALESMAN        7698 1981/09/10:00:00:00       1250       1400         30
+      7499 ALLEN      SALESMAN        7698 1981/02/11:00:00:00       1600        300         30
+      7844 TURNER     SALESMAN        7698 1981/08/21:00:00:00       1500          0         30
+      7900 JAMES      CLERK           7698 1981/12/11:00:00:00        950                    30
+      7521 WARD       SALESMAN        7698 1981/02/23:00:00:00       1250        500         30
+      7902 FORD       ANALYST         7566 1981/12/11:00:00:00       3000                    20
+      7369 SMITH      CLERK           7902 1980/12/09:00:00:00        800                    20
+      7788 SCOTT      ANALYST         7566 1982/12/22:00:00:00       3000                    20
+      7876 ADAMS      CLERK           7788 1983/01/15:00:00:00       1100                    20
+      7934 MILLER     CLERK           7782 1982/01/11:00:00:00       1300                    10
+
+14 rows selected.
+
+SQL> ㄴ selec
+SP2-0042: unknown command "selec" - rest of line ignored.
+SQL>
+SQL> select count(*) from dept;
+
+  COUNT(*)
+----------
+         4
+
+SQL> drop table dept purge;
+
+Table dropped.
+
+SQL> alter system archive log current;
+alter system archive log current
+*
+ERROR at line 1:
+ORA-01031: insufficient privileges
+
+
+SQL> conn / as sysdba
+Connected.
+
+PL/SQL procedure successfully completed.
+
+SQL> alter system archive log current;
+
+System altered.
+
+SQL> @log
+
+    GROUP# STATUS            SEQUENCE# ARC BYTES/1024/1024
+---------- ---------------- ---------- --- ---------------
+         1 CURRENT                   4 NO              200
+         2 INACTIVE                  2 YES             200
+         3 ACTIVE                    3 YES             200
+
+SQL> @log
+
+    GROUP# STATUS            SEQUENCE# ARC BYTES/1024/1024
+---------- ---------------- ---------- --- ---------------
+         1 CURRENT                   4 NO              200
+         2 INACTIVE                  2 YES             200
+         3 ACTIVE                    3 YES             200
+
+SQL> @logfile
+
+    GROUP# MEMBER
+---------- ----------------------------------------
+         1 /u01/app/oracle/oradata/ORA19/redo01.log
+         2 /u01/app/oracle/oradata/ORA19/redo02.log
+         3 /u01/app/oracle/oradata/ORA19/redo03.log
+
+SQL> @arch
+
+     RECID RESETLOGS_CHANGE#    THREAD#  SEQUENCE# FIRST_CHANGE# NEXT_CHANGE# NAME
+---------- ----------------- ---------- ---------- ------------- ------------ ----------------------------------------------------------------------------------------------------
+         6           1920977          1         12       2425344      2496914
+         7           1920977          1         13       2496914      2649062
+         8           1920977          1         14       2649062      2654182
+         9           1920977          1         15       2654182      2654249
+        10           1920977          1         16       2654249      2654901
+        11           1920977          1         17       2654901      2655272
+        12           2654782          1          1       2654782      2655901
+        13           2654782          1          2       2655901      2655961
+        14           2654782          1          3       2655961      2658298
+        15           2658003          1          1       2658003      2659936
+        16           2658003          1          2       2659936      2659981
+        17           2658003          1          3       2659981      2660222
+        18           2660051          1          1       2660051      2662288
+        19           2662286          1          1       2662286      2681243
+        25           2662286          1          1       2662286      2681243
+        27           2662286          1          2       2681243      2682127 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_2_nwl42d07_.arc
+        20           2662286          1          2       2681243      2682127 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_28/o1_mf_1_2_nwh3cvjr_.arc
+        23           2662286          1          2       2681243      2682127
+        24           2662286          1          3       2682127      2841439
+        21           2662286          1          3       2682127      2841439 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_3_nwl1vo0f_.arc
+        28           2662286          1          3       2682127      2841439 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_3_nwl42d58_.arc
+        22           2662286          1          4       2841439   1.8447E+19
+        26           2662286          1          4       2841439      2842592 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_4_nwl42cql_.arc
+        29           2681244          1          1       2681244      2698618 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_1_nwl50kfz_.arc
+        30           2681244          1          2       2698618      2698621 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_2_nwl50nvh_.arc
+        31           2681244          1          3       2698621      2698625 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_3_nwl50ryc_.arc
+        32           2681244          1          4       2698625      2698628 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_4_nwl50t56_.arc
+        37           2681244          1          4       2698625      2698628 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_4_nwl66zsg_.arc
+        34           2681244          1          4       2698625      2698628
+        35           2681244          1          5       2698628      2698641
+        33           2681244          1          5       2698628      2698641 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_5_nwl51scj_.arc
+        38           2681244          1          5       2698628      2698641 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_5_nwl66zyh_.arc
+        39           2681244          1          6       2698641      2698668 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_6_nwl67046_.arc
+        36           2681244          1          6       2698641   1.8447E+19
+        40           2698668          1          1       2698668      2700047 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_1_nwl6ohjc_.arc
+        41           2698668          1          2       2700047      2700095 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_2_nwl6qod4_.arc
+        42           2698668          1          3       2700095      2704925 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_3_nwl8wr63_.arc
+        43           2703935          1          1       2703935      2805023 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_30/o1_mf_1_1_nwo20tbc_.arc
+        44           2703935          1          2       2805023      2840102 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_2_nx0rvx8w_.arc
+        45           2703935          1          3       2840102      2842175 /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_3_nx0xt7dp_.arc
+
+40 rows selected.
+
+SQL> EXEC DBMS_LOGMNR.START_LOGMNR( -
+   OPTIONS => DBMS_LOGMNR.DICT_FROM_ONLINE_CATALOG + -
+              DBMS_LOGMNR.CONTINUOUS_MINE + -
+              DBMS_LOGMNR.COMMITTED_DATA_ONLY -
+);> > > >
+BEGIN DBMS_LOGMNR.START_LOGMNR(     OPTIONS => DBMS_LOGMNR.DICT_FROM_ONLINE_CATALOG +                DBMS_LOGMNR.CONTINUOUS_MINE +                DBMS_LOGMNR.COMMITTED_DATA_ONLY  ); END;
+
+*
+ERROR at line 1:
+ORA-01286: start interval required
+ORA-06512: at "SYS.DBMS_LOGMNR", line 72
+ORA-06512: at line 1
+
+
+SQL> EXEC DBMS_LOGMNR.ADD_LOGFILE( -
+   LogFileName => '/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_3_nx0xt7dp_.arc', -
+   Options => DBMS_LOGMNR.NEW -
+);> > >
+
+PL/SQL procedure successfully completed.
+
+SQL> SELECT SCN,
+       TO_CHAR(TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS') AS TIME,
+       SEG_OWNER,
+       OPERATION,
+       SQL_REDO
+FROM V$LOGMNR_CONTENTS
+WHERE SEG_OWNER NOT IN ('SYS', 'SYSTEM') -- 시스템 로그는 제외하고 내 것만!
+ORDER BY SCN DESC;  2    3    4    5    6    7    8
+FROM V$LOGMNR_CONTENTS
+     *
+ERROR at line 6:
+ORA-01306: dbms_logmnr.start_logmnr() must be invoked before selecting from v$logmnr_contents
+
+
+SQL> EXEC DBMS_LOGMNR.START_LOGMNR( -
+   OPTIONS => DBMS_LOGMNR.DICT_FROM_ONLINE_CATALOG -
+);> >
+
+PL/SQL procedure successfully completed.
+
+SQL> +SELECT SCN,
+       TO_CHAR(TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS') AS TIME,
+       SEG_OWNER,
+       OPERATION,
+       SQL_REDO
+FROM V$LOGMNR_CONTENTS
+WHERE SEG_OWNER NOT IN ('SYS', 'SYSTEM') -- 시스템 로그는 제외하고 내 것만!
+ORDER BY SCN DESC;SP2-0734: unknown command beginning "+SELECT SC..." - rest of line ignored.
+SQL> SP2-0734: unknown command beginning "TO_CHAR(TI..." - rest of line ignored.
+SQL> SP2-0042: unknown command "SEG_OWNER," - rest of line ignored.
+SQL> SP2-0042: unknown command "OPERATION," - rest of line ignored.
+SP2-0044: For a list of known commands enter HELP
+and to leave enter EXIT.
+SQL> SP2-0042: unknown command "SQL_REDO" - rest of line ignored.
+SQL> SP2-0734: unknown command beginning "FROM V$LOG..." - rest of line ignored.
+SQL> SP2-0734: unknown command beginning "WHERE SEG_..." - rest of line ignored.
+SQL>
+SP2-0734: unknown command beginning "ORDER BY S..." - rest of line ignored.
+SP2-0044: For a list of known commands enter HELP
+and to leave enter EXIT.
+SQL> SELECT SCN,
+       TO_CHAR(TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS') AS TIME,
+       SEG_OWNER,
+       OPERATION,
+       SQL_REDO
+FROM V$LOGMNR_CONTENTS
+WHERE SEG_OWNER NOT IN ('SYS', 'SYSTEM') -- 시스템 로그는 제외하고 내 것만!
+ORDER BY SCN DESC;  2    3    4    5    6    7    8
+
+       SCN TIME
+---------- -------------------
+SEG_OWNER
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+OPERATION
+--------------------------------
+SQL_REDO
+--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+   2840615 2026-04-04 10:16:54
+SCOTT
+DDL
+drop table dept purge;
+
+
+SQL> @line
+SQL> col seg_owner for a20
+SQL> col sql_redo for a30
+SQL> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[oracle@ora19c ~]$ sys
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Sat Apr 4 11:39:41 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+
+PL/SQL procedure successfully completed.
+
+SQL> exit
+Disconnected from Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+[oracle@ora19c ~]$ rman target / nocatalog
+
+Recovery Manager: Release 19.0.0.0.0 - Production on Sat Apr 4 11:39:48 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+connected to target database: ORA19 (DBID=725837126)
+using target database control file instead of recovery catalog
+
+RMAN> exit
+
+
+Recovery Manager complete.
+[oracle@ora19c ~]$ mkdir -p /u01/app/oracle/oradata/temp_recovery
+[oracle@ora19c ~]$ list backup of table scott.dept;
+bash: list: 명령을 찾을 수 없습니다...
+[oracle@ora19c ~]$ rman target / nocatalog
+
+Recovery Manager: Release 19.0.0.0.0 - Production on Sat Apr 4 11:40:34 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+connected to target database: ORA19 (DBID=725837126)
+using target database control file instead of recovery catalog
+
+RMAN> list backup of table scott.dept;
+
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-00558: error encountered while parsing input commands
+RMAN-01009: syntax error: found "table": expecting one of: "application, archivelog, controlfile, database, database root, datafile, foreign, pluggable, spfile, tablespace"
+RMAN-01007: at line 1 column 16 file: standard input
+
+RMAN> -- RMAN이 아닌 SQL 창(SQL*Plus 등)에서 실행하세요.
+SELECT CHECKPOINT_CHANGE#, TO_CHAR(CHECKPOINT_TIME, 'YYYY-MM-DD HH24:MI:SS')
+FROM V$DATAFILE;
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-00558: error encountered while parsing input commands
+RMAN-01006: error signaled during parse
+RMAN-02001: unrecognized punctuation symbol "-"
+
+RMAN> 2>
+
+CHECKPOINT_CHANGE# TO_CHAR(CHECKPOINT_
+------------------ -------------------
+           2842175 2026-04-04 11:28:23
+           2842175 2026-04-04 11:28:23
+           2842175 2026-04-04 11:28:23
+           2842175 2026-04-04 11:28:23
+           2842175 2026-04-04 11:28:23
+           2842175 2026-04-04 11:28:23
+
+RMAN> LIST BACKUP SUMMARY;
+
+
+List of Backups
+===============
+Key     TY LV S Device Type Completion Time     #Pieces #Copies Compressed Tag
+------- -- -- - ----------- ------------------- ------- ------- ---------- ---
+27      B  F  A DISK        2026/03/28:17:10:45 4       1       YES        FULL_BACKUP_P4_300M_20260328
+28      B  F  A DISK        2026/03/28:17:11:43 4       1       YES        FULL_BACKUP_P4_300M_20260328
+29      B  F  A DISK        2026/03/28:17:12:06 2       1       YES        FULL_BACKUP_P4_300M_20260328
+30      B  F  A DISK        2026/03/28:17:12:19 1       1       YES        FULL_BACKUP_P4_300M_20260328
+31      B  F  A DISK        2026/03/28:17:12:25 2       1       YES        FULL_BACKUP_P4_300M_20260328
+32      B  F  A DISK        2026/03/28:17:12:27 1       1       NO         TAG20260328T171226
+33      B  A  A DISK        2026/03/28:17:12:34 1       1       YES        TAG20260328T171232
+34      B  A  A DISK        2026/03/28:17:12:36 1       1       YES        TAG20260328T171232
+35      B  A  A DISK        2026/03/28:17:12:38 1       1       YES        TAG20260328T171232
+36      B  F  A DISK        2026/03/28:17:12:40 1       1       NO         TAG20260328T171239
+37      B  F  A DISK        2026/03/29:20:43:34 1       1       NO         TAG20260329T204333
+38      B  F  A DISK        2026/03/29:20:45:26 1       1       NO         TAG20260329T204407
+39      B  F  A DISK        2026/03/29:20:45:38 1       1       NO         TAG20260329T204536
+40      B  F  A DISK        2026/03/29:21:20:02 1       1       NO         TAG20260329T212001
+41      B  A  A DISK        2026/03/29:21:27:34 1       1       YES        TAG20260329T212728
+42      B  A  A DISK        2026/03/29:21:27:44 1       1       YES        TAG20260329T212728
+43      B  A  A DISK        2026/03/29:21:27:46 1       1       YES        TAG20260329T212728
+44      B  A  A DISK        2026/03/29:21:27:47 1       1       YES        TAG20260329T212728
+45      B  A  A DISK        2026/03/29:21:27:49 1       1       YES        TAG20260329T212728
+46      B  A  A DISK        2026/03/29:21:27:50 1       1       YES        TAG20260329T212728
+47      B  F  A DISK        2026/03/29:21:28:28 1       1       YES        TAG20260329T212751
+48      B  A  A DISK        2026/03/29:21:28:37 1       1       YES        TAG20260329T212837
+49      B  F  A DISK        2026/03/29:21:28:39 1       1       NO         TAG20260329T212838
+50      B  F  A DISK        2026/03/29:22:05:40 1       1       NO         TAG20260329T220540
+
+RMAN> RECOVER TABLE SCOTT.DEPT
+    UNTIL SCN 2840614
+    AUXILIARY DESTINATION '/u01/app/oracle/oradata/temp_recovery'
+    REMAP TABLE 'SCOTT'.'DEPT':'DEPT_RECOVERED';2> 3> 4>
+
+Starting recover at 2026/04/04:11:45:14
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=22 device type=DISK
+RMAN-05026: warning: presuming following set of tablespaces applies to specified point-in-time
+
+List of tablespaces expected to have UNDO segments
+Tablespace SYSTEM
+Tablespace UNDOTBS1
+
+Creating automatic instance, with SID='kAwv'
+
+initialization parameters used for automatic instance:
+db_name=ORA19
+db_unique_name=kAwv_pitr_ORA19
+compatible=19.0.0
+db_block_size=8192
+db_files=200
+diagnostic_dest=/u01/app/oracle
+_system_trig_enabled=FALSE
+sga_target=508M
+processes=200
+db_create_file_dest=/u01/app/oracle/oradata/temp_recovery
+log_archive_dest_1='location=/u01/app/oracle/oradata/temp_recovery'
+#No auxiliary parameter file used
+
+
+starting up automatic instance ORA19
+
+Oracle instance started
+
+Total System Global Area     532674560 bytes
+
+Fixed Size                     8898560 bytes
+Variable Size                171966464 bytes
+Database Buffers             343932928 bytes
+Redo Buffers                   7876608 bytes
+Automatic instance created
+
+contents of Memory Script:
+{
+# set requested point in time
+set until  scn 2840614;
+# restore the controlfile
+restore clone controlfile;
+
+# mount the controlfile
+sql clone 'alter database mount clone database';
+
+# archive current online log
+sql 'alter system archive log current';
+}
+executing Memory Script
+
+executing command: SET until clause
+
+Starting restore at 2026/04/04:11:45:54
+allocated channel: ORA_AUX_DISK_1
+channel ORA_AUX_DISK_1: SID=10 device type=DISK
+
+channel ORA_AUX_DISK_1: starting datafile backup set restore
+channel ORA_AUX_DISK_1: restoring control file
+channel ORA_AUX_DISK_1: reading from backup piece /u01/app/oracle/fast_recovery_area/ORA19/autobackup/2026_03_29/o1_mf_s_1229205940_nwl8x4mk_.bkp
+channel ORA_AUX_DISK_1: piece handle=/u01/app/oracle/fast_recovery_area/ORA19/autobackup/2026_03_29/o1_mf_s_1229205940_nwl8x4mk_.bkp tag=TAG20260329T220540
+channel ORA_AUX_DISK_1: restored backup piece 1
+channel ORA_AUX_DISK_1: restore complete, elapsed time: 00:00:01
+output file name=/u01/app/oracle/oradata/temp_recovery/ORA19/controlfile/o1_mf_nx0yv3hx_.ctl
+Finished restore at 2026/04/04:11:45:56
+
+sql statement: alter database mount clone database
+
+sql statement: alter system archive log current
+
+contents of Memory Script:
+{
+# set requested point in time
+set until  scn 2840614;
+# set destinations for recovery set and auxiliary set datafiles
+set newname for clone datafile  1 to new;
+set newname for clone datafile  4 to new;
+set newname for clone datafile  3 to new;
+set newname for clone tempfile  1 to new;
+# switch all tempfiles
+switch clone tempfile all;
+# restore the tablespaces in the recovery set and the auxiliary set
+restore clone datafile  1, 4, 3;
+
+switch clone datafile all;
+}
+executing Memory Script
+
+executing command: SET until clause
+
+executing command: SET NEWNAME
+
+executing command: SET NEWNAME
+
+executing command: SET NEWNAME
+
+executing command: SET NEWNAME
+
+renamed tempfile 1 to /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_temp_%u_.tmp in control file
+
+Starting restore at 2026/04/04:11:46:01
+using channel ORA_AUX_DISK_1
+
+channel ORA_AUX_DISK_1: starting datafile backup set restore
+channel ORA_AUX_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_AUX_DISK_1: restoring datafile 00001 to /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_system_%u_.dbf
+channel ORA_AUX_DISK_1: restoring datafile 00004 to /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_undotbs1_%u_.dbf
+channel ORA_AUX_DISK_1: restoring datafile 00003 to /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_sysaux_%u_.dbf
+channel ORA_AUX_DISK_1: reading from backup piece /u01/app/oracle/fast_recovery_area/ORA19/backupset/2026_03_29/o1_mf_nnndf_TAG20260329T212751_nwl6p7s9_.bkp
+channel ORA_AUX_DISK_1: piece handle=/u01/app/oracle/fast_recovery_area/ORA19/backupset/2026_03_29/o1_mf_nnndf_TAG20260329T212751_nwl6p7s9_.bkp tag=TAG20260329T212751
+channel ORA_AUX_DISK_1: restored backup piece 1
+channel ORA_AUX_DISK_1: restore complete, elapsed time: 00:00:55
+Finished restore at 2026/04/04:11:46:57
+
+datafile 1 switched to datafile copy
+input datafile copy RECID=4 STAMP=1229687218 file name=/u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_system_nx0yvbgm_.dbf
+datafile 4 switched to datafile copy
+input datafile copy RECID=5 STAMP=1229687218 file name=/u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_undotbs1_nx0yvbhx_.dbf
+datafile 3 switched to datafile copy
+input datafile copy RECID=6 STAMP=1229687218 file name=/u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_sysaux_nx0yvbhn_.dbf
+
+contents of Memory Script:
+{
+# set requested point in time
+set until  scn 2840614;
+# online the datafiles restored or switched
+sql clone "alter database datafile  1 online";
+sql clone "alter database datafile  4 online";
+sql clone "alter database datafile  3 online";
+# recover and open database read only
+recover clone database tablespace  "SYSTEM", "UNDOTBS1", "SYSAUX";
+sql clone 'alter database open read only';
+}
+executing Memory Script
+
+executing command: SET until clause
+
+sql statement: alter database datafile  1 online
+
+sql statement: alter database datafile  4 online
+
+sql statement: alter database datafile  3 online
+
+Starting recover at 2026/04/04:11:46:58
+using channel ORA_AUX_DISK_1
+
+starting media recovery
+
+archived log for thread 1 with sequence 2 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_2_nwl6qod4_.arc
+archived log for thread 1 with sequence 3 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_3_nwl8wr63_.arc
+archived log for thread 1 with sequence 1 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_30/o1_mf_1_1_nwo20tbc_.arc
+archived log for thread 1 with sequence 2 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_2_nx0rvx8w_.arc
+archived log for thread 1 with sequence 3 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_3_nx0xt7dp_.arc
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_2_nwl6qod4_.arc thread=1 sequence=2
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_3_nwl8wr63_.arc thread=1 sequence=3
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_30/o1_mf_1_1_nwo20tbc_.arc thread=1 sequence=1
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_2_nx0rvx8w_.arc thread=1 sequence=2
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_3_nx0xt7dp_.arc thread=1 sequence=3
+media recovery complete, elapsed time: 00:00:13
+Finished recover at 2026/04/04:11:47:13
+
+sql statement: alter database open read only
+
+contents of Memory Script:
+{
+   sql clone "create spfile from memory";
+   shutdown clone immediate;
+   startup clone nomount;
+   sql clone "alter system set  control_files =
+  ''/u01/app/oracle/oradata/temp_recovery/ORA19/controlfile/o1_mf_nx0yv3hx_.ctl'' comment=
+ ''RMAN set'' scope=spfile";
+   shutdown clone immediate;
+   startup clone nomount;
+# mount database
+sql clone 'alter database mount clone database';
+}
+executing Memory Script
+
+sql statement: create spfile from memory
+
+database closed
+database dismounted
+Oracle instance shut down
+
+connected to auxiliary database (not started)
+Oracle instance started
+
+Total System Global Area     532674560 bytes
+
+Fixed Size                     8898560 bytes
+Variable Size                171966464 bytes
+Database Buffers             343932928 bytes
+Redo Buffers                   7876608 bytes
+
+sql statement: alter system set  control_files =   ''/u01/app/oracle/oradata/temp_recovery/ORA19/controlfile/o1_mf_nx0yv3hx_.ctl'' comment= ''RMAN set'' scope=spfile
+
+Oracle instance shut down
+
+connected to auxiliary database (not started)
+Oracle instance started
+
+Total System Global Area     532674560 bytes
+
+Fixed Size                     8898560 bytes
+Variable Size                171966464 bytes
+Database Buffers             343932928 bytes
+Redo Buffers                   7876608 bytes
+
+sql statement: alter database mount clone database
+
+contents of Memory Script:
+{
+# set requested point in time
+set until  scn 2840614;
+# set destinations for recovery set and auxiliary set datafiles
+set newname for datafile  5 to new;
+set newname for datafile  7 to new;
+# restore the tablespaces in the recovery set and the auxiliary set
+restore clone datafile  5, 7;
+
+switch clone datafile all;
+}
+executing Memory Script
+
+executing command: SET until clause
+
+executing command: SET NEWNAME
+
+executing command: SET NEWNAME
+
+Starting restore at 2026/04/04:11:48:29
+allocated channel: ORA_AUX_DISK_1
+channel ORA_AUX_DISK_1: SID=10 device type=DISK
+
+channel ORA_AUX_DISK_1: starting datafile backup set restore
+channel ORA_AUX_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_AUX_DISK_1: restoring datafile 00005 to /u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/datafile/o1_mf_users_%u_.dbf
+channel ORA_AUX_DISK_1: restoring datafile 00007 to /u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/datafile/o1_mf_users_%u_.dbf
+channel ORA_AUX_DISK_1: reading from backup piece /u01/app/oracle/fast_recovery_area/ORA19/backupset/2026_03_29/o1_mf_nnndf_TAG20260329T212751_nwl6p7s9_.bkp
+channel ORA_AUX_DISK_1: piece handle=/u01/app/oracle/fast_recovery_area/ORA19/backupset/2026_03_29/o1_mf_nnndf_TAG20260329T212751_nwl6p7s9_.bkp tag=TAG20260329T212751
+channel ORA_AUX_DISK_1: restored backup piece 1
+channel ORA_AUX_DISK_1: restore complete, elapsed time: 00:00:15
+Finished restore at 2026/04/04:11:48:46
+
+datafile 5 switched to datafile copy
+input datafile copy RECID=9 STAMP=1229687326 file name=/u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/datafile/o1_mf_users_nx0yzz29_.dbf
+datafile 7 switched to datafile copy
+input datafile copy RECID=10 STAMP=1229687326 file name=/u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/datafile/o1_mf_users_nx0yzyz5_.dbf
+
+contents of Memory Script:
+{
+# set requested point in time
+set until  scn 2840614;
+# online the datafiles restored or switched
+sql clone "alter database datafile  5 online";
+sql clone "alter database datafile  7 online";
+# recover and open resetlogs
+recover clone database tablespace  "USERS", "SYSTEM", "UNDOTBS1", "SYSAUX" delete archivelog;
+alter clone database open resetlogs;
+}
+executing Memory Script
+
+executing command: SET until clause
+
+sql statement: alter database datafile  5 online
+
+sql statement: alter database datafile  7 online
+
+Starting recover at 2026/04/04:11:48:47
+using channel ORA_AUX_DISK_1
+
+starting media recovery
+
+archived log for thread 1 with sequence 2 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_2_nwl6qod4_.arc
+archived log for thread 1 with sequence 3 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_3_nwl8wr63_.arc
+archived log for thread 1 with sequence 1 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_30/o1_mf_1_1_nwo20tbc_.arc
+archived log for thread 1 with sequence 2 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_2_nx0rvx8w_.arc
+archived log for thread 1 with sequence 3 is already on disk as file /u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_3_nx0xt7dp_.arc
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_2_nwl6qod4_.arc thread=1 sequence=2
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_29/o1_mf_1_3_nwl8wr63_.arc thread=1 sequence=3
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_03_30/o1_mf_1_1_nwo20tbc_.arc thread=1 sequence=1
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_2_nx0rvx8w_.arc thread=1 sequence=2
+archived log file name=/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_3_nx0xt7dp_.arc thread=1 sequence=3
+media recovery complete, elapsed time: 00:00:02
+Finished recover at 2026/04/04:11:48:51
+
+database opened
+
+contents of Memory Script:
+{
+# create directory for datapump import
+sql "create or replace directory TSPITR_DIROBJ_DPDIR as ''
+/u01/app/oracle/oradata/temp_recovery''";
+# create directory for datapump export
+sql clone "create or replace directory TSPITR_DIROBJ_DPDIR as ''
+/u01/app/oracle/oradata/temp_recovery''";
+}
+executing Memory Script
+
+sql statement: create or replace directory TSPITR_DIROBJ_DPDIR as ''/u01/app/oracle/oradata/temp_recovery''
+
+sql statement: create or replace directory TSPITR_DIROBJ_DPDIR as ''/u01/app/oracle/oradata/temp_recovery''
+
+Performing export of tables...
+   EXPDP> Starting "SYS"."TSPITR_EXP_kAwv_vqCx":
+   EXPDP> Processing object type TABLE_EXPORT/TABLE/TABLE_DATA
+   EXPDP> Processing object type TABLE_EXPORT/TABLE/STATISTICS/TABLE_STATISTICS
+   EXPDP> Processing object type TABLE_EXPORT/TABLE/STATISTICS/MARKER
+   EXPDP> Processing object type TABLE_EXPORT/TABLE/TABLE
+   EXPDP> . . exported "SCOTT"."DEPT"                              6.031 KB       4 rows
+   EXPDP> Master table "SYS"."TSPITR_EXP_kAwv_vqCx" successfully loaded/unloaded
+   EXPDP> ******************************************************************************
+   EXPDP> Dump file set for SYS.TSPITR_EXP_kAwv_vqCx is:
+   EXPDP>   /u01/app/oracle/oradata/temp_recovery/tspitr_kAwv_72122.dmp
+   EXPDP> Job "SYS"."TSPITR_EXP_kAwv_vqCx" successfully completed at Sat Apr 4 11:50:47 2026 elapsed 0 00:00:46
+Export completed
+
+
+contents of Memory Script:
+{
+# shutdown clone before import
+shutdown clone abort
+}
+executing Memory Script
+
+Oracle instance shut down
+
+Performing import of tables...
+   IMPDP> Master table "SYS"."TSPITR_IMP_kAwv_EAEl" successfully loaded/unloaded
+   IMPDP> Starting "SYS"."TSPITR_IMP_kAwv_EAEl":
+   IMPDP> Processing object type TABLE_EXPORT/TABLE/TABLE
+   IMPDP> Processing object type TABLE_EXPORT/TABLE/TABLE_DATA
+   IMPDP> . . imported "SCOTT"."DEPT_RECOVERED"                    6.031 KB       4 rows
+   IMPDP> Processing object type TABLE_EXPORT/TABLE/STATISTICS/TABLE_STATISTICS
+   IMPDP> Processing object type TABLE_EXPORT/TABLE/STATISTICS/MARKER
+   IMPDP> Job "SYS"."TSPITR_IMP_kAwv_EAEl" successfully completed at Sat Apr 4 11:51:49 2026 elapsed 0 00:00:42
+Import completed
+
+
+Removing automatic instance
+Automatic instance removed
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_temp_nx0yxlqq_.tmp deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/onlinelog/o1_mf_3_nx0z0nhr_.log deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/onlinelog/o1_mf_2_nx0z0ng1_.log deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/onlinelog/o1_mf_1_nx0z0n84_.log deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/datafile/o1_mf_users_nx0yzyz5_.dbf deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/KAWV_PITR_ORA19/datafile/o1_mf_users_nx0yzz29_.dbf deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_sysaux_nx0yvbhn_.dbf deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_undotbs1_nx0yvbhx_.dbf deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/ORA19/datafile/o1_mf_system_nx0yvbgm_.dbf deleted
+auxiliary instance file /u01/app/oracle/oradata/temp_recovery/ORA19/controlfile/o1_mf_nx0yv3hx_.ctl deleted
+auxiliary instance file tspitr_kAwv_72122.dmp deleted
+Finished recover at 2026/04/04:11:51:56
+
+RMAN>
+
+RMAN>
+
+RMAN> exit
+
+
+Recovery Manager complete.
+[oracle@ora19c ~]$ sys
+
+SQL*Plus: Release 19.0.0.0.0 - Production on Sat Apr 4 11:58:36 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle.  All rights reserved.
+
+
+Connected to:
+Oracle Database 19c Enterprise Edition Release 19.0.0.0.0 - Production
+Version 19.3.0.0.0
+
+
+PL/SQL procedure successfully completed.
+
+SQL> conn scott/tiger
+Connected.
+BEGIN check_backup_status; END;
+
+      *
+ERROR at line 1:
+ORA-06550: line 1, column 7:
+PLS-00201: identifier 'CHECK_BACKUP_STATUS' must be declared
+ORA-06550: line 1, column 7:
+PL/SQL: Statement ignored
+
+
+SQL> @log
+from v$log
+     *
+ERROR at line 2:
+ORA-00942: table or view does not exist
+
+
+SQL> select * from dept;
+select * from dept
+              *
+ERROR at line 1:
+ORA-00942: table or view does not exist
+
+
+SQL> select * from DEPT_RECOVERED;
+
+    DEPTNO DNAME          LOC
+---------- -------------- -------------
+        10 ACCOUNTING     NEW YORK
+        20 RESEARCH       DALLAS
+        30 SALES          CHICAGO
+        40 OPERATIONS     BOSTON
+
+SQL>
+SQL> CREATE TABLE SCOTT.DEPT AS SELECT * FROM SCOTT.DEPT_RECOVERED;
+
+Table created.
+
+SQL> DROP TABLE SCOTT.DEPT_RECOVERED;
+
+
+Table dropped.
+
+SQL> SQL>
+SQL>
+SQL> select * from dept;
+
+    DEPTNO DNAME          LOC
+---------- -------------- -------------
+        10 ACCOUNTING     NEW YORK
+        20 RESEARCH       DALLAS
+        30 SALES          CHICAGO
+        40 OPERATIONS     BOSTON
+
+SQL>
+
+

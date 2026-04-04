@@ -1,0 +1,112 @@
+-- 1. 첫 번째 파일 등록 (목록 초기화 후 새로 시작)
+EXEC DBMS_LOGMNR.ADD_LOGFILE( -
+   LogFileName => '/.../o1_mf_1_5_nx10zs9t_.arc', -
+   Options => DBMS_LOGMNR.NEW -
+);
+
+-- 2. 두 번째 파일 추가 (기존 목록에 더하기)
+EXEC DBMS_LOGMNR.ADD_LOGFILE( -
+   LogFileName => '/.../o1_mf_1_6_px21at0v_.arc', -
+   Options => DBMS_LOGMNR.ADDFILE -
+);
+
+-- 3. 세 번째 파일 추가 (계속 더하기)
+EXEC DBMS_LOGMNR.ADD_LOGFILE( -
+   LogFileName => '/.../o1_mf_1_7_qx32bu1w_.arc', -
+   Options => DBMS_LOGMNR.ADDFILE -
+);
+
+SELECT FILENAME FROM V$LOGMNR_LOGS;
+
+
+### 2. 여러 파일을 한 번에 등록하기 (PL/SQL 루프)
+파일이 5개, 10개라면 손으로 치지 마세요. 리눅스에서 파일 목록만 뽑아서 **스크립트**를 만들거나, 아래처럼 **루프**를 돌리면 끝납니다.
+
+**방법 A: 파일 경로만 바꿔서 복사 붙여넣기**
+```sql
+BEGIN
+  DBMS_LOGMNR.ADD_LOGFILE('/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_3_nx0xt7dp_.arc', DBMS_LOGMNR.NEW);
+  DBMS_LOGMNR.ADD_LOGFILE('/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_4_nx0yv9l2_.arc', DBMS_LOGMNR.ADDFILE);
+  DBMS_LOGMNR.ADD_LOGFILE('/u01/app/oracle/fast_recovery_area/ORA19/archivelog/2026_04_04/o1_mf_1_5_nx10zs9t_.arc', DBMS_LOGMNR.ADDFILE);
+END;
+/
+```
+*(이렇게 `BEGIN...END;` 블록으로 묶으면 중간에 `-`를 안 써도 엔터 쳐가며 편하게 입력할 수 있습니다!)*
+
+---
+
+BEGIN
+ DBMS_LOGMNR.START_LOGMNR(
+  OPTIONS => DBMS_LOGMNR.DICT_FROM_ONLINE_CATALOG +
+             DBMS_LOGMNR.COMMITTED_DATA_ONLY);
+END;
+/
+
+BEGIN
+ DBMS_LOGMNR.START_LOGMNR(
+  OPTIONS => DBMS_LOGMNR.DICT_FROM_ONLINE_CATALOG);
+END;
+/
+
+/** ADD_LOGFILE을 편리하게 만들수있음 **/
+SET LINESIZE 300
+SET PAGESIZE 100
+COL LOG_CMD FOR A200
+
+SELECT 
+    CASE 
+        WHEN ROW_NUMBER() OVER (ORDER BY RESETLOGS_CHANGE# ASC, FIRST_CHANGE# ASC) = 1 
+        THEN 'EXEC DBMS_LOGMNR.ADD_LOGFILE(''' || NAME || ''', DBMS_LOGMNR.NEW);'
+        ELSE 'EXEC DBMS_LOGMNR.ADD_LOGFILE(''' || NAME || ''', DBMS_LOGMNR.ADDFILE);'
+    END AS LOG_CMD
+FROM V$ARCHIVED_LOG
+WHERE FIRST_CHANGE# >= 2840000 
+  AND NAME IS NOT NULL
+-- 인카네이션 순서로 먼저 정렬 후, 그 안에서 SCN 순으로 정렬
+ORDER BY RESETLOGS_CHANGE# ASC, FIRST_CHANGE# ASC;
+
+
+SELECT SCN, TO_CHAR(TIMESTAMP, 'YYYY-MM-DD HH24:MI:SS') AS TIME, SQL_REDO, status
+FROM V$LOGMNR_CONTENTS 
+WHERE SQL_REDO LIKE 'delete%'
+AND SEG_OWNER = 'SCOTT'
+ORDER BY SCN;
+
+SELECT 
+    A.SCN, 
+    TO_CHAR(A.TIMESTAMP, 'HH24:MI:SS') AS TIME,
+    A.SQL_REDO,
+    A.XID
+FROM V$LOGMNR_CONTENTS A
+WHERE A.OPERATION = 'DELETE'
+  AND A.SEG_OWNER = 'SCOTT'
+  AND A.SEG_NAME = 'EMP'
+  AND EXISTS (
+      SELECT 1 
+      FROM V$LOGMNR_CONTENTS B 
+      WHERE B.XID = A.XID 
+        AND B.OPERATION = 'COMMIT'
+  )
+ORDER BY A.SCN;
+
+SET LINESIZE 300
+SET PAGESIZE 1000
+COL RECOVERY_SQL FOR A200
+
+SELECT 
+    '/* SCN: ' || A.SCN || ' TIME: ' || TO_CHAR(A.TIMESTAMP, 'HH24:MI:SS') || ' */ ' || 
+    A.SQL_UNDO || ';' AS RECOVERY_SQL
+FROM V$LOGMNR_CONTENTS A
+WHERE A.OPERATION = 'DELETE'
+  AND A.SEG_OWNER = 'SCOTT'
+  AND A.SEG_NAME = 'EMP'
+  AND EXISTS (
+      SELECT 1 
+      FROM V$LOGMNR_CONTENTS B 
+      WHERE B.XID = A.XID 
+        AND B.OPERATION = 'COMMIT'
+  )
+ORDER BY A.SCN DESC; 
+-- 최신 삭제분부터 역순으로 복구하는 것이 안전합니다.
+
+
