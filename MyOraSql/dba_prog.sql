@@ -7,7 +7,6 @@ column status   format a12
 column last_ddl format a19
 
 accept o prompt 'OWNER (blank=all): '
-accept p prompt 'OBJECT_NAME (blank=all): '
 
 select owner,
        object_type type_,
@@ -17,6 +16,4 @@ select owner,
 from dba_objects
 where object_type in ('PROCEDURE', 'FUNCTION', 'PACKAGE', 'PACKAGE BODY')
   and ('&o' = '' or owner = upper('&o'))
-  and ('&p' = '' or object_name = upper('&p'))
 order by owner, type_, last_ddl desc nulls last, prog_name;
-

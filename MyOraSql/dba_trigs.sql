@@ -8,7 +8,6 @@ column status     format a12
 column when_clause format a45
 
 accept o  prompt 'OWNER (blank=all): '
-accept tr prompt 'TRIGGER_NAME (blank=all): '
 
 select owner,
        trigger_name trig_name,
@@ -18,6 +17,4 @@ select owner,
        substr(when_clause, 1, 45) when_clause
 from dba_triggers
 where ('&o' = '' or owner = upper('&o'))
-  and ('&tr' = '' or trigger_name = upper('&tr'))
 order by owner, status, table_name, trigger_name;
-

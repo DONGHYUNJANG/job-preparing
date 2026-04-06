@@ -14,9 +14,6 @@ column clust_f    format 999999999999
 column hi_v       format a60
 
 accept o prompt 'OWNER (blank=all): '
-accept t prompt 'TABLE_NAME (blank=all): '
-accept i prompt 'INDEX_NAME (blank=all): '
-accept p prompt 'PARTITION_NAME (blank=all): '
 
 select owner,
        table_name       tbl_name,
@@ -32,8 +29,4 @@ select owner,
        substr(high_value, 1, 200) hi_v
 from dba_ind_partitions
 where ('&o' = '' or owner = upper('&o'))
-  and ('&t' = '' or table_name = upper('&t'))
-  and ('&i' = '' or index_name = upper('&i'))
-  and ('&p' = '' or partition_name = upper('&p'))
 order by owner, table_name, index_name, partition_position;
-

@@ -7,7 +7,6 @@ column last_ddl  format a19
 column created   format a10
 
 accept o prompt 'OWNER (blank=all): '
-accept v prompt 'VIEW_NAME (blank=all): '
 
 select owner,
        object_name view_name,
@@ -17,6 +16,4 @@ select owner,
 from dba_objects
 where object_type = 'VIEW'
   and ('&o' = '' or owner = upper('&o'))
-  and ('&v' = '' or object_name = upper('&v'))
 order by last_ddl desc nulls last, owner, view_name;
-

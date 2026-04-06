@@ -12,8 +12,6 @@ column del_rule  format a10
 column rcons     format a35
 
 accept o prompt 'OWNER (blank=all): '
-accept t prompt 'TABLE_NAME (blank=all): '
-accept c prompt 'CONSTRAINT_NAME (blank=all): '
 
 select owner,
        constraint_name cons_name,
@@ -27,7 +25,4 @@ select owner,
        delete_rule     del_rule
 from dba_constraints
 where ('&o' = '' or owner = upper('&o'))
-  and ('&t' = '' or table_name = upper('&t'))
-  and ('&c' = '' or constraint_name = upper('&c'))
 order by owner, status, constraint_type, cons_name;
-

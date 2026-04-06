@@ -9,7 +9,6 @@ column descend  format a3
 column col_len  format 9999999
 
 accept t prompt 'TABLE_NAME (blank=all): '
-accept i prompt 'INDEX_NAME (blank=all): '
 
 select index_name idx_name,
        table_name tbl_name,
@@ -19,6 +18,4 @@ select index_name idx_name,
        column_length col_len
 from user_ind_columns
 where ('&t' = '' or table_name = upper('&t'))
-  and ('&i' = '' or index_name = upper('&i'))
 order by table_name, index_name, column_position;
-

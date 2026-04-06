@@ -10,7 +10,6 @@ column leaf_b    format 999999999
 column last_an   format a19
 
 accept o prompt 'OWNER (blank=all): '
-accept t prompt 'TABLE_NAME (blank=all): '
 
 select owner,
        index_name idx_name,
@@ -22,6 +21,4 @@ select owner,
        to_char(last_analyzed, 'YYYY-MM-DD HH24:MI:SS') last_an
 from dba_indexes
 where ('&o' = '' or owner = upper('&o'))
-  and ('&t' = '' or table_name = upper('&t'))
 order by last_an desc nulls last, owner, idx_name;
-

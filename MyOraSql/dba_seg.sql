@@ -10,8 +10,6 @@ column blocks    format 999999999999
 column extents   format 999999
 
 accept o prompt 'OWNER (blank=all): '
-accept sn prompt 'SEGMENT_NAME (blank=all): '
-accept ty prompt 'SEGMENT_TYPE (blank=all): '
 
 select owner,
        segment_name seg_name,
@@ -23,6 +21,4 @@ select owner,
        extents
 from dba_segments
 where ('&o' = '' or owner = upper('&o'))
-  and ('&sn' = '' or segment_name = upper('&sn'))
-  and ('&ty' = '' or segment_type = upper('&ty'))
 order by owner, segment_type, segment_name, partition_name;

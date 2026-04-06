@@ -9,8 +9,6 @@ column descend  format a3
 column col_len  format 9999999
 
 accept o prompt 'OWNER (blank=all): '
-accept t prompt 'TABLE_NAME (blank=all): '
-accept i prompt 'INDEX_NAME (blank=all): '
 
 select owner,
        index_name idx_name,
@@ -21,7 +19,4 @@ select owner,
        column_length col_len
 from dba_ind_columns
 where ('&o' = '' or owner = upper('&o'))
-  and ('&t' = '' or table_name = upper('&t'))
-  and ('&i' = '' or index_name = upper('&i'))
 order by owner, idx_name, column_position;
-

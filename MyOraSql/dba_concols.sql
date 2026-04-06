@@ -7,8 +7,6 @@ column pos       format 99999
 column col_name  format a35
 
 accept o prompt 'OWNER (blank=all): '
-accept t prompt 'TABLE_NAME (blank=all): '
-accept c prompt 'CONSTRAINT_NAME (blank=all): '
 
 select owner,
        constraint_name cons_name,
@@ -17,7 +15,4 @@ select owner,
        column_name     col_name
 from dba_cons_columns
 where ('&o' = '' or owner = upper('&o'))
-  and ('&t' = '' or table_name = upper('&t'))
-  and ('&c' = '' or constraint_name = upper('&c'))
 order by owner, cons_name, pos;
-
