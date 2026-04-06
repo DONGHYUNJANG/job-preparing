@@ -1,0 +1,76 @@
+1. 알맨으로 접속해서 전체 백업을 받습니다.
+
+rman  target / nocatalog
+
+RMAN> delete backupset;
+
+RMAN> delete copy;
+
+RMAN> backup database include current controlfile;
+
+2. dbid 를 미리 알아냅니다.
+
+SQL> select dbid, name from v$database;
+
+SQL> exit;
+
+cd $ORACLE_BASE/admin/$ORACLE_SID/adump
+
+grep -H "DBID" *.aud
+
+3. 데이터 베이스 강제종료 및 asm 파일 모두 삭제하기
+
+SQL> shutdown abort
+ORACLE instance shut down.
+
+그리고 asmcmd 에서 datafile, controlfile, redo logfile, spfile 지우기
+
+4. 복구하기
+
+[oracle@asmtest ~]$ rman target / nocatalog
+
+
+RMAN> set dbid=1754810328;
+
+RMAN> startup force nomount
+
+RMAN> restore spfile to pfile '/home/oracle/init_temp.ora' from '+reco/orcl/autobackup/2026_04_06/s_1229853955.356.1229853959';
+
+RMAN> shutdown abort
+
+RMAN> startup force nomount pfile='/home/oracle/init_temp.ora';
+
+RMAN> exit;
+
+SQL> create spfile='+data' from pfile='/home/oracle/init_temp.ora';
+
+SQL> shutdown abort
+ 
+SQL> startup force nomount
+
+SQL> exit;
+
+$ rman target / nocatalog 
+
+RMAN> restore controlfile from autobackup;
+
+RMAN> alter database mount;
+
+RMAN> restore database;
+
+RMAN> recover database; 
+
+RMAN> alter database open resetlogs;
+
+Statement processed
+
+RMAN> exit;
+
+[oracle@asmtest ~]$ sqlplus scott/tiger
+
+
+SQL> select count(*) from emp;
+
+  COUNT(*)
+----------
+        14

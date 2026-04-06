@@ -1,0 +1,6 @@
+1. D:\git_working\job-preparing\MyOraSql\README.md를 읽고 이 프로젝트에 대해 파악해줘
+2. 입력 파라미터가2개이상인sql은 모두 1개로 줄여줘 
+3. 입력 파라미터의 우선순위는 user 그외에는 첫번째 파라미터를 남겨줘
+4. D:\git_working\job-preparing\MyOraSql\README.md최신화해줘
+5. 위의 지시사항을 이해했으면 수정은 하지말고 실행계획서를 20260406_run.txt에 적어줘
+6. D:\git_working\job-preparing\MyOraSql에 수정할 sql파일들이 있어

@@ -1,0 +1,14 @@
+파일명: D:\git_working\job-preparing\DailyOracleHealthCheck\daily_health_check_v1.03\daily_health_check_v1.03.sh
+README: D:\git_working\job-preparing\DailyOracleHealthCheck\daily_health_check_v1.03\README.md
+작업계획서: D:\git_working\job-preparing\DailyOracleHealthCheck\daily_health_check_v1.03\RUN.md
+리눅스: 오라클 리눅스 7
+오라클버전: 오라클 19c버전
+
+1. daily_health_check_v1.03.sh 파일을 분석해줘
+2. README.md에 있는 기능(점검 항목)들이 daily_health_check_v1.03.sh에 모두 구현되어있는지 확인하고 구현된것 되지않은것을 체크해서 RUN.md파일에 정리해줘
+3. 구현되지 않은 기능들에 대해 어떻게 구현할것인지 작업 계획서를 RUN.md 파일에 정리해줘
+4. 구현은 RUN.md파일을 내가 확인 한 후에 별도 지시를 할때까지 실행하지 말아줘
+5. 이미 구현된 프로그램은 수정하지 말아줘
+6. 코드 수정시 prompt 안에 문자 [&] 사용하지말아줘
+7. 코드 수정시 linux환경에서 문제없이 실행될 수 있게 인코딩 적절하게 변환해줘. 한글주석도 가능하면 보일 수 있게.
+
