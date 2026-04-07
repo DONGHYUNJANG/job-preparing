@@ -1,0 +1,15 @@
+체이닝/마이그레이션이 심한 TOP 10 테이블 조회
+
+SELECT * FROM (
+SELECT
+owner,
+table_name,
+num_rows,
+chain_cnt,
+ROUND((chain_cnt / DECODE(num_rows, 0, 1, num_rows)) * 100, 2) as "Chain_Pct(%)"
+FROM all_tables
+WHERE owner NOT IN ('SYS', 'SYSTEM') -- 시스템 테이블 제외
+AND chain_cnt > 0
+ORDER BY chain_cnt DESC -- 개수 기준 정렬
+)
+WHERE ROWNUM <= 10;
