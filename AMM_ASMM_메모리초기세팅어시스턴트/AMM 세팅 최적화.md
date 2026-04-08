@@ -30,6 +30,9 @@ TARGET_60=$(echo "$TOTAL_MEM * 0.6" | bc | cut -d. -f1)
 PGA_ESTIMATED=$(echo "$TARGET_50 * 0.2" | bc | cut -d. -f1)
 PGA_LIMIT=$(echo "$PGA_ESTIMATED * 1.5" | bc | cut -d. -f1)
 
+# /dev/shm 현재 크기 확인 (MB 단위)
+SHM_TOTAL=$(df -m /dev/shm | tail -1 | awk '{print $2}')
+
 echo "=== Oracle Conservative Memory Configuration (50/60) ==="
 echo "Total Memory         : ${TOTAL_MEM} MB"
 echo "------------------------------------------"
@@ -37,6 +40,24 @@ echo "Recommended MEMORY_TARGET (50%)     : ${TARGET_50} MB"
 echo "Recommended MEMORY_MAX_TARGET (60%) : ${TARGET_60} MB"
 echo "Recommended PGA_AGGREGATE_LIMIT     : ${PGA_LIMIT} MB"
 echo "------------------------------------------"
+# [CHECK] /dev/shm Status
+echo "### [STEP 1] /dev/shm OS Status Check ###"
+if [ $SHM_TOTAL -lt $TARGET_60 ]; then
+    echo "⚠️  WARNING: /dev/shm (${SHM_TOTAL}MB) is SMALLER than MAX_TARGET (${TARGET_60}MB)."
+    echo "    To avoid ORA-00845, please run the following as root:"
+    echo "    ------------------------------------------------------"
+    echo "    # [Immediate Apply]"
+    echo "    mount -o remount,size=${TARGET_60}M /dev/shm"
+    echo ""
+    echo "    # [Permanent Apply] Edit /etc/fstab"
+    echo "    tmpfs   /dev/shm   tmpfs   defaults,size=${TARGET_60}M   0 0"
+    echo "    ------------------------------------------------------"
+else
+    echo "✅  PASS: /dev/shm is sufficient for current configuration."
+fi
+echo ""
+
+echo "### [STEP 2] Oracle SQL Commands (Run in SQL*Plus) ###"
 echo "### 1. 기본 메모리 설정 (재기동 필요) ###"
 echo "ALTER SYSTEM SET MEMORY_MAX_TARGET = ${TARGET_60}M SCOPE=SPFILE;"
 echo "ALTER SYSTEM SET MEMORY_TARGET = ${TARGET_50}M SCOPE=SPFILE;"
