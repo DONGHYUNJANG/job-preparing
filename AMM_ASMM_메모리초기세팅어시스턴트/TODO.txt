@@ -1,0 +1,2 @@
+AMM의 /dev/shm 설정
+/dev/shm이 memory_target 또는 MEMORY_MAX_TARGET보다커야한다
