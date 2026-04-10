@@ -1,0 +1,323 @@
+
+===============================================================================
+* Preinstallation RPM 설치
+
+  $ yum install oracle-database-preinstall-19c
+
+
+===============================================================================
+* group, user 생성 (양쪽 노드에서)
+
+  $ cat /etc/group
+  $ groupadd dba
+  
+  $ cat /etc/passwd
+  $ useradd -s /bin/bash -g dba grid
+  $ usermod -g dba oracle
+      --> oracle 유저를 처음 Install 할때 생성한 경우는 기본 그룹을 dba 로 변경
+  $ groupdel oracle
+  $ groupdel wheel
+
+  $ vi .bash_profile
+    --추가) umask 022
+
+
+
+===============================================================================
+* Base Directory 생성
+
+(( grid 유저에서 ))
+mkdir -p /u01/app/19.0.0/grid
+mkdir -p /u01/app/grid
+chown -R grid:dba /u01
+chmod -R 775 /u01
+
+
+
+===============================================================================
+* hosts 파일에 ip 등록
+
+$ vi /etc/hosts
+
+### Public
+192.168.1.161 ol7rac1
+192.168.1.162 ol7rac2
+### Private
+192.168.56.161 ol7rac1-priv
+192.168.56.162 ol7rac2-priv
+### Virtual
+192.168.1.163 ol7rac1-vip
+192.168.1.164 ol7rac2-vip
+### SCAN
+192.168.1.165 ol7rac-scan
+
+
+
+===============================================================================
+* Hostname 변경
+
+hostnamectl  set-hostname  ol7rac1
+hostnamectl  set-hostname  ol7rac1  --pretty
+hostnamectl  set-hostname  ol7rac1  --static
+hostnamectl  set-hostname  ol7rac1  --transient
+hostnamectl  status
+
+
+
+===============================================================================
+* Memory 확인
+  $ grep MemTotal /proc/meminfo
+    -- GI는 8GB 이상, DB는 1GB 이상.
+
+* swap 공간 확인 (메모리크기의 1~1.5배 이어야함. <16GB)
+  $ grep SwapTotal /proc/meminfo
+
+
+* swap 볼륨 추가
+  $ dd if=/dev/zero of=/etc/swapfile bs=1024 count=5000000
+    -- 5GB 생성
+  $ mkswap /etc/swapfile
+    -- Swap 파일로 포맷
+  $ swapon /etc/swapfile
+    -- Swap 공간으로 활성화
+  $ /etc/fstab 파일에 추가
+    /etc/swapfile          swap            swap    defaults        0 0
+
+
+* /tmp 공간 확인 (1GB 이상이어야함)
+  $ df -h /tmp
+
+
+
+
+===============================================================================((Skip))
+* 필요한 패키지 설치되어있는지 확인
+
+  $ yum list glibc*
+    -- OS Version 마다 필요한 패키지가 다르므로 확인 필요.
+    -- 4-18 페이지, Operating System Requirements for x86-64 Linux Platforms 부분에서 확인. 
+
+  -->>> Oracle Linux 7
+  yum install -y bc binutils compat-libcap1 compat-libstdc++-33 elfutils-libelf elfutils-libelf-devel fontconfig-devel glibc glibc-devel ksh libaio libaio-devel libXrender libXrender-devel libX11 libXau libXi libXtst libgcc libstdc++ libstdc++-devel libxcb make policycoreutils policycoreutils-python smartmontools sysstat
+
+
+
+===============================================================================((Skip))
+* OS Kernel 파라메타 세팅
+
+  $ vi /etc/sysctl.d/97-oracledatabase-sysctl.conf
+-----------------------------
+fs.aio-max-nr = 1048576
+fs.file-max = 6815744
+kernel.shmall = 2097152
+kernel.shmmax = 10142509056
+kernel.shmmni = 4096
+kernel.sem = 250 32000 100 128
+net.ipv4.ip_local_port_range = 9000 65500
+net.core.rmem_default = 262144
+net.core.rmem_max = 4194304
+net.core.wmem_default = 262144
+net.core.wmem_max = 1048576
+-----------------------------
+  $ /sbin/sysctl --system       # 변경값 적용
+  $ /sbin/sysctl -a             # 잘 변경되었는지 확인
+
+
+
+===============================================================================
+* Resource Limit 관련 파라메타 세팅
+
+  $ vi /etc/security/limits.conf
+-----------------------------
+grid       soft     nofile     4096
+grid       hard     nofile     65536
+grid       soft     nproc      16384
+grid       hard     nproc      16384
+grid       soft     stack      10240
+grid       hard     stack      32768
+grid       soft     memlock    3145728
+grid       hard     memlock    3145728
+-----------------------------
+  (( 변경후 서버 재부팅 필요 ))
+
+  (( grid 유저에서 확인 ))
+  $ ulimit -Sn
+  4096
+  $ ulimit -Hn
+  65536
+  $ ulimit -Su
+  16384
+  $ ulimit -Hu
+  16384
+  $ ulimit -Ss
+  10240
+  $ ulimit -Hs
+  32768
+
+  $ vi /etc/security/limits.conf
+-----------------------------
+oracle       soft     nofile     4096
+oracle       hard     nofile     65536
+oracle       soft     nproc      16384
+oracle       hard     nproc      16384
+oracle       soft     stack      10240
+oracle       hard     stack      32768
+oracle       soft     memlock    3145728
+oracle       hard     memlock    3145728
+-----------------------------
+
+항목    의미                     설정 이유
+----------------------------------------------------------
+nofile  열 수 있는 최대 파일 수
+nproc   생성 가능한 프로세스 수
+stack   프로세스 스택 크기
+memlock 메모리에 고정 가능한 크기  HugePages 설정을 위해 필수. SGA(시스템 공유 메모리)가 디스크 스왑(Swap)으로 빠지지 않게 메모리에 '박제'해두는 용도입니다.
+
+===============================================================================
+* NTP 설정
+
+  -- 방화벽 Down
+  $ systemctl stop firewalld
+  $ systemctl disable firewalld
+
+  -- ntpd 설치
+  $ yum install ntp
+  
+  -- ntpd 기동
+  $ systemctl start ntpd
+  $ systemctl enable ntpd
+  $ systemctl status ntpd
+
+
+
+
+
+
+-------------------------------------------------------------------------------------------------------------------------
+
+
+
+===============================================================================
+* asmlib 설치
+
+  $ yum list *oracleasm*
+  $ yum install oracleasm-support
+  $ yum install kmod-oracleasm
+
+
+
+>>>>>>>>>>>>>>>>>>>>>>> 서버 복제해서 2번 노드 생성 <<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+
+
+
+===============================================================================
+* Hostname 변경
+
+hostnamectl  set-hostname  ol7rac2
+hostnamectl  set-hostname  ol7rac2  --pretty
+hostnamectl  set-hostname  ol7rac2  --static
+hostnamectl  set-hostname  ol7rac2  --transient
+hostnamectl  status
+
+
+
+
+-- 공유 Disk 2개 생성하고 가상서버에 Attach
+
+
+
+===============================================================================
+== ASM Disk 구성
+===============================================================================
+
+-- 아래 1,2,5 번은 모든 node에서 수행
+-- 아래 3,4 번은 1번 node 에서만 수행
+
+  $ su -   ((root로 실행))
+
+  1. configure
+    $ /usr/sbin/oracleasm configure -i
+
+  2. oracleasm 커널모듈 로딩
+    $ /usr/sbin/oracleasm init
+
+  3. 사용할 수 있는 Disk 확인 및 파티션 생성
+    $ fdisk -l
+    $ lsblk
+    $ fdisk /dev/sdb
+    $ fdisk /dev/sdc
+    
+    $ pvcreate /dev/sdb1 /dev/sdc1
+
+  4. 생성된 파티션 디스크를 ASM 디스크로 할당
+    $ oracleasm createdisk DATA /dev/sdb1
+    $ oracleasm createdisk RECO /dev/sdc1
+    $ oracleasm listdisks
+
+  5. 모든 node에서 asm disk들을 접근하기 위해서 아래 커맨드를 모든 node에서 실행
+    $ oracleasm scandisks
+
+    
+
+
+-------------------------------------------------------------------------------------------------------------------------
+
+
+
+
+===============================================================================
+* grid S/W 설치
+
+  $ su - grid
+  $ cd /u01/app/19.0.0/grid
+  $ unzip -q /home/STAGE/LINUX.X64_193000_grid_home.zip
+
+
+
+===============================================================================
+* .bash_profile 에 환경 세팅
+
+  $ su - grid
+  $ vi .bash_profile
+
+export LANG=C
+export ORACLE_BASE=/u01/app/grid
+export ORACLE_HOME=/u01/app/19.0.0/grid
+export ORACLE_SID=+ASM1
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib
+export NLS_LANG=AMERICAN_AMERICA.AL32UTF8
+export PATH=$ORACLE_HOME/bin:$PATH
+
+alias oh='cd $ORACLE_HOME'
+
+
+
+===============================================================================
+* grid Setup
+
+  $ su - grid
+
+  -- X-term 에서..
+  $ /u01/app/19.0.0/grid/gridSetup.sh
+
+
+
+     --> 에러(경고)
+     Daemon "avahi-daemon" not configured and running - This test checks that the "avahi-daemon" daemon is not configured and running on the cluster nodes.
+     PRVG-1359 : Daemon process "avahi-daemon" is configured on node "ol7rac2"
+     PRVG-1360 : Daemon process "avahi-daemon" is running on node "ol7rac2"
+        --> 해결방법 참조) https://dbaclass.com/article/verifying-daemon-avahi-daemon-not-configured-and-running-failed-prvg-1360/
+                     참조) https://logic.edchen.org/how-to-resolve-prvg-1359-daemon-process-avahi-daemon-is-configured-on-node/
+        --> 3rd Party DNS 서비스의 일종으로 이게 있으면 방해되니까 제대로 세팅해서 쓰라는 경고메시지 임.
+        --> 그냥 Stop 하고 Disable 시켜버리면 됨.
+        > systemctl stop avahi-daemon
+        > systemctl disable avahi-daemon
+
+
+
+
+
+
+
+
+

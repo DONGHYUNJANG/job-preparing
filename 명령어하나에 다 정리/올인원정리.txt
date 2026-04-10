@@ -1107,3 +1107,277 @@ SELECT timestamp, username, sql_redo
 
 
 
+
+# =================================================
+# 🗂️ Oracle PDB(Pluggable Database) 오픈 명령어 가이드
+# =================================================
+
+---
+
+## 💡 1. 핵심 개념 설명
+
+Oracle 12c부터 도입된 **Multitenant Architecture**에서 PDB는 CDB(Container Database) 내에 존재하는 독립적인 데이터베이스입니다. 
+
+* **기본 동작:** CDB가 시작(Startup)될 때, 내부에 포함된 PDB들은 기본적으로 **`MOUNT`** 상태(닫힌 상태)로 시작됩니다.
+* **관리자 작업:** 사용자가 PDB에 접속하여 데이터를 조회하거나 수정하려면, 관리자가 직접 PDB를 **`READ WRITE`** 모드로 열어주어야 합니다.
+
+---
+
+## 🛠️ 2. PDB 오픈 명령어 정리
+
+모든 명령어는 `SYSDBA` 권한이 있는 상태에서 실행해야 합니다.
+
+### A. 특정 PDB 열기
+가장 일반적으로 사용되는 명령어로, CDB(Root)에서 특정 PDB 하나만 지정해서 엽니다.
+```sql
+-- 문법: ALTER PLUGGABLE DATABASE [PDB_NAME] OPEN;
+ALTER PLUGGABLE DATABASE pdb1 OPEN;
+```
+
+### B. 모든 PDB 한꺼번에 열기
+CDB 내의 모든 PDB를 동시에 오픈할 때 사용합니다.
+```sql
+ALTER PLUGGABLE DATABASE ALL OPEN;
+```
+
+### C. 특정 PDB를 제외하고 모두 열기
+```sql
+ALTER PLUGGABLE DATABASE ALL EXCEPT pdb2 OPEN;
+```
+
+### D. 읽기 전용(Read Only)으로 열기
+```sql
+ALTER PLUGGABLE DATABASE pdb1 OPEN READ ONLY;
+```
+
+---
+
+## 📝 PDB 상태 저장
+
+### ✅ 현재 상태 확인 (v$pdbs)
+명령어 실행 후 PDB의 상태가 `READ WRITE`인지 확인하는 습관이 중요합니다.
+```sql
+SELECT name, open_mode FROM v$pdbs;
+```
+
+### ✅ PDB 상태 저장 (`SAVE STATE`)
+CDB를 재시작해도 PDB가 자동으로 열리게 하려면 현재의 오픈 상태를 저장해야 합니다. (OCP 단골 문제!)
+```sql
+-- 특정 PDB의 현재 상태 저장
+ALTER PLUGGABLE DATABASE pdb1 SAVE STATE;
+
+-- 모든 PDB의 현재 상태 저장
+ALTER PLUGGABLE DATABASE ALL SAVE STATE;
+
+-- 저장된 상태 해제 (다시 수동으로 열어야 함)
+ALTER PLUGGABLE DATABASE pdb1 DISCARD STATE;
+```
+
+# =================================================
+# 🗂️ Oracle CDB/PDB 세션 변경 명령어 정리
+# =================================================
+
+
+---
+
+## 💡 1. 컨테이너 변경 명령어
+
+현재 세션이 바라보는 컨테이너(CDB Root 또는 특정 PDB)를 전환할 때 사용합니다.
+
+```sql
+-- 특정 PDB로 컨테이너 변경
+ALTER SESSION SET CONTAINER = pdb_name;
+
+-- CDB Root(최상위)로 컨테이너 변경
+ALTER SESSION SET CONTAINER = CDB$ROOT;
+```
+
+---
+
+## 🛠️ 2. 함께 알아두면 좋은 필수 명령어
+
+PDB 환경에서 작업할 때 `ALTER SESSION`과 함께 가장 자주 쓰이는 명령어들입니다.
+
+### ✅ 현재 접속 정보 확인
+내가 지금 어디(Root인지 특정 PDB인지)에 있는지 확인할 때 사용합니다.
+```sql
+-- 현재 컨테이너 이름 확인
+SHOW CON_NAME;
+
+-- 현재 컨테이너 ID 확인
+SHOW CON_ID;
+
+-- 현재 접속 유저 확인
+SHOW USER;
+```
+
+### ✅ PDB 목록 및 상태 확인
+```sql
+-- 모든 PDB의 이름과 오픈 상태 확인
+SELECT name, open_mode FROM v$pdbs;
+
+-- 상세 정보 포함 확인 (간략 버전)
+SHOW PDBS;
+```
+
+### ✅ 서비스 이름 확인
+PDB는 각각 고유한 서비스 이름을 가집니다. 네트워크 접속(TNS) 시 필요합니다.
+```sql
+-- 현재 컨테이너의 서비스 이름 확인
+SELECT name FROM v$services;
+```
+
+---
+
+# =================================================
+# 🗂️ RAC환경 로그파일 삭제 및 추가
+# =================================================
+
+---
+
+## 💡 1. 핵심 개념 설명: Thread와 공유 저장소
+
+RAC 환경에서 가장 중요한 점은 **"로그는 각자 쓰고, 읽는 건 같이 한다"**는 것입니다.
+
+* **Thread의 분리**: 각 인스턴스(Node)는 충돌을 방지하기 위해 자신만의 전용 로그 쓰레드(Thread)를 가집니다.
+* **저장소의 공유**: 하지만 장애 복구 시 다른 노드가 이 로그를 읽어야 하므로, 모든 Redo Log 파일은 **ASM(+DATA 등)**과 같은 공유 저장소에 위치해야 합니다.
+
+---
+
+## 🛠️ 2. RAC 로그 관리 명령어 
+
+### ✅ 로그 상태 확인 (전체 노드)
+어떤 인스턴스가 어떤 쓰레드를 쓰고 있는지, 로그 파일이 어디 있는지 한눈에 확인하는 쿼리입니다.
+```sql
+SELECT a.thread#, a.group#, b.member, a.bytes/1024/1024 as "SIZE(MB)", a.status
+FROM v$log a, v$logfile b
+WHERE a.group# = b.group#
+ORDER BY a.thread#, a.group#;
+```
+
+### ✅ 로그 그룹 추가 (Thread 지정 필수)
+RAC에서는 단순히 추가하는 것이 아니라, **어느 인스턴스(Thread)가 사용할 것인지** 명시해야 합니다.
+SIZE 생략 가능
+```sql
+-- Thread 1(1번 노드)에 4번 그룹 추가
+ALTER DATABASE ADD LOGFILE THREAD 1 GROUP 4 '+DATA' SIZE 100M;
+
+-- Thread 2(2번 노드)에 5번 그룹 추가
+ALTER DATABASE ADD LOGFILE THREAD 2 GROUP 5 '+DATA' SIZE 100M;
+```
+
+### ✅ 로그 그룹 삭제
+!!!!!!!!!!!!!!!!!!!! 삭제 전에는 반드시 해당 그룹의 상태가 **`INACTIVE`**여야 합니다. !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+만약 `CURRENT`나 `ACTIVE`라면 위에서 배운 `SWITCH LOGFILE`이나 `CHECKPOINT`를 통해 상태를 변경해야 합니다.
+```sql
+-- 로그 그룹 삭제 (물리적 파일은 ASM에서 별도 삭제 필요할 수 있음)
+ALTER DATABASE DROP LOGFILE GROUP 4;
+```
+
+---
+
+## ⚠️ 주의사항 요약
+1.  **최소 그룹 수**: 각 Thread는 최소 **2개 이상의 로그 그룹**을 가져야 합니다.
+2.  **크기 통일**: RAC 내의 모든 리두 로그 파일은 성능과 관리 편의를 위해 **동일한 크기**로 맞추는 것이 정석입니다.
+3.  **OMF 사용**: ASM 환경이라면 파일 경로를 생략하고 `'+DATA'`만 지정하여 오라클이 이름을 자동으로 짓게(OMF) 하는 것이 편리합니다.
+
+---
+
+# ================================================
+# 🗂️ RAC 인스턴스 및 데이터베이스 재기동 가이드
+# =================================================
+
+---
+
+## 💡 1. 핵심 개념 설명: `srvctl` vs `sqlplus`
+
+* **`srvctl` (권장):** 오라클 클러스터 관리 도구입니다. 이 명령어로 DB를 내리면 리스너와의 관계, 의존성 등을 모두 고려하여 깔끔하게 처리하며, OCR(장부)에 상태를 정확히 업데이트합니다.
+* **`sqlplus`:** 개별 인스턴스만 제어합니다. RAC에서는 한쪽을 내려도 다른 쪽이 살아있으므로 큰 문제는 없으나, 클러스터 관리자가 "어? 인스턴스가 왜 죽었지?" 하고 다시 살리려고 시도하는 등 간섭이 생길 수 있습니다.
+
+---
+
+## 🛠️ 2. 재기동 명령어 (MD 파일 정리용)
+
+가장 많이 쓰이는 **`srvctl`** 기준으로 정리해 드립니다. (명령어는 OS 프롬프트에서 실행합니다.)
+
+### ✅ 방법 1: 전체 데이터베이스 한 번에 내리고 올리기 (가장 간편)
+양쪽 노드(인스턴스)를 한꺼번에 제어할 때 사용합니다.
+```bash
+# 전체 DB 중지 (Immediate 옵션)
+srvctl stop database -d racdb -o immediate
+
+# 전체 DB 시작
+srvctl start database -d racdb
+```
+
+### ✅ 방법 2: 특정 인스턴스만 골라서 내리고 올리기
+1번 노드만 점검하거나 재기동하고 싶을 때 사용합니다.
+```bash
+# 1번 인스턴스만 중지
+srvctl stop instance -d racdb -i racdb1 -o immediate
+
+# 1번 인스턴스만 시작
+srvctl start instance -d racdb -i racdb1
+```
+
+### ✅ 상태 확인 (재기동 후 필수)
+```bash
+# 전체 인스턴스 및 서비스 상태 확인
+srvctl status database -d racdb
+```
+
+
+
+---
+
+## 📝 3. 문제 해설: 주의사항 및 OCP 포인트
+
+> **Q: `shutdown abort`와 `immediate`의 차이는?**
+> **A:** `immediate`는 현재 진행 중인 트랜잭션을 롤백하고 정상적으로 체크포인트를 수행하며 내리지만, `abort`는 전원을 끄는 것과 같아서 나중에 올릴 때 **인스턴스 복구(Instance Recovery)** 과정이 필요합니다. 실습 중이라도 가급적 `-o immediate`를 쓰시는 것이 좋습니다.
+
+> **💡 팁:** `srvctl`로 내리면 아까 질문하신 **OCR** 정보와 동기화되기 때문에, 서버가 재부팅되어도 그리드 인프라가 자동으로 DB를 다시 올려줍니다.
+
+---
+
+## ✅ 요약 테이블
+
+| 대상 | 명령어 (중지) | 명령어 (시작) |
+| :--- | :--- | :--- |
+| **전체 DB** | `srvctl stop database -d [DB명]` | `srvctl start database -d [DB명]` |
+| **특정 노드** | `srvctl stop instance -d [DB명] -i [인스턴스명]` | `srvctl start instance -d [DB명] -i [인스턴스명]` |
+
+---
+
+
+
+
+# ================================================
+# 🗂️ RAC archive log 모드 변경
+# =================================================
+
+RAC#1> archive log list
+
+RAC#1> shutdown immediate
+
+RAC#2>shutdown immediate 
+
+
+RAC#1> startup mount
+
+
+RAC#1> alter database archivelog;
+
+
+RAC#1> alter database open;
+
+
+RAC#1> archive log list
+Database log mode              Archive Mode
+Automatic archival             Enabled
+Archive destination            USE_DB_RECOVERY_FILE_DEST
+Oldest online log sequence     57
+Next log sequence to archive   59
+Current log sequence           59
+RAC#1>
+
+RAC#2> startup

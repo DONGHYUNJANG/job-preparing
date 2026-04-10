@@ -1,0 +1,400 @@
+2026/04/09 GUI 비활성화 후 관찰
+GUI OFF 명령어
+systemctl set-default multi-user.target
+GUI ON 명령어
+systemctl isolate multi-user.target
+r  9 12:42:01 jdh1 systemd[3866]: grub-boot-success.timer: Succeeded.
+Apr  9 12:42:01 jdh1 systemd[3866]: Stopped Mark boot as successful after the user session has run 2 minutes.
+Apr  9 12:42:01 jdh1 systemd[3866]: Stopped target Sockets.
+Apr  9 12:42:01 jdh1 systemd[3866]: pipewire.socket: Succeeded.
+Apr  9 12:42:01 jdh1 systemd[3866]: Closed Multimedia System.
+Apr  9 12:42:01 jdh1 systemd[3866]: pulseaudio.socket: Succeeded.
+Apr  9 12:42:01 jdh1 systemd[3866]: Closed Sound System.
+Apr  9 12:42:01 jdh1 systemd[3866]: Stopped target Paths.
+Apr  9 12:42:01 jdh1 systemd[3866]: dbus.socket: Succeeded.
+Apr  9 12:42:01 jdh1 systemd[3866]: Closed D-Bus User Message Bus Socket.
+Apr  9 12:42:01 jdh1 systemd[3866]: Reached target Shutdown.
+Apr  9 12:42:01 jdh1 systemd[3866]: Starting Exit the Session...
+Apr  9 12:42:01 jdh1 systemd[1]: user@54321.service: Succeeded.
+Apr  9 12:42:01 jdh1 systemd[1]: Stopped User Manager for UID 54321.
+Apr  9 12:42:01 jdh1 systemd[1]: Stopping /run/user/54321 mount wrapper...
+Apr  9 12:42:01 jdh1 systemd[1]: Removed slice User Slice of UID 54321.
+Apr  9 12:42:01 jdh1 systemd[1]: user-runtime-dir@54321.service: Succeeded.
+Apr  9 12:42:01 jdh1 systemd[1]: Stopped /run/user/54321 mount wrapper.
+Apr  9 12:42:07 jdh1 systemd[1]: Started /run/user/54321 mount wrapper.
+Apr  9 12:42:07 jdh1 systemd[1]: Created slice User Slice of UID 54321.
+Apr  9 12:42:07 jdh1 systemd[1]: Starting User Manager for UID 54321...
+Apr  9 12:42:07 jdh1 systemd[1]: Started Session 34 of user oracle.
+Apr  9 12:42:07 jdh1 systemd-logind[1337]: New session 34 of user oracle.
+Apr  9 12:42:07 jdh1 systemd[4010]: Listening on Sound System.
+Apr  9 12:42:07 jdh1 systemd[4010]: Listening on Multimedia System.
+Apr  9 12:42:07 jdh1 systemd[4010]: Starting D-Bus User Message Bus Socket.
+Apr  9 12:42:07 jdh1 systemd[4010]: Reached target Paths.
+Apr  9 12:42:07 jdh1 systemd[4010]: Started Mark boot as successful after the user session has run 2 minutes.
+Apr  9 12:42:07 jdh1 systemd[4010]: Reached target Timers.
+Apr  9 12:42:07 jdh1 systemd[4010]: Listening on D-Bus User Message Bus Socket.
+Apr  9 12:42:07 jdh1 systemd[4010]: Reached target Sockets.
+Apr  9 12:42:07 jdh1 systemd[4010]: Reached target Basic System.
+Apr  9 12:42:07 jdh1 systemd[1]: Started User Manager for UID 54321.
+Apr  9 12:42:07 jdh1 systemd[4010]: Starting Sound Service...
+Apr  9 12:42:07 jdh1 systemd[4010]: Started D-Bus User Message Bus.
+Apr  9 12:42:07 jdh1 dbus-daemon[4070]: [session uid=54321 pid=4070] Activating via systemd: service name='org.gtk.vfs.Daemon' unit='gvfs-daemon.service' requested by ':1.1' (uid=54321 pid=4066 comm="flatpak --installations ")
+Apr  9 12:42:07 jdh1 systemd[4010]: Starting Virtual filesystem service...
+Apr  9 12:42:07 jdh1 dbus-daemon[4070]: [session uid=54321 pid=4070] Successfully activated service 'org.gtk.vfs.Daemon'
+Apr  9 12:42:07 jdh1 systemd[4010]: Started Virtual filesystem service.
+Apr  9 12:42:08 jdh1 dbus-daemon[898]: [system] Activating via systemd: service name='org.bluez' unit='dbus-org.bluez.service' requested by ':1.1074' (uid=54321 pid=4029 comm="/usr/bin/pulseaudio --daemonize=no --log-target=jo")
+Apr  9 12:42:08 jdh1 dbus-daemon[898]: [system] Activation via systemd failed for unit 'dbus-org.bluez.service': Unit dbus-org.bluez.service not found.
+Apr  9 12:42:08 jdh1 systemd[4010]: Started Sound Service.
+Apr  9 12:42:08 jdh1 pulseaudio[4029]: GetManagedObjects() failed: org.freedesktop.systemd1.NoSuchUnit: Unit dbus-org.bluez.service not found.
+Apr  9 12:42:08 jdh1 systemd[4010]: Reached target Default.
+Apr  9 12:42:08 jdh1 systemd[4010]: Startup finished in 864ms.
+Apr  9 12:42:08 jdh1 systemd[1]: session-34.scope: Succeeded.
+Apr  9 12:42:08 jdh1 systemd-logind[1337]: Session 34 logged out. Waiting for processes to exit.
+Apr  9 12:42:08 jdh1 systemd-logind[1337]: Removed session 34.
+Apr  9 12:42:08 jdh1 systemd[4010]: pulseaudio.service: Succeeded.
+Apr  9 12:42:08 jdh1 systemd[1]: Stopping User Manager for UID 54321...
+Apr  9 12:42:08 jdh1 systemd[4010]: Stopping D-Bus User Message Bus...
+Apr  9 12:42:08 jdh1 systemd[4010]: Stopping Virtual filesystem service...
+Apr  9 12:42:08 jdh1 systemd[4010]: Stopped target Default.
+Apr  9 12:42:08 jdh1 systemd[4010]: dbus.service: Succeeded.
+Apr  9 12:42:08 jdh1 systemd[4010]: Stopped D-Bus User Message Bus.
+Apr  9 12:42:08 jdh1 systemd[4010]: run-user-54321-gvfs.mount: Succeeded.
+Apr  9 12:42:08 jdh1 systemd[4010]: gvfs-daemon.service: Succeeded.
+Apr  9 12:42:08 jdh1 systemd[4010]: Stopped Virtual filesystem service.
+Apr  9 12:42:08 jdh1 systemd[4010]: Stopped target Basic System.
+Apr  9 12:42:08 jdh1 systemd[4010]: Stopped target Timers.
+Apr  9 12:42:08 jdh1 systemd[4010]: grub-boot-success.timer: Succeeded.
+Apr  9 12:42:08 jdh1 systemd[4010]: Stopped Mark boot as successful after the user session has run 2 minutes.
+Apr  9 12:42:08 jdh1 systemd[4010]: Stopped target Sockets.
+Apr  9 12:42:08 jdh1 systemd[4010]: pulseaudio.socket: Succeeded.
+Apr  9 12:42:08 jdh1 systemd[4010]: Closed Sound System.
+Apr  9 12:42:08 jdh1 systemd[4010]: pipewire.socket: Succeeded.
+Apr  9 12:42:08 jdh1 systemd[4010]: Closed Multimedia System.
+Apr  9 12:42:08 jdh1 systemd[4010]: Stopped target Paths.
+Apr  9 12:42:08 jdh1 systemd[4010]: dbus.socket: Succeeded.
+Apr  9 12:42:08 jdh1 systemd[4010]: Closed D-Bus User Message Bus Socket.
+Apr  9 12:42:08 jdh1 systemd[4010]: Reached target Shutdown.
+Apr  9 12:42:08 jdh1 systemd[4010]: Starting Exit the Session...
+Apr  9 12:42:08 jdh1 systemd[1]: user@54321.service: Succeeded.
+Apr  9 12:42:08 jdh1 systemd[1]: Stopped User Manager for UID 54321.
+Apr  9 12:42:08 jdh1 systemd[1]: Stopping /run/user/54321 mount wrapper...
+Apr  9 12:42:08 jdh1 systemd[1]: Removed slice User Slice of UID 54321.
+Apr  9 12:42:08 jdh1 systemd[1]: user-runtime-dir@54321.service: Succeeded.
+Apr  9 12:42:08 jdh1 systemd[1]: Stopped /run/user/54321 mount wrapper.
+Apr  9 12:43:08 jdh1 su[4177]: (to root) root on pts/0
+Apr  9 12:43:15 jdh1 systemd[1]: Reloading.
+Apr  9 12:45:05 jdh1 journal[1677]: JS WARNING: [resource:///org/gnome/shell/ui/screenShield.js 920]: reference to undefined property "actor"
+Apr  9 12:45:05 jdh1 journal[1677]: JS ERROR: Error calling onComplete: TypeError: this._dialog.actor is undefined#012_hideLockScreenComplete@resource:///org/gnome/shell/ui/screenShield.js:920:13#012_callOnFunction@resource:///org/gnome/gjs/modules/tweener/tweener.js:208:13#012_updateTweenByIndex@resource:///org/gnome/gjs/modules/tweener/tweener.js:342:9#012_updateTweens@resource:///org/gnome/gjs/modules/tweener/tweener.js:355:18#012_onEnterFrame@resource:///org/gnome/gjs/modules/tweener/tweener.js:370:10#012_emit@resource:///org/gnome/gjs/modules/signals.js:142:27#012_onNewFrame@resource:///org/gnome/shell/ui/tweener.js:238:9#012ClutterFrameTicker</<@resource:///org/gnome/shell/ui/tweener.js:209:13
+Apr  9 12:45:15 jdh1 su[4253]: (to oracle) root on pts/0
+Apr  9 12:45:50 jdh1 dbus-daemon[898]: [system] Activating via systemd: service name='net.reactivated.Fprint' unit='fprintd.service' requested by ':1.73' (uid=42 pid=1677 comm="/usr/bin/gnome-shell ")
+Apr  9 12:45:50 jdh1 systemd[1]: Starting Fingerprint Authentication Daemon...
+Apr  9 12:45:50 jdh1 dbus-daemon[898]: [system] Successfully activated service 'net.reactivated.Fprint'
+Apr  9 12:45:50 jdh1 systemd[1]: Started Fingerprint Authentication Daemon.
+Apr  9 12:45:51 jdh1 systemd[1]: Created slice User Slice of UID 54321.
+Apr  9 12:45:51 jdh1 systemd[1]: Started /run/user/54321 mount wrapper.
+Apr  9 12:45:51 jdh1 systemd[1]: Starting User Manager for UID 54321...
+Apr  9 12:45:51 jdh1 systemd[1]: Started Session 36 of user oracle.
+Apr  9 12:45:51 jdh1 systemd-logind[1337]: New session 36 of user oracle.
+Apr  9 12:45:52 jdh1 systemd[4311]: Reached target Paths.
+Apr  9 12:45:52 jdh1 systemd[4311]: Listening on Sound System.
+Apr  9 12:45:52 jdh1 systemd[4311]: Started Mark boot as successful after the user session has run 2 minutes.
+Apr  9 12:45:52 jdh1 systemd[4311]: Reached target Timers.
+Apr  9 12:45:52 jdh1 systemd[4311]: Listening on Multimedia System.
+Apr  9 12:45:52 jdh1 systemd[4311]: Starting D-Bus User Message Bus Socket.
+Apr  9 12:45:52 jdh1 systemd[4311]: Listening on D-Bus User Message Bus Socket.
+Apr  9 12:45:52 jdh1 systemd[4311]: Reached target Sockets.
+Apr  9 12:45:52 jdh1 systemd[4311]: Reached target Basic System.
+Apr  9 12:45:52 jdh1 systemd[1]: Started User Manager for UID 54321.
+Apr  9 12:45:52 jdh1 systemd[4311]: Starting Sound Service...
+Apr  9 12:45:52 jdh1 rtkit-daemon[891]: Successfully made thread 4329 of process 4329 (/usr/bin/pulseaudio) owned by '54321' high priority at nice level -11.
+Apr  9 12:45:52 jdh1 dbus-daemon[898]: [system] Activating via systemd: service name='org.bluez' unit='dbus-org.bluez.service' requested by ':1.1143' (uid=54321 pid=4329 comm="/usr/bin/pulseaudio --daemonize=no --log-target=jo")
+Apr  9 12:45:52 jdh1 dbus-daemon[898]: [system] Activation via systemd failed for unit 'dbus-org.bluez.service': Unit dbus-org.bluez.service not found.
+Apr  9 12:45:52 jdh1 rtkit-daemon[891]: Successfully made thread 4338 of process 4329 (/usr/bin/pulseaudio) owned by '54321' RT at priority 5.
+Apr  9 12:45:52 jdh1 systemd[4311]: Started D-Bus User Message Bus.
+Apr  9 12:45:52 jdh1 pulseaudio[4329]: GetManagedObjects() failed: org.freedesktop.systemd1.NoSuchUnit: Unit dbus-org.bluez.service not found.
+Apr  9 12:45:52 jdh1 systemd[4311]: Started Sound Service.
+Apr  9 12:45:52 jdh1 systemd[4311]: Reached target Default.
+Apr  9 12:45:52 jdh1 systemd[4311]: Startup finished in 100ms.
+Apr  9 12:45:52 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating via systemd: service name='org.gtk.vfs.Daemon' unit='gvfs-daemon.service' requested by ':1.3' (uid=54321 pid=4368 comm="flatpak --installations ")
+Apr  9 12:45:52 jdh1 systemd[4311]: Starting Virtual filesystem service...
+Apr  9 12:45:52 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.gtk.vfs.Daemon'
+Apr  9 12:45:52 jdh1 systemd[4311]: Started Virtual filesystem service.
+Apr  9 12:45:52 jdh1 gnome-keyring-ssh.desktop[4431]: SSH_AUTH_SOCK=/run/user/54321/keyring/ssh
+Apr  9 12:45:52 jdh1 org.gnome.Shell.desktop[4436]: VMware: No 3D enabled (0, Success).
+Apr  9 12:45:52 jdh1 org.gnome.Shell.desktop[4436]: libEGL warning: DRI2: failed to create dri screen
+Apr  9 12:45:52 jdh1 org.gnome.Shell.desktop[4436]: VMware: No 3D enabled (0, Success).
+Apr  9 12:45:52 jdh1 org.gnome.Shell.desktop[4436]: libEGL warning: DRI2: failed to create dri screen
+Apr  9 12:45:52 jdh1 org.gnome.Shell.desktop[4436]: VMware: No 3D enabled (0, Success).
+Apr  9 12:45:52 jdh1 journal[4436]: Failed to initialize accelerated iGPU/dGPU framebuffer sharing: Do not want to use software renderer (llvmpipe (LLVM 11.0.0, 256 bits)), falling back to CPU copy path
+Apr  9 12:45:52 jdh1 journal[4436]: Using X11 display :0 for Xwayland
+Apr  9 12:45:52 jdh1 org.gnome.Shell.desktop[4436]: VMware: No 3D enabled (0, Success).
+Apr  9 12:45:52 jdh1 org.gnome.Shell.desktop[4436]: libEGL warning: DRI2: failed to create dri screen
+Apr  9 12:45:52 jdh1 org.gnome.Shell.desktop[4436]: VMware: No 3D enabled (0, Success).
+Apr  9 12:45:52 jdh1 org.gnome.Shell.desktop[4436]: libEGL warning: DRI2: failed to create dri screen
+Apr  9 12:45:52 jdh1 org.gnome.Shell.desktop[4436]: glamor: No eglstream capable devices found
+Apr  9 12:45:52 jdh1 org.gnome.Shell.desktop[4436]: glamor: 'wl_drm' not supported
+Apr  9 12:45:52 jdh1 org.gnome.Shell.desktop[4436]: Missing Wayland requirements for glamor GBM backend
+Apr  9 12:45:52 jdh1 org.gnome.Shell.desktop[4436]: Missing Wayland requirements for glamor EGLStream backend
+Apr  9 12:45:52 jdh1 org.gnome.Shell.desktop[4436]: Failed to initialize glamor, falling back to sw
+Apr  9 12:45:52 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating via systemd: service name='org.a11y.Bus' unit='at-spi-dbus-bus.service' requested by ':1.19' (uid=54321 pid=4436 comm="/usr/bin/gnome-shell ")
+Apr  9 12:45:52 jdh1 systemd[4311]: Starting Accessibility services bus...
+Apr  9 12:45:52 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.a11y.Bus'
+Apr  9 12:45:52 jdh1 systemd[4311]: Started Accessibility services bus.
+Apr  9 12:45:52 jdh1 at-spi-bus-launcher[4493]: dbus-daemon[4498]: Activating service name='org.a11y.atspi.Registry' requested by ':1.0' (uid=54321 pid=4436 comm="/usr/bin/gnome-shell ")
+Apr  9 12:45:52 jdh1 at-spi-bus-launcher[4493]: dbus-daemon[4498]: Successfully activated service 'org.a11y.atspi.Registry'
+Apr  9 12:45:52 jdh1 at-spi-bus-launcher[4493]: SpiRegistry daemon is running with well-known name - org.a11y.atspi.Registry
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating via systemd: service name='org.freedesktop.impl.portal.PermissionStore' unit='xdg-permission-store.service' requested by ':1.18' (uid=54321 pid=4436 comm="/usr/bin/gnome-shell ")
+Apr  9 12:45:53 jdh1 systemd[4311]: Starting sandboxed app permission store...
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating service name='org.freedesktop.portal.IBus' requested by ':1.22' (uid=54321 pid=4507 comm="ibus-daemon --xim --panel disable ")
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.freedesktop.impl.portal.PermissionStore'
+Apr  9 12:45:53 jdh1 systemd[4311]: Started sandboxed app permission store.
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating service name='org.gnome.Shell.CalendarServer' requested by ':1.18' (uid=54321 pid=4436 comm="/usr/bin/gnome-shell ")
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.freedesktop.portal.IBus'
+Apr  9 12:45:53 jdh1 dbus-daemon[898]: [system] Activating via systemd: service name='org.freedesktop.GeoClue2' unit='geoclue.service' requested by ':1.1183' (uid=54321 pid=4436 comm="/usr/bin/gnome-shell ")
+Apr  9 12:45:53 jdh1 systemd[1]: Starting Location Lookup Service...
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating service name='ca.desrt.dconf' requested by ':1.18' (uid=54321 pid=4436 comm="/usr/bin/gnome-shell ")
+Apr  9 12:45:53 jdh1 journal[4436]: Telepathy is not available, chat integration will be disabled.
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating via systemd: service name='org.gtk.vfs.UDisks2VolumeMonitor' unit='gvfs-udisks2-volume-monitor.service' requested by ':1.18' (uid=54321 pid=4436 comm="/usr/bin/gnome-shell ")
+Apr  9 12:45:53 jdh1 dbus-daemon[898]: [system] Activating via systemd: service name='org.freedesktop.Avahi' unit='dbus-org.freedesktop.Avahi.service' requested by ':1.1225' (uid=997 pid=4549 comm="/usr/libexec/geoclue ")
+Apr  9 12:45:53 jdh1 dbus-daemon[898]: [system] Activation via systemd failed for unit 'dbus-org.freedesktop.Avahi.service': Unit dbus-org.freedesktop.Avahi.service not found.
+Apr  9 12:45:53 jdh1 journal[4549]: Failed to connect to avahi service: Daemon not running
+Apr  9 12:45:53 jdh1 dbus-daemon[898]: [system] Successfully activated service 'org.freedesktop.GeoClue2'
+Apr  9 12:45:53 jdh1 systemd[1]: Started Location Lookup Service.
+Apr  9 12:45:53 jdh1 systemd[4311]: Starting Virtual filesystem service - disk device monitor...
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'ca.desrt.dconf'
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.gtk.vfs.UDisks2VolumeMonitor'
+Apr  9 12:45:53 jdh1 systemd[4311]: Started Virtual filesystem service - disk device monitor.
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating via systemd: service name='org.gtk.vfs.MTPVolumeMonitor' unit='gvfs-mtp-volume-monitor.service' requested by ':1.18' (uid=54321 pid=4436 comm="/usr/bin/gnome-shell ")
+Apr  9 12:45:53 jdh1 systemd[4311]: Starting Virtual filesystem service - Media Transfer Protocol monitor...
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.gtk.vfs.MTPVolumeMonitor'
+Apr  9 12:45:53 jdh1 systemd[4311]: Started Virtual filesystem service - Media Transfer Protocol monitor.
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating via systemd: service name='org.gtk.vfs.GPhoto2VolumeMonitor' unit='gvfs-gphoto2-volume-monitor.service' requested by ':1.18' (uid=54321 pid=4436 comm="/usr/bin/gnome-shell ")
+Apr  9 12:45:53 jdh1 systemd[4311]: Starting Virtual filesystem service - digital camera monitor...
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.gtk.vfs.GPhoto2VolumeMonitor'
+Apr  9 12:45:53 jdh1 systemd[4311]: Started Virtual filesystem service - digital camera monitor.
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating via systemd: service name='org.gtk.vfs.GoaVolumeMonitor' unit='gvfs-goa-volume-monitor.service' requested by ':1.18' (uid=54321 pid=4436 comm="/usr/bin/gnome-shell ")
+Apr  9 12:45:53 jdh1 systemd[4311]: Starting Virtual filesystem service - GNOME Online Accounts monitor...
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating service name='org.gnome.OnlineAccounts' requested by ':1.32' (uid=54321 pid=4578 comm="/usr/libexec/gvfs-goa-volume-monitor ")
+Apr  9 12:45:53 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating via systemd: service name='org.gnome.evolution.dataserver.Sources5' unit='evolution-source-registry.service' requested by ':1.33' (uid=54321 pid=4543 comm="/usr/libexec/gnome-shell-calendar-server ")
+Apr  9 12:45:53 jdh1 systemd[4311]: Starting Evolution source registry...
+Apr  9 12:45:54 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.gnome.evolution.dataserver.Sources5'
+Apr  9 12:45:54 jdh1 systemd[4311]: Started Evolution source registry.
+Apr  9 12:45:54 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.gnome.Shell.CalendarServer'
+Apr  9 12:45:54 jdh1 journal[4582]: goa-daemon version 3.28.2 starting
+Apr  9 12:45:54 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating service name='org.gnome.Identity' requested by ':1.35' (uid=54321 pid=4582 comm="/usr/libexec/goa-daemon ")
+Apr  9 12:45:54 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.gnome.OnlineAccounts'
+Apr  9 12:45:54 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.gtk.vfs.GoaVolumeMonitor'
+Apr  9 12:45:54 jdh1 systemd[4311]: Started Virtual filesystem service - GNOME Online Accounts monitor.
+Apr  9 12:45:54 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating via systemd: service name='org.gtk.vfs.AfcVolumeMonitor' unit='gvfs-afc-volume-monitor.service' requested by ':1.18' (uid=54321 pid=4436 comm="/usr/bin/gnome-shell ")
+Apr  9 12:45:54 jdh1 systemd[4311]: Starting Virtual filesystem service - Apple File Conduit monitor...
+Apr  9 12:45:54 jdh1 gvfs-afc-volume-monitor[4601]: Volume monitor alive
+Apr  9 12:45:54 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.gnome.Identity'
+Apr  9 12:45:54 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.gtk.vfs.AfcVolumeMonitor'
+Apr  9 12:45:54 jdh1 systemd[4311]: Started Virtual filesystem service - Apple File Conduit monitor.
+Apr  9 12:45:54 jdh1 journal[4599]: GoaKerberosIdentityManager: Using polling for change notification for credential cache type 'KCM'
+Apr  9 12:45:55 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating via systemd: service name='org.gnome.evolution.dataserver.Calendar7' unit='evolution-calendar-factory.service' requested by ':1.33' (uid=54321 pid=4543 comm="/usr/libexec/gnome-shell-calendar-server ")
+Apr  9 12:45:55 jdh1 dbus-daemon[898]: [system] Activating via systemd: service name='org.freedesktop.Avahi' unit='dbus-org.freedesktop.Avahi.service' requested by ':1.1237' (uid=54321 pid=4612 comm="/usr/libexec/gsd-print-notifications ")
+Apr  9 12:45:55 jdh1 dbus-daemon[898]: [system] Activation via systemd failed for unit 'dbus-org.freedesktop.Avahi.service': Unit dbus-org.freedesktop.Avahi.service not found.
+Apr  9 12:45:55 jdh1 cupsd[930]: REQUEST localhost - - "POST / HTTP/1.1" 200 362 Create-Printer-Subscriptions successful-ok
+Apr  9 12:45:55 jdh1 dbus-daemon[898]: [system] Activating via systemd: service name='org.freedesktop.hostname1' unit='dbus-org.freedesktop.hostname1.service' requested by ':1.1240' (uid=54321 pid=4614 comm="/usr/libexec/gsd-rfkill ")
+Apr  9 12:45:55 jdh1 systemd[4311]: Starting Evolution calendar service...
+Apr  9 12:45:55 jdh1 systemd[1]: Starting Hostname Service...
+Apr  9 12:45:55 jdh1 journal[4436]: Error looking up permission: GDBus.Error:org.freedesktop.portal.Error.NotFound: No entry for geolocation
+Apr  9 12:45:55 jdh1 journal[4666]: Loading NVML: libnvidia-ml.so: cannot open shared object file: No such file or directory
+Apr  9 12:45:55 jdh1 journal[4620]: Failed to StopUnit service: GDBus.Error:org.freedesktop.systemd1.NoSuchUnit: Unit gnome-user-share-webdav.service not loaded.
+Apr  9 12:45:55 jdh1 journal[4620]: Failed to StopUnit service: GDBus.Error:org.freedesktop.systemd1.NoSuchUnit: Unit rygel.service not loaded.
+Apr  9 12:45:55 jdh1 org.gnome.SettingsDaemon.Subscription.desktop[4648]: Failed to start: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name com.redhat.RHSM1 was not provided by any .service files
+Apr  9 12:45:55 jdh1 gnome-session[4350]: gnome-session-binary[4350]: WARNING: App 'org.gnome.SettingsDaemon.Subscription.desktop' exited with code 1
+Apr  9 12:45:55 jdh1 gnome-session-binary[4350]: WARNING: App 'org.gnome.SettingsDaemon.Subscription.desktop' exited with code 1
+Apr  9 12:45:55 jdh1 dbus-daemon[898]: [system] Activating via systemd: service name='org.freedesktop.locale1' unit='dbus-org.freedesktop.locale1.service' requested by ':1.1255' (uid=54321 pid=4670 comm="/usr/libexec/gsd-keyboard ")
+Apr  9 12:45:55 jdh1 systemd[1]: Starting Locale Service...
+Apr  9 12:45:55 jdh1 org.gnome.Shell.desktop[4436]: The XKEYBOARD keymap compiler (xkbcomp) reports:
+Apr  9 12:45:55 jdh1 org.gnome.Shell.desktop[4436]: > Warning:          Unsupported maximum keycode 569, clipping.
+Apr  9 12:45:55 jdh1 org.gnome.Shell.desktop[4436]: >                   X11 cannot support keycodes above 255.
+Apr  9 12:45:55 jdh1 org.gnome.Shell.desktop[4436]: Errors from xkbcomp are not fatal to the X server
+Apr  9 12:45:55 jdh1 dbus-daemon[898]: [system] Successfully activated service 'org.freedesktop.hostname1'
+Apr  9 12:45:55 jdh1 systemd[1]: Started Hostname Service.
+Apr  9 12:45:55 jdh1 org.gnome.SettingsDaemon.Subscription.desktop[4725]: Failed to start: GDBus.Error:org.freedesktop.DBus.Error.ServiceUnknown: The name com.redhat.RHSM1 was not provided by any .service files
+Apr  9 12:45:55 jdh1 gnome-session[4350]: gnome-session-binary[4350]: WARNING: App 'org.gnome.SettingsDaemon.Subscription.desktop' exited with code 1
+Apr  9 12:45:55 jdh1 gnome-session-binary[4350]: WARNING: App 'org.gnome.SettingsDaemon.Subscription.desktop' exited with code 1
+Apr  9 12:45:55 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.gnome.evolution.dataserver.Calendar7'
+Apr  9 12:45:55 jdh1 systemd[4311]: Started Evolution calendar service.
+Apr  9 12:45:55 jdh1 dbus-daemon[898]: [system] Successfully activated service 'org.freedesktop.locale1'
+Apr  9 12:45:55 jdh1 systemd[1]: Started Locale Service.
+Apr  9 12:45:55 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating via systemd: service name='org.gnome.evolution.dataserver.AddressBook9' unit='evolution-addressbook-factory.service' requested by ':1.61' (uid=54321 pid=4761 comm="/usr/libexec/evolution-calendar-factory-subprocess")
+Apr  9 12:45:55 jdh1 systemd[4311]: Starting Evolution address book service...
+Apr  9 12:45:55 jdh1 journal[4663]: failed to get edid: unable to get EDID for output
+Apr  9 12:45:55 jdh1 gnome-shell[4436]: GNOME Shell started at Thu Apr 09 2026 12:45:54 GMT+0900 (KST)
+Apr  9 12:45:55 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating via systemd: service name='org.freedesktop.Tracker1' unit='tracker-store.service' requested by ':1.63' (uid=54321 pid=4792 comm="gdbus call -e -d org.freedesktop.DBus -o /org/free")
+Apr  9 12:45:55 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.gnome.evolution.dataserver.AddressBook9'
+Apr  9 12:45:55 jdh1 systemd[4311]: Started Evolution address book service.
+Apr  9 12:45:55 jdh1 systemd[4311]: Starting Tracker metadata database store and lookup manager...
+Apr  9 12:45:55 jdh1 NetworkManager[900]: <info>  [1775706355.9762] agent-manager: agent[25275b2d52dba24d,:1.1183/org.gnome.Shell.NetworkAgent/54321]: agent registered
+Apr  9 12:45:56 jdh1 journal[4663]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
+Apr  9 12:45:56 jdh1 journal[1793]: unable to get EDID for xrandr-Virtual-1: unable to get EDID for output
+Apr  9 12:45:56 jdh1 vmware-user.desktop[4855]: vmware-user: could not open /proc/fs/vmblock/dev
+Apr  9 12:45:56 jdh1 vmware-user.desktop[4855]: Error: /usr/bin/vmtoolsd must be run inside a virtual machine on a VMware hypervisor product.
+Apr  9 12:45:56 jdh1 gnome-session-binary[4350]: Entering running state
+Apr  9 12:45:56 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.freedesktop.Tracker1'
+Apr  9 12:45:56 jdh1 systemd[4311]: Started Tracker metadata database store and lookup manager.
+Apr  9 12:45:56 jdh1 tracker-store.desktop[4792]: (uint32 1,)
+Apr  9 12:45:57 jdh1 journal[4436]: clutter_paint_volume_set_width: assertion 'width >= 0.0f' failed
+Apr  9 12:45:57 jdh1 journal[4436]: clutter_paint_volume_set_height: assertion 'height >= 0.0f' failed
+Apr  9 12:45:57 jdh1 journal[4886]: enabled plugins: desktop-categories, fwupd, os-release, packagekit, packagekit-local, packagekit-offline, packagekit-proxy, packagekit-refresh, packagekit-upgrade, packagekit-url-to-app, shell-extensions, appstream, desktop-menu-path, flatpak, hardcoded-blacklist, hardcoded-popular, modalias, packagekit-refine, rewrite-resource, odrs, packagekit-history, provenance, repos, systemd-updates, generic-updates, packagekit-refine-repos, provenance-license, icons, key-colors, key-colors-metadata
+Apr  9 12:45:57 jdh1 journal[4886]: disabled plugins: dummy, fedora-langpacks, fedora-pkgdb-collections
+Apr  9 12:45:58 jdh1 dbus-daemon[898]: [system] Activating via systemd: service name='org.freedesktop.fwupd' unit='fwupd.service' requested by ':1.1349' (uid=54321 pid=4886 comm="/usr/bin/gnome-software --gapplication-service ")
+Apr  9 12:45:58 jdh1 journal[4436]: Could not delete runtime/persistent state file: Error removing file /home/oracle/.local/share/gnome-shell/notifications: No such file or directory
+Apr  9 12:45:58 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating via systemd: service name='org.gtk.vfs.Metadata' unit='gvfs-metadata.service' requested by ':1.18' (uid=54321 pid=4436 comm="/usr/bin/gnome-shell ")
+Apr  9 12:45:58 jdh1 systemd[1]: Starting Firmware update daemon...
+Apr  9 12:45:58 jdh1 systemd[4311]: Starting Virtual filesystem metadata service...
+Apr  9 12:45:58 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.gtk.vfs.Metadata'
+Apr  9 12:45:58 jdh1 systemd[4311]: Started Virtual filesystem metadata service.
+Apr  9 12:45:58 jdh1 dbus-daemon[898]: [system] Successfully activated service 'org.freedesktop.fwupd'
+Apr  9 12:45:58 jdh1 systemd[1]: Started Firmware update daemon.
+Apr  9 12:45:58 jdh1 PackageKit[1779]: uid 54321 is trying to obtain org.freedesktop.packagekit.system-sources-refresh auth (only_trusted:0)
+Apr  9 12:45:58 jdh1 PackageKit[1779]: uid 54321 obtained auth for org.freedesktop.packagekit.system-sources-refresh
+Apr  9 12:45:58 jdh1 journal[4886]: Only 0 apps for recent list, hiding
+Apr  9 12:45:58 jdh1 journal[4886]: hiding category games featured applications: found only 0 to show, need at least 9
+Apr  9 12:45:58 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating via systemd: service name='org.gnome.Terminal' unit='gnome-terminal-server.service' requested by ':1.73' (uid=54321 pid=4967 comm="gnome-terminal ")
+Apr  9 12:45:58 jdh1 systemd[4311]: Starting GNOME Terminal Server...
+Apr  9 12:45:58 jdh1 gnome-terminal-server[4973]: Display does not support owner-change; copy/paste will be broken!
+Apr  9 12:45:58 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.gnome.Terminal'
+Apr  9 12:45:58 jdh1 systemd[4311]: Started GNOME Terminal Server.
+Apr  9 12:45:59 jdh1 journal[4886]: Only 0 apps for popular list, hiding
+Apr  9 12:45:59 jdh1 journal[4886]: hiding category audio-video featured applications: found only 4 to show, need at least 9
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_fast: "/org/gnome/desktop/interface/" (establishing: 0, active: 0)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_fast: "/org/gnome/settings-daemon/peripherals/mouse/" (establishing: 0, active: 0)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_fast: "/org/gnome/desktop/sound/" (establishing: 0, active: 0)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_fast: "/org/gnome/desktop/privacy/" (establishing: 0, active: 0)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_fast: "/org/gnome/desktop/wm/preferences/" (establishing: 0, active: 0)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_fast: "/org/gnome/settings-daemon/plugins/xsettings/" (establishing: 0, active: 0)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_fast: "/org/gnome/desktop/a11y/" (establishing: 0, active: 0)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_established: "/org/gnome/desktop/interface/" (establishing: 1)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_established: "/org/gnome/settings-daemon/peripherals/mouse/" (establishing: 1)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_established: "/org/gnome/desktop/sound/" (establishing: 1)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_established: "/org/gnome/desktop/privacy/" (establishing: 1)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_established: "/org/gnome/desktop/wm/preferences/" (establishing: 1)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_established: "/org/gnome/settings-daemon/plugins/xsettings/" (establishing: 1)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_established: "/org/gnome/desktop/a11y/" (establishing: 1)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_fast: "/org/gnome/terminal/legacy/" (establishing: 0, active: 0)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # unwatch_fast: "/org/gnome/terminal/legacy/" (active: 0, establishing: 1)
+Apr  9 12:45:59 jdh1 org.gnome.Terminal.desktop[4967]: # watch_established: "/org/gnome/terminal/legacy/" (establishing: 0)
+Apr  9 12:45:59 jdh1 journal[4886]: State change on system/package/AppStream/desktop/org.gnome.Cheese.desktop/* from updatable to installed is not OK
+Apr  9 12:46:02 jdh1 journal[1677]: Connection to xwayland lost
+Apr  9 12:46:02 jdh1 journal[1801]: gsd-media-keys: Fatal IO error 11 (Resource temporarily unavailable) on X server :1024.
+Apr  9 12:46:02 jdh1 journal[1790]: gsd-clipboard: Fatal IO error 11 (Resource temporarily unavailable) on X server :1024.
+Apr  9 12:46:02 jdh1 at-spi-bus-launcher[1711]: X connection to :1024 broken (explicit kill or server shutdown).
+Apr  9 12:46:02 jdh1 journal[1798]: gsd-keyboard: Fatal IO error 11 (Resource temporarily unavailable) on X server :1024.
+Apr  9 12:46:02 jdh1 journal[1811]: gsd-power: Fatal IO error 11 (Resource temporarily unavailable) on X server :1024.
+Apr  9 12:46:02 jdh1 journal[1793]: gsd-color: Fatal IO error 11 (Resource temporarily unavailable) on X server :1024.
+Apr  9 12:46:02 jdh1 journal[1784]: gsd-xsettings: Fatal IO error 11 (Resource temporarily unavailable) on X server :1024.
+Apr  9 12:46:02 jdh1 cupsd[930]: REQUEST localhost - - "POST / HTTP/1.1" 200 151 Cancel-Subscription client-error-not-found
+Apr  9 12:46:02 jdh1 gdm-wayland-session[1558]: GLib: Source ID 2 was not found when attempting to remove it
+Apr  9 12:46:02 jdh1 systemd-logind[1337]: Session c1 logged out. Waiting for processes to exit.
+Apr  9 12:46:02 jdh1 systemd[1]: session-c1.scope: Succeeded.
+Apr  9 12:46:02 jdh1 systemd-logind[1337]: Removed session c1.
+Apr  9 12:46:02 jdh1 systemd[1]: Stopping User Manager for UID 42...
+Apr  9 12:46:02 jdh1 systemd[1494]: Stopping Accessibility services bus...
+Apr  9 12:46:02 jdh1 systemd[1494]: Stopping D-Bus User Message Bus...
+Apr  9 12:46:02 jdh1 systemd[1494]: Stopping sandboxed app permission store...
+Apr  9 12:46:02 jdh1 systemd[1494]: Stopped target Default.
+Apr  9 12:46:02 jdh1 systemd[1494]: Stopping Sound Service...
+Apr  9 12:46:02 jdh1 systemd[1494]: pulseaudio.service: Succeeded.
+Apr  9 12:46:02 jdh1 systemd[1494]: Stopped Sound Service.
+Apr  9 12:46:02 jdh1 systemd[1494]: dbus.service: Succeeded.
+Apr  9 12:46:02 jdh1 systemd[1494]: Stopped D-Bus User Message Bus.
+Apr  9 12:46:02 jdh1 systemd[1494]: at-spi-dbus-bus.service: Succeeded.
+Apr  9 12:46:02 jdh1 systemd[1494]: Stopped Accessibility services bus.
+Apr  9 12:46:02 jdh1 systemd[1494]: xdg-permission-store.service: Succeeded.
+Apr  9 12:46:02 jdh1 systemd[1494]: Stopped sandboxed app permission store.
+Apr  9 12:46:02 jdh1 systemd[1494]: Stopped target Basic System.
+Apr  9 12:46:02 jdh1 systemd[1494]: Stopped target Paths.
+Apr  9 12:46:02 jdh1 systemd[1494]: Stopped target Timers.
+Apr  9 12:46:02 jdh1 systemd[1494]: Stopped target Sockets.
+Apr  9 12:46:02 jdh1 systemd[1494]: pipewire.socket: Succeeded.
+Apr  9 12:46:02 jdh1 systemd[1494]: Closed Multimedia System.
+Apr  9 12:46:02 jdh1 systemd[1494]: dbus.socket: Succeeded.
+Apr  9 12:46:02 jdh1 systemd[1494]: Closed D-Bus User Message Bus Socket.
+Apr  9 12:46:02 jdh1 systemd[1494]: pulseaudio.socket: Succeeded.
+Apr  9 12:46:02 jdh1 systemd[1494]: Closed Sound System.
+Apr  9 12:46:02 jdh1 systemd[1494]: Reached target Shutdown.
+Apr  9 12:46:02 jdh1 systemd[1494]: Starting Exit the Session...
+Apr  9 12:46:02 jdh1 systemd[1]: user@42.service: Succeeded.
+Apr  9 12:46:02 jdh1 systemd[1]: Stopped User Manager for UID 42.
+Apr  9 12:46:02 jdh1 systemd[1]: Stopping /run/user/42 mount wrapper...
+Apr  9 12:46:02 jdh1 systemd[1]: Removed slice User Slice of UID 42.
+Apr  9 12:46:02 jdh1 systemd[4311]: run-user-42.mount: Succeeded.
+Apr  9 12:46:02 jdh1 gdm[1404]: Child process -1558 was already dead.
+Apr  9 12:46:02 jdh1 systemd[1]: user-runtime-dir@42.service: Succeeded.
+Apr  9 12:46:02 jdh1 systemd[1]: Stopped /run/user/42 mount wrapper.
+Apr  9 12:46:20 jdh1 systemd[1]: fprintd.service: Succeeded.
+Apr  9 12:46:25 jdh1 systemd[1]: systemd-hostnamed.service: Succeeded.
+Apr  9 12:46:26 jdh1 systemd[1]: systemd-localed.service: Succeeded.
+Apr  9 12:46:54 jdh1 journal[4549]: Service not used for 60 seconds. Shutting down..
+Apr  9 12:46:54 jdh1 systemd[1]: geoclue.service: Succeeded.
+Apr  9 12:46:55 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Activating via systemd: service name='org.freedesktop.Tracker1.Miner.Extract' unit='tracker-extract.service' requested by ':1.70' (uid=54321 pid=4900 comm="/usr/libexec/tracker-miner-fs ")
+Apr  9 12:46:55 jdh1 systemd[4311]: Starting Tracker metadata extractor...
+Apr  9 12:46:55 jdh1 dbus-daemon[4345]: [session uid=54321 pid=4345] Successfully activated service 'org.freedesktop.Tracker1.Miner.Extract'
+Apr  9 12:46:55 jdh1 systemd[4311]: Started Tracker metadata extractor.
+Apr  9 12:47:03 jdh1 systemd-logind[1337]: New session 38 of user oracle.
+Apr  9 12:47:03 jdh1 systemd[1]: Started Session 38 of user oracle.
+Apr  9 12:47:03 jdh1 systemd[1]: session-38.scope: Succeeded.
+Apr  9 12:47:03 jdh1 systemd-logind[1337]: Session 38 logged out. Waiting for processes to exit.
+Apr  9 12:47:03 jdh1 systemd-logind[1337]: Removed session 38.
+Apr  9 12:47:04 jdh1 dbus-daemon[898]: [system] Activating via systemd: service name='org.freedesktop.timedate1' unit='dbus-org.freedesktop.timedate1.service' requested by ':1.1421' (uid=54321 pid=5236 comm="timedatectl ")
+Apr  9 12:47:04 jdh1 systemd[1]: Starting System clock and RTC settings service...
+Apr  9 12:47:04 jdh1 dbus-daemon[898]: [system] Successfully activated service 'org.freedesktop.timedate1'
+Apr  9 12:47:04 jdh1 systemd[1]: Started System clock and RTC settings service.
+Apr  9 12:47:04 jdh1 systemd-logind[1337]: New session 39 of user oracle.
+Apr  9 12:47:04 jdh1 systemd[1]: Started Session 39 of user oracle.
+Apr  9 12:47:05 jdh1 systemd[1]: session-39.scope: Succeeded.
+Apr  9 12:47:05 jdh1 systemd-logind[1337]: Session 39 logged out. Waiting for processes to exit.
+Apr  9 12:47:05 jdh1 systemd-logind[1337]: Removed session 39.
+Apr  9 12:47:05 jdh1 systemd[4311]: tracker-extract.service: Succeeded.
+Apr  9 12:47:34 jdh1 systemd[1]: timedatex.service: Succeeded.
+Apr  9 12:47:43 jdh1 org.gnome.Shell.desktop[4436]: Window manager warning: Invalid WM_TRANSIENT_FOR window 0xc00007 specified for 0xc00020.
+Apr  9 12:47:49 jdh1 systemd[1]: Started Session 40 of user oracle.
+Apr  9 12:47:49 jdh1 systemd-logind[1337]: New session 40 of user oracle.
+Apr  9 12:47:49 jdh1 systemd[1]: session-40.scope: Succeeded.
+Apr  9 12:47:49 jdh1 systemd-logind[1337]: Session 40 logged out. Waiting for processes to exit.
+Apr  9 12:47:49 jdh1 systemd-logind[1337]: Removed session 40.
+Apr  9 12:47:49 jdh1 systemd[1]: Started Session 41 of user oracle.
+Apr  9 12:47:49 jdh1 systemd-logind[1337]: New session 41 of user oracle.
+Apr  9 12:47:49 jdh1 systemd[1]: session-41.scope: Succeeded.
+Apr  9 12:47:49 jdh1 systemd-logind[1337]: Session 41 logged out. Waiting for processes to exit.
+Apr  9 12:47:49 jdh1 systemd-logind[1337]: Removed session 41.
+Apr  9 12:47:49 jdh1 systemd[1]: Started Session 42 of user oracle.
+Apr  9 12:47:49 jdh1 systemd-logind[1337]: New session 42 of user oracle.
+Apr  9 12:47:49 jdh1 systemd[1]: session-42.scope: Succeeded.
+Apr  9 12:47:49 jdh1 systemd-logind[1337]: Session 42 logged out. Waiting for processes to exit.
+Apr  9 12:47:49 jdh1 systemd-logind[1337]: Removed session 42.
+Apr  9 12:47:49 jdh1 systemd[1]: Started Session 43 of user oracle.
+Apr  9 12:47:49 jdh1 systemd-logind[1337]: New session 43 of user oracle.
+Apr  9 12:47:49 jdh1 systemd[1]: session-43.scope: Succeeded.
+Apr  9 12:47:49 jdh1 systemd-logind[1337]: Session 43 logged out. Waiting for processes to exit.
+Apr  9 12:47:49 jdh1 systemd-logind[1337]: Removed session 43.
+Apr  9 12:47:50 jdh1 systemd[1]: Started Session 44 of user oracle.
+Apr  9 12:47:50 jdh1 systemd-logind[1337]: New session 44 of user oracle.
+Apr  9 12:47:50 jdh1 systemd[1]: session-44.scope: Succeeded.
+Apr  9 12:47:50 jdh1 systemd-logind[1337]: Session 44 logged out. Waiting for processes to exit.
+Apr  9 12:47:50 jdh1 systemd-logind[1337]: Removed session 44.
+Apr  9 12:47:50 jdh1 systemd[1]: Started Session 45 of user oracle.
+Apr  9 12:47:50 jdh1 systemd-logind[1337]: New session 45 of user oracle.
+Apr  9 12:47:50 jdh1 systemd[1]: session-45.scope: Succeeded.
+Apr  9 12:47:50 jdh1 systemd-logind[1337]: Session 45 logged out. Waiting for processes to exit.
+Apr  9 12:47:50 jdh1 systemd-logind[1337]: Removed session 45.
+Apr  9 12:48:09 jdh1 systemd[4311]: Starting Mark boot as successful...
+Apr  9 12:48:09 jdh1 systemd[4311]: grub-boot-success.service: Succeeded.
+Apr  9 12:48:09 jdh1 systemd[4311]: Started Mark boot as successful.
+Apr  9 12:50:02 jdh1 systemd[1]: Starting system activity accounting tool...
+Apr  9 12:50:02 jdh1 systemd[1]: sysstat-collect.service: Succeeded.
+Apr  9 12:50:02 jdh1 systemd[1]: Started system activity accounting tool.
+Apr  9 12:50:25 jdh1 su[6722]: (to root) root on pts/0
+Apr  9 12:51:03 jdh1 systemd-logind[1337]: New session 46 of user oracle.
+Apr  9 12:51:03 jdh1 systemd[1]: Started Session 46 of user oracle.
+Apr  9 12:51:03 jdh1 systemd[1]: session-46.scope: Succeeded.
+Apr  9 12:51:03 jdh1 systemd-logind[1337]: Session 46 logged out. Waiting for processes to exit.
+Apr  9 12:51:03 jdh1 systemd-logind[1337]: Removed session 46.
+Apr  9 12:51:17 jdh1 systemd[1]: Started Session 47 of user oracle.
+Apr  9 12:51:17 jdh1 systemd-logind[1337]: New session 47 of user oracle.
+Apr  9 12:51:17 jdh1 systemd[1]: session-47.scope: Succeeded.

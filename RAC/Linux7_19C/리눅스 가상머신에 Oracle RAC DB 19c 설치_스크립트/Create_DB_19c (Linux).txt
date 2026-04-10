@@ -1,0 +1,53 @@
+
+
+
+===============================================================================
+* .bash_profile 에 환경 세팅 (oracle)
+
+  $ su - oracle
+  $ vi .bash_profile
+
+export LANG=C
+export ORACLE_BASE=/u02/app/oracle
+export ORACLE_HOME=/u02/app/oracle/product/19.0.0/dbhome_1
+export ORACLE_SID=ORA191
+export LD_LIBRARY_PATH=$ORACLE_HOME/lib:/lib:/usr/lib
+export NLS_LANG=AMERICAN_AMERICA.AL32UTF8
+export PATH=$ORACLE_HOME/bin:$PATH
+
+alias oh='cd $ORACLE_HOME'
+
+
+
+===============================================================================
+* DB 설치
+
+  -- 양쪽 노드에서 모두..
+  $ su - 
+  $ mkdir -p /u02/app/oracle
+  $ mkdir -p /u02/app/oraInventory
+  $ chown -R oracle:dba /u02/app/oracle
+  $ chown -R oracle:dba /u02/app/oraInventory
+  $ chmod -R 775 /u02/app
+  
+  $ su - oracle
+  $ mkdir -p /u02/app/oracle/product/19.0.0/dbhome_1
+
+  -- 1번 노드에서만..
+  $ cd /u02/app/oracle/product/19.0.0/dbhome_1
+  $ unzip -q /home/STAGE/LINUX.X64_193000_db_home.zip
+
+
+  $ su - oracle
+
+  -- X-term 에서..
+  $ cd /u02/app/oracle/product/19.0.0/dbhome_1
+  $ ./runInstaller
+
+
+
+
+
+
+
+
