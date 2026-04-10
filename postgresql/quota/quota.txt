@@ -1,0 +1,204 @@
+### 유저에게 할당량(Quota) 할당 정리
+
+<aside>
+📘
+
+**정의**
+
+- 테이블스페이스 할당량(Quota)은 **특정 유저가 특정 테이블스페이스에서 사용할 수 있는 공간의 최대 크기**를 제한하는 설정입니다.
+</aside>
+
+### 언제 필요한가?
+
+- `UNLIMITED TABLESPACE` 시스템 권한이 **없는** 유저가 테이블스페이스에 테이블, 인덱스 등 객체를 생성하려면, 해당 테이블스페이스에 **Quota가 반드시 부여**되어야 합니다.
+- 시스템 권한이 있더라도, 해당 테이블스페이스의 할당량이 **0(None)**이면 **객체 생성이 불가**합니다.
+
+### 할당량 옵션
+
+| 옵션 | 설명 |
+| --- | --- |
+| 특정 값 (MB / KB) | 해당 크기까지만 사용 가능 (예: 20MB) |
+| UNLIMITED | 테이블스페이스 공간 전체를 제한 없이 사용 가능 |
+| NONE (0) | 객체 생성 불가 (기본값) |
+
+### 부여 방법 (SQL)
+
+```sql
+-- 특정 크기 부여
+ALTER USER scott QUOTA 20M ON users;
+
+-- 무제한 부여
+ALTER USER scott QUOTA UNLIMITED ON users;
+
+-- 할당량 회수 (0으로 설정)
+ALTER USER scott QUOTA 0 ON users;
+```
+
+### 왜 중요한가?
+
+1. **보안 및 자원 통제**
+    - 특정 유저가 디스크를 무한정 사용하는 것을 방지합니다.
+    - 개발 계정의 실수로 대용량 데이터가 적재되어 운영 DB 공간이 고갈되는 사고를 예방할 수 있습니다.
+2. **멀티 유저 환경에서 공정한 자원 배분**
+    - 여러 팀이나 서비스가 하나의 DB를 공유할 때, 테이블스페이스별로 할당량을 나눠 서로 영향을 주지 않도록 격리할 수 있습니다.
+3. **`UNLIMITED TABLESPACE` 권한 남용 방지**
+    - `UNLIMITED TABLESPACE`는 DBA급의 강력한 권한입니다.
+    - 일반 유저에게 권한을 부여하기보다는, 필요한 테이블스페이스에만 적절한 크기의 할당량을 부여하는 방식이 보안 원칙에 맞습니다.
+4. **객체 생성 오류의 주요 원인 파악**
+    - 현업에서 `ORA-01536: space quota exceeded` 오류의 주된 원인이 할당량 미설정인 경우가 많습니다.
+    - 신규 계정 생성 후 할당량을 누락하면 즉시 문제가 발생할 수 있습니다.
+
+### 주의사항
+
+- TEMP, UNDO 테이블스페이스는 할당량 설정 대상이 아닙니다. (자동 관리)
+- `DBA_TS_QUOTAS` 뷰에서 현재 할당량 현황을 조회할 수 있습니다.
+- `UNLIMITED TABLESPACE` 권한을 회수해도, 기존에 부여된 개별 할당량은 유지됩니다.
+
+## 실습
+
+```sql
+1. 일반 유져를 생성하고 접속할 수 있는 권한과 테이블 생성 권한을 부여합니다.
+
+create user  jack
+ identified by tiger;
+ 
+grant connect to jack;
+
+grant create  table to jack;
+
+2. jack 으로 접속해서 테이블을 생성하고 데이터를 입력합니다.
+
+SQL> create table emp90
+  2  ( empno number(10),
+  3    ename varchar2(20),
+  4    sal  number(10) );
+
+Table created.
+
+SQL> select table_name, tablespace_name
+  2   from user_tables;
+
+TABLE_NAME     TABLESPACE_NAME
+------------  ------------------
+EMP90               USERS
+
+SQL> insert into emp90
+  2    values(1111,'scott', 3000);
+insert into emp90
+            *
+ERROR at line 1:
+ORA-01950: no privileges on tablespace 'USERS'
+
+3. dba 권한이 있는 scott 유져에서 jack 에게 users 테이블 스페이스에 데이터 입력할 수 있는
+   쿼터(quota) 를 10m 로 부여하시오
+   
+ 
+alter  user  jack
+ quota  10m  on  users;
+ 
+ 
+ 4. jack에서 emp90 에 데이터가 입력되는지 확인하시오
+ 
+SQL> show user
+USER is "JACK"
+SQL>
+SQL> insert into emp90
+  2  values(1111,'scott',3000);
+
+1 row created.
+
+SQL> insert into emp90
+  2  select *
+  3   from emp90;
+
+1 row created.
+
+SQL> /
+
+2 rows created.
+
+SQL> /
+
+4 rows created.
+
+SQL> /
+
+8 rows created.
+
+SQL>
+SQL> /
+
+131072 rows created.
+
+SQL> /
+insert into emp90
+*
+ERROR at line 1:
+ORA-01536: space quota exceeded for tablespace 'USERS'
+
+5. 오랜지에서 users 테이블 스페이스가 full 났는지 확인하시오
+
+```
+
+![image.png](attachment:8e03cc76-575a-4bfd-a095-989d3bd4982c:image.png)
+
+<aside>
+💡
+
+jack 만 데이터 입력을 못하는거지 다른 유져들에게는 영향이 없습니다.
+
+</aside>
+
+```sql
+6. 다시 scott 에서 jack 이 users 테이블 스페이스를 무한히 쓸수 있도록 지정하시오
+
+alter user  jack
+ quota  unlimited  on  users;
+ 
+grant  unlimited  tablespace to  jack;
+ 
+ 7. 그리고 jack 에서 데이터를 입력해봅니다.
+ 
+ SQL> insert into emp90
+      select *
+     from emp90
+SQL> /
+
+524288 rows created.
+
+```
+
+### 문제1. jack 에게서 unlimted  tablespace 권한을 취소하시오
+
+### 문제2. ts7000 이라는 테이블 스페이스를 사이즈 100m 로 생성하시오
+
+### 문제3. jack 이 ts7000 테이블 스페이스를 50m 만 사용하도록 쿼터를 설정하시오
+
+### 문제4. jack 으로 접속해서 ts7000 에 테이블을 임의로 생성하고 데이터를 입력해서 
+           쿼터 부족 오류가 날때까지 입력하시오
+
+### 문제5. jack 유져가 temp 테이블 스페이스의 쿼터를 10m 만 쓸 수 있도록 제한하시오
+
+```sql
+SQL> alter user jack
+  2   quota 10m on temp;
+alter user jack
+*
+ERROR at line 1:
+ORA-30041: Cannot grant quota on the tablespace
+
+```
+
+### 문제6. jack 유져가 undotbs2  테이블 스페이스의 쿼터를 10m 만 쓸 수 있도록 제한하시오
+
+```sql
+SQL> alter user jack
+  2   quota 10m on undotbs2;
+alter user jack
+*
+ERROR at line 1:
+ORA-30041: Cannot grant quota on the tablespace
+
+```
+
+### 문제7. jack2 라는 유져를 만들고 connect 와 resource 라는 롤을 부여하면 jack2 에게 unlimited tablespace 권한이 자동으로 들어가는지 확인하시오
