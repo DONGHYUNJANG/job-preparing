@@ -1,0 +1,78 @@
+   ----------------------------------------------------------------------------------
+      1) 복제 타겟DB쪽에 패스워드 파일(orapwSID) 생성
+         $ orapwd file=$ORACLE_HOME/dbs/orapwNEWDB password=oracle
+
+      2) 타겟DB쪽 리스너에 SID정보 추가
+         -- 타겟DB가 nomount 상태라 자동 등록이 안되기 때문에 이걸 넣어줘야 접속이 됨.
+         SID_LIST_LISTENER =
+           (SID_LIST =
+             (SID_DESC =
+               (SID_NAME = NEWDB)
+               (ORACLE_HOME = /u01/app/oracle/product/19.3.0/dbhome_1)
+               (GLOBAL_DBNAME = NEWDB)
+             )
+           )
+
+      3) 소스/타겟 DB와 연결할 수 있는 tns 세팅
+         $ vi tnsnames.ora
+           SRCDB =
+             (DESCRIPTION =
+               (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.1.101)(PORT = 1521))
+               (CONNECT_DATA =
+                 (SERVER = DEDICATED)
+                 (SERVICE_NAME = ORCL)
+               )
+             )
+           NEWDB =
+             (DESCRIPTION =
+               (ADDRESS = (PROTOCOL = TCP)(HOST = 192.168.1.103)(PORT = 1521))
+               (CONNECT_DATA =
+                 (SERVER = DEDICATED)
+                 (SERVICE_NAME = NEWDB)
+               )
+             )
+
+         -- 소스 DB 접속 확인
+         $ sqlplus sys@SRCDB as sysdba
+         $ sqlplus sys@NEWDB as sysdba
+
+      4) 타겟DB 쪽에 필요한 디렉토리 생성
+         -- 디렉토리가 자동으로 생성되지 않기 때문에 지정된 디렉토리는 미리 생성되어 있어야 함.
+         $ mkdir -p /u01/app/oracle/oradata/NEWDB
+         $ mkdir -p /u01/app/oracle/admin/NEWDB/adump
+         $ mkdir -p /u01/app/oracle/fast_recovery_area/NEWDB
+   
+      5) 파라메타 파일(initSID.ora) 생성 (아래 1개 파라메타만 있으면 됨)
+         $ cat > /tmp/initNEWDB.ora
+         *.db_name = NEWDB
+
+      6) 복제 타겟DB쪽에 DB를 nomount 상태로 띄워놓아야 함.
+         $ export ORACLE_HOME=/u01/app/oracle/product/19.3.0/dbhome_1
+         $ export ORACLE_SID=NEWDB
+         $ sqlplus / as sysdba
+         SQL> startup nomount pfile='/tmp/initNEWDB.ora'
+
+         # 마지막 점검
+         # 권한 확인: mkdir로 생성한 디렉토리들의 소유자가 oracle:oinstall인지, 그리고 권한이 755 이상인지 꼭 확인해 보세요.
+
+         # 파일 존재 여부: orapwNEWDB 파일이 $ORACLE_HOME/dbs 아래에 잘 생성되었는지 다시 한번 확인하시면 접속 오류를 막을 수 있습니다.
+
+      7) $ rman target sys@SRCDB auxiliary sys@NEWDB
+                -- 여기에서 (target = 소스), (auxiliary = 타겟) 임.
+                -- 소스DB 위치에서 rman 수행시는 @SRCDB 없어도 됨.
+                -- OS 로그인(/) 접속은 안됨. sys로 접속해야 함.
+         RMAN> duplicate target database to NEWDB from active database
+               spfile
+               set db_name='NEWDB'
+               set control_files='/u01/app/oracle/oradata/NEWDB/control01.ctl', '/u01/app/oracle/oradata/NEWDB/control02.ctl'
+               set db_file_name_convert '/u01/app/oracle/oradata/ORCL', '/u01/app/oracle/oradata/NEWDB'
+               set log_file_name_convert '/u01/app/oracle/oradata/ORCL', '/u01/app/oracle/oradata/NEWDB'
+               set db_recovery_file_dest_size='1G'
+               set db_recovery_file_dest='/u01/app/oracle/fast_recovery_area/NEWDB'
+               set sga_target='900M'
+               set audit_file_dest='/u01/app/oracle/admin/NEWDB/adump'
+               nofilenamecheck
+               ;
+
+
+   ----------------------------------------------------------------------------------
