@@ -4,3 +4,6 @@
 4. latch: shared pool      0409
 5. latch: cache buffer chains 0409
 6. latch: cache buffers LRU chain 0409
+7. log file switch (archiving needed) 0412
+8. buffer busy waits 0412
+9. log file parallel write (Background Only) 0412

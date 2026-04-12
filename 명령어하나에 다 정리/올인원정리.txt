@@ -1381,3 +1381,82 @@ Current log sequence           59
 RAC#1>
 
 RAC#2> startup
+
+
+
+
+# ================================================
+# 🕵️‍♂️ Oracle DB 성능 진단 실전 SQL 가이드
+# =================================================
+
+## 1. 시스템 전체의 '고통 지수' 확인 (`V$SYSTEM_EVENT`)
+현재 인스턴스가 켜진 이후, 시스템 전체에서 어떤 대기 이벤트가 가장 많은 시간을 잡아먹었는지 확인합니다.
+
+```sql
+SELECT * FROM (
+    SELECT 
+        event,                -- 대기 이벤트 명
+        total_waits,          -- 발생 횟수
+        time_waited_micro,    -- 총 대기 시간 (마이크로초)
+        average_wait          -- 평균 대기 시간 (한 번 기다릴 때 걸리는 시간)
+    FROM v$system_event
+    WHERE wait_class <> 'Idle' -- 성능과 무관한 '대기(Idle)' 상태는 제외
+    ORDER BY time_waited_micro DESC -- 가장 오래 기다린 순서로 정렬
+) WHERE ROWNUM <= 5; -- 상위 5개만 추출
+```
+
+---
+
+## 2. 최근 5분간의 '현장 사진' 분석 (`V$ACTIVE_SESSION_HISTORY`)
+ASH는 1초마다 샘플링한 데이터입니다. 최근 5분 동안 어떤 세션이 어떤 이벤트로 고생하고 있었는지 집계합니다.
+
+```sql
+SELECT
+    event,           -- 발생한 대기 이벤트
+    session_id,      -- 고통받고 있는 세션 ID (SID)
+    COUNT(*) as wait_count -- 샘플링된 횟수 (이 숫자가 크면 오래 멈춰있었다는 뜻)
+FROM v$active_session_history
+WHERE sample_time > sysdate - 5/1440 -- 현재 시간 기준 최근 5분간의 기록
+  AND event IS NOT NULL              -- 이벤트가 발생한 경우만 필터링
+GROUP BY event, session_id
+ORDER BY wait_count DESC; -- 많이 찍힌 순서대로 정렬
+```
+
+---
+
+## 3. 범인(세션)의 '신상 정보' 및 '범행 도구' 확인
+특정 세션 ID(SID)가 어떤 사용자이며, 현재 어떤 쿼리를 실행 중인지 상세히 조회합니다.
+
+```sql
+SELECT 
+    s.sid, 
+    s.serial#, 
+    s.username, 
+    s.osuser, 
+    s.program, 
+    q.sql_text -- 세션이 실행 중인 실제 SQL 문장
+FROM v$session s
+JOIN v$sql q ON s.sql_id = q.sql_id -- 현재 세션의 SQL ID를 기준으로 SQL 텍스트 결합
+WHERE s.sid = 29; -- 조사 대상 세션 ID 입력
+```
+
+---
+
+## 4. '계급도' 분석: 대기 세션 간의 연결 고리 (Hierarchy)
+누가 누구를 붙잡고 있는지, 근본적인 원인을 제공하는 '최상위 블로킹 세션'을 계층형 쿼리로 찾습니다.
+
+```sql
+SELECT
+    level, -- 계층 깊이 (1이 최상위 가해자)
+    lpad(' ', (level-1)*2) || sid as "Session", -- 계층별 들여쓰기 시각화
+    blocking_session as "Blocking", -- 나를 막고 있는 세션 ID
+    event, -- 현재 대기 중인 이벤트
+    seconds_in_wait -- 대기 중인 시간 (초)
+FROM v$session
+WHERE blocking_session IS NOT NULL -- 누군가를 막거나 막히고 있는 세션만 추출
+   OR sid IN (SELECT blocking_session FROM v$session)
+CONNECT BY PRIOR sid = blocking_session -- 내(sid)가 누군가의 블로킹 세션인 경우 연결
+START WITH blocking_session IS NULL;    -- 나를 막는 놈이 없는 '최상위 가해자'부터 시작
+```
+
+---
