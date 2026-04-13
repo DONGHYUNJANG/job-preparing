@@ -1,0 +1,364 @@
+[oracle@ora19c ~]$ rman target sys/oracle@SRCDB auxiliary sys/oracle@NEWDB
+
+Recovery Manager: Release 19.0.0.0.0 - Production on Sun Apr 12 00:05:45 2026
+Version 19.3.0.0.0
+
+Copyright (c) 1982, 2019, Oracle and/or its affiliates.  All rights reserved.
+
+connected to target database: ORCL (DBID=1752822042)
+connected to auxiliary database: NEWDB (not mounted)
+
+RMAN> duplicate target database to NEWDB from active database
+2> spfile
+3> set db_name='NEWDB'
+set control_files='/u01/app/oracle/oradata/NEWDB/control01.ctl', '/u01/app/oracle/oradata/NEWDB/control02.ctl'
+set db_file_name_convert '/u01/app/oracle/oradata/ORCL', '/u01/app/oracle/oradata/NEWDB'
+set log_file_name_convert '/4> u01/app/oracle/oradata/ORCL', '/u01/app/oracle/oradata/NEWDB'
+set db_recovery_file_dest_size='1G'
+set db_recovery_file_dest='/u01/app/oracle/fast_recovery_area/NEWDB'
+set sga_target='900M'
+set audit_file_dest='/u01/app/oracle/admin/NEWDB/adump'
+nofilenamecheck
+;5> 6> 7> 8> 9> 10> 11> 12>
+
+Starting Duplicate Db at 12-APR-26
+using target database control file instead of recovery catalog
+allocated channel: ORA_AUX_DISK_1
+channel ORA_AUX_DISK_1: SID=10 device type=DISK
+current log archived
+
+contents of Memory Script:
+{
+   restore clone from service  'SRCDB' spfile to
+ '/u01/app/oracle/product/19.3.0/dbhome_1/dbs/spfileNEWDB.ora';
+   sql clone "alter system set spfile= ''/u01/app/oracle/product/19.3.0/dbhome_1/dbs/spfileNEWDB.ora''";
+}
+executing Memory Script
+
+Starting restore at 12-APR-26
+using channel ORA_AUX_DISK_1
+
+channel ORA_AUX_DISK_1: starting datafile backup set restore
+channel ORA_AUX_DISK_1: using network backup set from service SRCDB
+channel ORA_AUX_DISK_1: restoring SPFILE
+output file name=/u01/app/oracle/product/19.3.0/dbhome_1/dbs/spfileNEWDB.ora
+channel ORA_AUX_DISK_1: restore complete, elapsed time: 00:00:01
+Finished restore at 12-APR-26
+
+sql statement: alter system set spfile= ''/u01/app/oracle/product/19.3.0/dbhome_1/dbs/spfileNEWDB.ora''
+
+contents of Memory Script:
+{
+   sql clone "alter system set  db_name =
+ ''NEWDB'' comment=
+ ''duplicate'' scope=spfile";
+   sql clone "alter system set  db_name =
+ ''NEWDB'' comment=
+ '''' scope=spfile";
+   sql clone "alter system set  control_files =
+ ''/u01/app/oracle/oradata/NEWDB/control01.ctl'', ''/u01/app/oracle/oradata/NEWDB/control02.ctl'' comment=
+ '''' scope=spfile";
+   sql clone "alter system set  db_file_name_convert =
+ ''/u01/app/oracle/oradata/ORCL'', ''/u01/app/oracle/oradata/NEWDB'' comment=
+ '''' scope=spfile";
+   sql clone "alter system set  log_file_name_convert =
+ ''/u01/app/oracle/oradata/ORCL'', ''/u01/app/oracle/oradata/NEWDB'' comment=
+ '''' scope=spfile";
+   sql clone "alter system set  db_recovery_file_dest_size =
+ 1G comment=
+ '''' scope=spfile";
+   sql clone "alter system set  db_recovery_file_dest =
+ ''/u01/app/oracle/fast_recovery_area/NEWDB'' comment=
+ '''' scope=spfile";
+   sql clone "alter system set  sga_target =
+ 900M comment=
+ '''' scope=spfile";
+   sql clone "alter system set  audit_file_dest =
+ ''/u01/app/oracle/admin/NEWDB/adump'' comment=
+ '''' scope=spfile";
+   shutdown clone immediate;
+   startup clone nomount;
+}
+executing Memory Script
+
+sql statement: alter system set  db_name =  ''NEWDB'' comment= ''duplicate'' scope=spfile
+
+sql statement: alter system set  db_name =  ''NEWDB'' comment= '''' scope=spfile
+
+sql statement: alter system set  control_files =  ''/u01/app/oracle/oradata/NEWDB/control01.ctl'', ''/u01/app/oracle/oradata/NEWDB/control02.ctl'' comment= '''' scope=spfile
+
+sql statement: alter system set  db_file_name_convert =  ''/u01/app/oracle/oradata/ORCL'', ''/u01/app/oracle/oradata/NEWDB'' comment= '''' scope=spfile
+
+sql statement: alter system set  log_file_name_convert =  ''/u01/app/oracle/oradata/ORCL'', ''/u01/app/oracle/oradata/NEWDB'' comment= '''' scope=spfile
+
+sql statement: alter system set  db_recovery_file_dest_size =  1G comment= '''' scope=spfile
+
+sql statement: alter system set  db_recovery_file_dest =  ''/u01/app/oracle/fast_recovery_area/NEWDB'' comment= '''' scope=spfile
+
+sql statement: alter system set  sga_target =  900M comment= '''' scope=spfile
+
+sql statement: alter system set  audit_file_dest =  ''/u01/app/oracle/admin/NEWDB/adump'' comment= '''' scope=spfile
+
+Oracle instance shut down
+
+connected to auxiliary database (not started)
+Oracle instance started
+
+Total System Global Area     943716976 bytes
+
+Fixed Size                     8903280 bytes
+Variable Size                247463936 bytes
+Database Buffers             679477248 bytes
+Redo Buffers                   7872512 bytes
+
+contents of Memory Script:
+{
+   sql clone "alter system set  db_name =
+ ''ORCL'' comment=
+ ''Modified by RMAN duplicate'' scope=spfile";
+   sql clone "alter system set  db_unique_name =
+ ''NEWDB'' comment=
+ ''Modified by RMAN duplicate'' scope=spfile";
+   shutdown clone immediate;
+   startup clone force nomount
+   restore clone from service  'SRCDB' primary controlfile;
+   alter clone database mount;
+}
+executing Memory Script
+
+sql statement: alter system set  db_name =  ''ORCL'' comment= ''Modified by RMAN duplicate'' scope=spfile
+
+sql statement: alter system set  db_unique_name =  ''NEWDB'' comment= ''Modified by RMAN duplicate'' scope=spfile
+
+Oracle instance shut down
+
+Oracle instance started
+
+Total System Global Area     943716976 bytes
+
+Fixed Size                     8903280 bytes
+Variable Size                247463936 bytes
+Database Buffers             679477248 bytes
+Redo Buffers                   7872512 bytes
+
+Starting restore at 12-APR-26
+allocated channel: ORA_AUX_DISK_1
+channel ORA_AUX_DISK_1: SID=136 device type=DISK
+
+channel ORA_AUX_DISK_1: starting datafile backup set restore
+channel ORA_AUX_DISK_1: using network backup set from service SRCDB
+channel ORA_AUX_DISK_1: restoring control file
+channel ORA_AUX_DISK_1: restore complete, elapsed time: 00:00:02
+output file name=/u01/app/oracle/oradata/NEWDB/control01.ctl
+output file name=/u01/app/oracle/oradata/NEWDB/control02.ctl
+Finished restore at 12-APR-26
+
+database mounted
+
+contents of Memory Script:
+{
+   set newname for datafile  1 to
+ "/u01/app/oracle/oradata/NEWDB/system01.dbf";
+   set newname for datafile  3 to
+ "/u01/app/oracle/oradata/NEWDB/sysaux01.dbf";
+   set newname for datafile  4 to
+ "/u01/app/oracle/oradata/NEWDB/undotbs01.dbf";
+   set newname for datafile  7 to
+ "/u01/app/oracle/oradata/NEWDB/users01.dbf";
+   restore
+   from  nonsparse   from service
+ 'SRCDB'   clone database
+   ;
+   sql 'alter system archive log current';
+}
+executing Memory Script
+
+executing command: SET NEWNAME
+
+executing command: SET NEWNAME
+
+executing command: SET NEWNAME
+
+executing command: SET NEWNAME
+
+Starting restore at 12-APR-26
+using channel ORA_AUX_DISK_1
+
+channel ORA_AUX_DISK_1: starting datafile backup set restore
+channel ORA_AUX_DISK_1: using network backup set from service SRCDB
+channel ORA_AUX_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_AUX_DISK_1: restoring datafile 00001 to /u01/app/oracle/oradata/NEWDB/system01.dbf
+channel ORA_AUX_DISK_1: restore complete, elapsed time: 00:00:49
+channel ORA_AUX_DISK_1: starting datafile backup set restore
+channel ORA_AUX_DISK_1: using network backup set from service SRCDB
+channel ORA_AUX_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_AUX_DISK_1: restoring datafile 00003 to /u01/app/oracle/oradata/NEWDB/sysaux01.dbf
+channel ORA_AUX_DISK_1: restore complete, elapsed time: 00:00:25
+channel ORA_AUX_DISK_1: starting datafile backup set restore
+channel ORA_AUX_DISK_1: using network backup set from service SRCDB
+channel ORA_AUX_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_AUX_DISK_1: restoring datafile 00004 to /u01/app/oracle/oradata/NEWDB/undotbs01.dbf
+channel ORA_AUX_DISK_1: restore complete, elapsed time: 00:00:26
+channel ORA_AUX_DISK_1: starting datafile backup set restore
+channel ORA_AUX_DISK_1: using network backup set from service SRCDB
+channel ORA_AUX_DISK_1: specifying datafile(s) to restore from backup set
+channel ORA_AUX_DISK_1: restoring datafile 00007 to /u01/app/oracle/oradata/NEWDB/users01.dbf
+channel ORA_AUX_DISK_1: restore complete, elapsed time: 00:00:01
+Finished restore at 12-APR-26
+
+sql statement: alter system archive log current
+current log archived
+
+contents of Memory Script:
+{
+   restore clone force from service  'SRCDB'
+           archivelog from scn  2244933;
+   switch clone datafile all;
+}
+executing Memory Script
+
+Starting restore at 12-APR-26
+using channel ORA_AUX_DISK_1
+
+channel ORA_AUX_DISK_1: starting archived log restore to default destination
+channel ORA_AUX_DISK_1: using network backup set from service SRCDB
+channel ORA_AUX_DISK_1: restoring archived log
+archived log thread=1 sequence=8
+channel ORA_AUX_DISK_1: restore complete, elapsed time: 00:00:01
+channel ORA_AUX_DISK_1: starting archived log restore to default destination
+channel ORA_AUX_DISK_1: using network backup set from service SRCDB
+channel ORA_AUX_DISK_1: restoring archived log
+archived log thread=1 sequence=9
+channel ORA_AUX_DISK_1: restore complete, elapsed time: 00:00:02
+Finished restore at 12-APR-26
+
+datafile 1 switched to datafile copy
+input datafile copy RECID=5 STAMP=1230336604 file name=/u01/app/oracle/oradata/NEWDB/system01.dbf
+datafile 3 switched to datafile copy
+input datafile copy RECID=6 STAMP=1230336604 file name=/u01/app/oracle/oradata/NEWDB/sysaux01.dbf
+datafile 4 switched to datafile copy
+input datafile copy RECID=7 STAMP=1230336604 file name=/u01/app/oracle/oradata/NEWDB/undotbs01.dbf
+datafile 7 switched to datafile copy
+input datafile copy RECID=8 STAMP=1230336604 file name=/u01/app/oracle/oradata/NEWDB/users01.dbf
+
+contents of Memory Script:
+{
+   set until scn  2245118;
+   recover
+   clone database
+    delete archivelog
+   ;
+}
+executing Memory Script
+
+executing command: SET until clause
+
+Starting recover at 12-APR-26
+using channel ORA_AUX_DISK_1
+
+starting media recovery
+
+archived log for thread 1 with sequence 8 is already on disk as file /u01/app/oracle/fast_recovery_area/NEWDB/NEWDB/archivelog/2026_04_12/o1_mf_1_8_nxns29fn_.arc
+archived log for thread 1 with sequence 9 is already on disk as file /u01/app/oracle/fast_recovery_area/NEWDB/NEWDB/archivelog/2026_04_12/o1_mf_1_9_nxns2c2o_.arc
+archived log file name=/u01/app/oracle/fast_recovery_area/NEWDB/NEWDB/archivelog/2026_04_12/o1_mf_1_8_nxns29fn_.arc thread=1 sequence=8
+archived log file name=/u01/app/oracle/fast_recovery_area/NEWDB/NEWDB/archivelog/2026_04_12/o1_mf_1_9_nxns2c2o_.arc thread=1 sequence=9
+media recovery complete, elapsed time: 00:00:03
+Finished recover at 12-APR-26
+
+contents of Memory Script:
+{
+   delete clone force archivelog all;
+}
+executing Memory Script
+
+released channel: ORA_AUX_DISK_1
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=147 device type=DISK
+deleted archived log
+archived log file name=/u01/app/oracle/fast_recovery_area/NEWDB/NEWDB/archivelog/2026_04_12/o1_mf_1_8_nxns29fn_.arc RECID=1 STAMP=1230336601
+deleted archived log
+archived log file name=/u01/app/oracle/fast_recovery_area/NEWDB/NEWDB/archivelog/2026_04_12/o1_mf_1_9_nxns2c2o_.arc RECID=2 STAMP=1230336603
+Deleted 2 objects
+
+Oracle instance started
+
+Total System Global Area     943716976 bytes
+
+Fixed Size                     8903280 bytes
+Variable Size                247463936 bytes
+Database Buffers             679477248 bytes
+Redo Buffers                   7872512 bytes
+
+contents of Memory Script:
+{
+   sql clone "alter system set  db_name =
+ ''NEWDB'' comment=
+ ''Reset to original value by RMAN'' scope=spfile";
+   sql clone "alter system reset  db_unique_name scope=spfile";
+}
+executing Memory Script
+
+sql statement: alter system set  db_name =  ''NEWDB'' comment= ''Reset to original value by RMAN'' scope=spfile
+
+sql statement: alter system reset  db_unique_name scope=spfile
+Oracle instance started
+
+Total System Global Area     943716976 bytes
+
+Fixed Size                     8903280 bytes
+Variable Size                247463936 bytes
+Database Buffers             679477248 bytes
+Redo Buffers                   7872512 bytes
+sql statement: CREATE CONTROLFILE REUSE SET DATABASE "NEWDB" RESETLOGS ARCHIVELOG
+  MAXLOGFILES     16
+  MAXLOGMEMBERS      3
+  MAXDATAFILES      100
+  MAXINSTANCES     8
+  MAXLOGHISTORY      292
+ LOGFILE
+  GROUP     1 ( '/u01/app/oracle/oradata/NEWDB/redo01.log' ) SIZE 200 M  REUSE,
+  GROUP     2 ( '/u01/app/oracle/oradata/NEWDB/redo02.log' ) SIZE 200 M  REUSE,
+  GROUP     3 ( '/u01/app/oracle/oradata/NEWDB/redo03.log' ) SIZE 200 M  REUSE
+ DATAFILE
+  '/u01/app/oracle/oradata/NEWDB/system01.dbf'
+ CHARACTER SET AL32UTF8
+
+
+contents of Memory Script:
+{
+   set newname for tempfile  1 to
+ "/u01/app/oracle/oradata/NEWDB/temp01.dbf";
+   switch clone tempfile all;
+   catalog clone datafilecopy  "/u01/app/oracle/oradata/NEWDB/sysaux01.dbf",
+ "/u01/app/oracle/oradata/NEWDB/undotbs01.dbf",
+ "/u01/app/oracle/oradata/NEWDB/users01.dbf";
+   switch clone datafile all;
+}
+executing Memory Script
+
+executing command: SET NEWNAME
+
+renamed tempfile 1 to /u01/app/oracle/oradata/NEWDB/temp01.dbf in control file
+
+cataloged datafile copy
+datafile copy file name=/u01/app/oracle/oradata/NEWDB/sysaux01.dbf RECID=1 STAMP=1230336641
+cataloged datafile copy
+datafile copy file name=/u01/app/oracle/oradata/NEWDB/undotbs01.dbf RECID=2 STAMP=1230336641
+cataloged datafile copy
+datafile copy file name=/u01/app/oracle/oradata/NEWDB/users01.dbf RECID=3 STAMP=1230336641
+
+datafile 3 switched to datafile copy
+input datafile copy RECID=1 STAMP=1230336641 file name=/u01/app/oracle/oradata/NEWDB/sysaux01.dbf
+datafile 4 switched to datafile copy
+input datafile copy RECID=2 STAMP=1230336641 file name=/u01/app/oracle/oradata/NEWDB/undotbs01.dbf
+datafile 7 switched to datafile copy
+input datafile copy RECID=3 STAMP=1230336641 file name=/u01/app/oracle/oradata/NEWDB/users01.dbf
+
+contents of Memory Script:
+{
+   Alter clone database open resetlogs;
+}
+executing Memory Script
+
+database opened
+Finished Duplicate Db at 12-APR-26

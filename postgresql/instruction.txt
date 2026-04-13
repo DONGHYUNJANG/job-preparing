@@ -5,4 +5,4 @@
 5. markdown형식으로 만들어줘
 6. postgresql에서 제공하지 않거나 매커니즘이 많이 다른 기능에 대해선 비슷한 기능으로 변환해서 설명해줘
 7. 예제는 가급적이면 오라클의 scott유저의 emp테이블 dept테이블을 이용해줘 
-항목을 정리한 파일이름 : user.md
+항목을 정리한 파일이름 : C:\work\job-preparing\postgresql\quota\quota.txt
