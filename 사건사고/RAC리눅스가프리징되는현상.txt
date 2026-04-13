@@ -398,3 +398,163 @@ Apr  9 12:51:03 jdh1 systemd-logind[1337]: Removed session 46.
 Apr  9 12:51:17 jdh1 systemd[1]: Started Session 47 of user oracle.
 Apr  9 12:51:17 jdh1 systemd-logind[1337]: New session 47 of user oracle.
 Apr  9 12:51:17 jdh1 systemd[1]: session-47.scope: Succeeded.
+
+
+20260413
+또 프리징되었다. 아래의 로그에서 ALTER DATABASE CLOSE NORMAL /* db agent *//* {1:48962:4888} */
+부분을 보면 클러스터가 오라클을 죽였다고 한다.
+또한 메모리 점유율과cpu가 매우 빠듯하므로 이것이 커널에 문제를 일으켰을 가능성이 높아 프리징되었을 것이라고 한다.
+그래서 SGA를 줄여보기로 했다. 이제 다시 시간을 들여 기다려봐야할것 같다.
+
+-- SGA와 PGA의 전체적인 설정값 확인
+show parameter target
+
+-- 더 상세한 실제 사용량 확인
+select name, value/1024/1024 as "Size(MB)" 
+from v$parameter 
+where name in ('sga_target', 'sga_max_size', 'pga_aggregate_target');
+
+
+리눅스 8기가 메모리 기준
+-- 1. SGA 최대 크기와 목표 크기 설정 (예: 2GB로 제한)
+alter system set sga_max_size = 2G scope=spfile;
+alter system set sga_target = 2G scope=spfile;
+
+-- 2. PGA 목표 크기 설정 (예: 500MB로 제한)
+alter system set pga_aggregate_target = 500M scope=spfile;
+
+-- 3. (중요) 설정 적용을 위해 DB 재시작
+shutdown immediate;
+startup;
+
+
+# 11시부터 12시 사이의 CPU, 메모리, I/O 상태 확인
+sar -q -f /var/log/sa/sa13 -s 11:40:00 -e 11:55:00
+sar -r -f /var/log/sa/sa13 -s 11:40:00 -e 11:55:00
+[root@rac1 oracle]#
+[root@rac1 oracle]# sar -q -f /var/log/sa/sa13 -s 11:40:00 -e 11:55:00
+Linux 4.18.0-553.117.1.el8_10.x86_64 (rac1)     04/13/2026      _x86_64_        (4 CPU)
+
+11:40:00 AM   runq-sz  plist-sz   ldavg-1   ldavg-5  ldavg-15   blocked
+11:50:08 AM         0       941      3.54      4.00      4.69         0
+Average:            0       941      3.54      4.00      4.69         0
+[root@rac1 oracle]# sar -r -f /var/log/sa/sa13 -s 11:40:00 -e 11:55:00
+Linux 4.18.0-553.117.1.el8_10.x86_64 (rac1)     04/13/2026      _x86_64_        (4 CPU)
+
+11:40:00 AM kbmemfree   kbavail kbmemused  %memused kbbuffers  kbcached  kbcommit   %commit  kbactive   kbinact   kbdirty
+11:50:08 AM    335312   1171540   7808804     95.88        64   4680296   8745876     52.90   1802640   5003588      1292
+Average:       335312   1171540   7808804     95.88        64   4680296   8745876     52.90   1802640   5003588      1292
+[root@rac1 oracle]#
+[root@rac1 oracle]#
+
+
+
+ALTER DATABASE CLOSE NORMAL /* db agent *//* {1:48962:4888} */
+
+journalctl -b -1 | tail -2000
+dmesg -T | tail -200
+tail -2000 /var/log/messages
+
+29465047
+===========================================================
+2026-04-13T11:42:27.321180+09:00
+db_recovery_file_dest_size of 5120 MB is 14.53% used. This is a
+user-specified limit on the amount of space that will be used by this
+database for recovery-related files, and does not reflect the amount of
+space available in the underlying filesystem or ASM diskgroup.
+2026-04-13T11:50:46.558225+09:00
+Shutting down ORACLE instance (immediate) (OS id: 45821)
+2026-04-13T11:50:48.688441+09:00
+Stopping background process SMCO
+2026-04-13T11:50:49.726157+09:00
+Shutting down instance: further logons disabled
+2026-04-13T11:50:49.969228+09:00
+Stopping background process CJQ0
+Stopping background process MMNL
+2026-04-13T11:50:51.109324+09:00
+Stopping background process MMON
+2026-04-13T11:50:54.187017+09:00
+alter pluggable database all close immediate
+Completed: alter pluggable database all close immediate
+2026-04-13T11:50:54.241561+09:00
+PDB$SEED(2):JIT: pid 45821 requesting stop
+PDB$SEED(2):Buffer Cache flush deferred for PDB 2
+2026-04-13T11:50:54.361017+09:00
+NOTE: Deferred communication with ASM instance
+NOTE: deferred map free for map id 39
+2026-04-13T11:50:54.373367+09:00
+NOTE: Deferred communication with ASM instance
+License high water mark = 11
+2026-04-13T11:50:54.605297+09:00
+Dispatchers and shared servers shutdown
+
+Data Pump shutdown on PDB: 1 in progress
+2026-04-13T11:50:54.607419+09:00
+Process termination requested for pid 49395 [source = rdbms], [info = 2] [request issued by pid: 45821, uid: 54321]
+2026-04-13T11:50:56.705655+09:00
+ALTER DATABASE CLOSE NORMAL /* db agent *//* {1:48962:4888} */
+2026-04-13T11:50:57.180254+09:00
+Stopping Emon pool
+alter pluggable database all close immediate
+Completed: alter pluggable database all close immediate
+2026-04-13T11:50:58.402528+09:00
+
+IM on ADG: Start of Empty Journal
+
+IM on ADG: End of Empty Journal
+Stopping background process RCBG
+2026-04-13T11:50:59.429152+09:00
+Stopping Emon pool
+stopping change tracking
+2026-04-13T11:51:00.812545+09:00
+Redo thread 1 internally disabled at seq 28 (LGWR)
+
+IM on ADG: Start of Empty Journal
+
+IM on ADG: End of Empty Journal
+Stopping background process RCBG
+2026-04-13T11:50:59.429152+09:00
+Stopping Emon pool
+stopping change tracking
+2026-04-13T11:51:00.812545+09:00
+Redo thread 1 internally disabled at seq 28 (LGWR)
+Shutting down archive processes
+2026-04-13T11:51:00.813559+09:00
+TT00 (PID:45443): Gap Manager exiting
+2026-04-13T11:51:01.588287+09:00
+ARC1 (PID:45450): Archiving disabled T-1.S-28
+2026-04-13T11:51:01.766825+09:00
+ARC1 (PID:45450): Archived Log entry 5 added for T-1.S-28 ID 0x492df392 LAD:1
+2026-04-13T11:51:01.813408+09:00
+Archiving is disabled
+2026-04-13T11:51:01.813943+09:00
+ARC3 (PID:45454): ARCH shutting down
+2026-04-13T11:51:01.813963+09:00
+ARC2 (PID:45452): ARCH shutting down
+2026-04-13T11:51:01.813978+09:00
+ARC3 (PID:45454): Archival stopped
+2026-04-13T11:51:01.813997+09:00
+ARC2 (PID:45452): Archival stopped
+2026-04-13T11:51:01.818169+09:00
+ARC0 (PID:45445): ARCH shutting down
+ARC0 (PID:45445): Archival stopped
+2026-04-13T11:51:01.851496+09:00
+ARC1 (PID:45450): ARCH shutting down
+ARC1 (PID:45450): Archival stopped
+2026-04-13T11:51:02.816077+09:00
+NOTE: Deferred communication with ASM instance
+NOTE: deferred map free for map id 28
+Thread 1 closed at log sequence 28
+Successful close of redo thread 1
+2026-04-13T11:51:03.009247+09:00
+Buffer Cache invalidation for all PDBs started
+Buffer Cache invalidation for all PDBs complete
+Completed: ALTER DATABASE CLOSE NORMAL /* db agent *//* {1:48962:4888} */
+ALTER DATABASE DISMOUNT /* db agent *//* {1:48962:4888} */
+Shutting down archive processes
+Archiving is disabled
+2026-04-13T11:51:03.276689+09:00
+NOTE: Deferred communication with ASM instance
+NOTE: deferred map free for map id 2
+Completed: ALTER DATABASE DISMOUNT /* db agent *//* {1:48962:4888} */
+                                                                                                                
