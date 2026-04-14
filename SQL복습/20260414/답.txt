@@ -1,0 +1,8 @@
+SELECT 
+       deptno,
+       SUM(CASE WHEN job = 'SALESMAN' THEN sal END) AS "SALESMAN",
+       SUM(CASE WHEN job = 'MANAGER' THEN sal END) AS "MANAGER",
+       SUM(CASE WHEN job = 'CLERK' THEN sal END) AS "CLERK"
+FROM emp
+GROUP BY deptno
+order by deptno;

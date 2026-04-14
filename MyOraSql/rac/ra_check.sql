@@ -1,0 +1,1 @@
+alter system checkpoint global;

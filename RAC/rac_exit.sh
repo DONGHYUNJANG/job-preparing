@@ -36,7 +36,7 @@ echo "----------------------------------------------------"
 echo "2. Grid Infrastructure (Cluster) 모든 노드 종료..."
 echo "----------------------------------------------------"
 # root 권한이므로 sudo 없이 직접 실행
-${GRID_HOME}/bin/crsctl stop cluster -all -f
+${GRID_HOME}/bin/crsctl stop cluster -all
 
 echo ""
 echo "모든 서비스가 안전하게 종료되었습니다."

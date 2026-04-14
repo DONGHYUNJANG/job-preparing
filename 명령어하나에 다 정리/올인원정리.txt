@@ -1610,3 +1610,60 @@ START WITH blocking_session IS NULL;    -- 나를 막는 놈이 없는 '최상�
 ```
 
 ---
+
+# ================================================
+# 🕵️‍♂️ RAC 환경에서 오랜시간 동안 대기중인 세션 검색 및 kill
+# =================================================
+
+SELECT
+    -- [기다리는 세션 정보]
+    w.inst_id         AS "대기_노드",
+    w.sid             AS "대기_SID",
+    w.username        AS "대기_유저",
+    w.event           AS "대기_이벤트",
+    w.seconds_in_wait AS "대기_시간(초)",
+    w.sql_id          AS "대기_SQL_ID",
+    
+    -- [막고 있는(범인) 세션 정보]
+    b.inst_id         AS "범인_노드",
+    b.sid             AS "범인_SID",
+    b.serial#         AS "범인_serial",
+    b.username        AS "범인_유저",
+    b.status          AS "범인_상태", -- ACTIVE면 작업중, INACTIVE면 커밋안하고 노는중
+    b.osuser          AS "범인_OS유저",
+    b.program         AS "범인_프로그램"
+FROM 
+    gv$session w
+JOIN 
+    gv$session b ON (w.blocking_instance = b.inst_id AND w.blocking_session = b.sid)
+WHERE 
+    w.blocking_session IS NOT NULL
+ORDER BY 
+    w.seconds_in_wait DESC;
+    
+    
+ALTER SYSTEM KILL SESSION '604, 8010, @2';
+
+# ================================================
+# 🕵️‍♂️ 튜닝 - 실행 계획 확인
+# =================================================
+
+SET AUTOTRACE ON EXPLAIN; -- 결과물과 예상 계획만 출력
+
+SELECT * FROM emp WHERE ename = 'SCOTT';
+
+SET AUTOTRACE TRACEONLY; -- 결과는 출력하지 않고 계획만 출력
+
+# ================================================
+# 🕵️‍♂️ 튜닝 - 실제 실행 결과 후의 계획 확인
+# =================================================
+
+ALTER SESSION SET STATISTICS_LEVEL = ALL;
+
+create index emp_ename on emp(ename);
+
+select /*+ GATHER_PLAN_STATISTICS */ ename, rowid
+  from emp
+  where ename > '   ';
+ 
+SELECT * FROM table(dbms_xplan.display_cursor(null, null, 'ALLSTATS LAST'));
