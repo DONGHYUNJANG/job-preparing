@@ -7,3 +7,4 @@
 7. log file switch (archiving needed) 0412
 8. buffer busy waits 0412
 9. log file parallel write (Background Only) 0412
+10. 📝 free buffer waits 0414
