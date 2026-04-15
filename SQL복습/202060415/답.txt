@@ -1,0 +1,56 @@
+1. 서브쿼리 사용 (내가 만든 답)
+SELECT
+    *,
+    (b.current_y - b.last_y) / b.last_y * 100 AS yoy
+FROM (
+    SELECT
+        dept_name,
+        TO_CHAR(sale_date, 'MM') AS month,
+        MAX(CASE WHEN TO_CHAR(sale_date, 'YYYY') = '2023' THEN amount END) AS "last_y",
+        MAX(CASE WHEN TO_CHAR(sale_date, 'YYYY') = '2024' THEN amount END) AS "current_y"
+    FROM dept_sales
+    GROUP BY dept_name, TO_CHAR(sale_date, 'MM')
+    ORDER BY dept_name, month
+) b;
+
+중요!!! window 함수의 실행순서
+FROM / JOIN
+
+WHERE
+
+GROUP BY
+
+HAVING
+
+윈도우 함수 (Window Functions) ⬅️ 바로 여기!
+
+SELECT
+
+ORDER BY
+
+2.Lag를 이용한 방식 (제미나이 답)
+SELECT 
+    dept_name,
+    month,
+    year,
+    amount AS 당년도_매출,
+    -- 같은 부서, 같은 월 내에서 '연도' 순으로 정렬했으므로 바로 윗줄은 전년도임
+    LAG(amount, 1) OVER (PARTITION BY dept_name, month ORDER BY year) AS 전년도_매출,
+    -- 성장률 계산
+    ROUND(
+        (amount - LAG(amount, 1) OVER (PARTITION BY dept_name, month ORDER BY year)) 
+        / NULLIF(LAG(amount, 1) OVER (PARTITION BY dept_name, month ORDER BY year), 0) * 100, 2
+    ) AS "YoY (%)"
+FROM (
+    -- 1단계: 부서/연도/월별 매출 합계 구하기
+    SELECT 
+        dept_name,
+        EXTRACT(YEAR FROM sale_date) AS year,
+        EXTRACT(MONTH FROM sale_date) AS month,
+        SUM(amount) AS amount
+    FROM dept_sales
+    GROUP BY dept_name, year, month
+) sub
+ORDER BY dept_name, month, year;
+
+

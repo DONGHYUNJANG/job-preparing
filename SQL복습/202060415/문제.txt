@@ -53,4 +53,3 @@ INSERT INTO dept_sales (dept_name, sale_date, amount) VALUES
 
 ---
 
-**호흡을 통해 가슴과 흉추 펴기를 잊지 마세요!** 깊은 호흡은 복잡한 쿼리 로직을 정리하는 데 큰 도움이 됩니다. 풀다가 막히면 언제든 물어봐 주세요!
