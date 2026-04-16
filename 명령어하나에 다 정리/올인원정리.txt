@@ -1667,3 +1667,34 @@ select /*+ GATHER_PLAN_STATISTICS */ ename, rowid
   where ename > '   ';
  
 SELECT * FROM table(dbms_xplan.display_cursor(null, null, 'ALLSTATS LAST'));
+
+
+# ================================================
+# 🕵️‍♂️ ASM - 디스크 여유 공간 확인
+# =================================================
+[oracle@rac1 ~]$ asmcmd lsdg | column -t
+State    Type    Rebal  Sector  Logical_Sector  Block  AU       Total_MB  Free_MB  Req_mir_free_MB  Usable_file_MB  Offline_disks  Voting_files  Name
+MOUNTED  NORMAL  N      512     512             4096   4194304  3060      2120     1020             550             0              Y             CRS/
+MOUNTED  EXTERN  N      512     512             4096   4194304  30716     19552    0                19552           0              N             DATA/
+MOUNTED  EXTERN  N      512     512             4096   4194304  20476     17800    0                17800           0              N             FRA/
+[oracle@rac1 ~]$
+
+
+
+# ================================================
+# 🕵️‍♂️ FRA 여유공간 확인
+# =================================================
+오라클 내부에서 FRA 사용량 확인하기 📊
+오라클 안에서 실제 한도와 사용량을 보려면 V$RECOVERY_AREA_USAGE나 V$RECOVERY_FILE_DEST 같은 뷰(View)를 조회해야 합니다.
+
+가장 직관적으로 확인할 수 있는 쿼리를 하나 알려드릴게요. SQL*Plus나 툴에서 한번 조회해 보시겠어요?
+
+SQL> show parameter db_recovery_file_dest_size;
+
+SQL
+SELECT NAME, 
+       ROUND(SPACE_LIMIT / 1024 / 1024 / 1024, 2) AS "제한(GB)", 
+       ROUND(SPACE_USED / 1024 / 1024 / 1024, 2) AS "사용중(GB)", 
+       ROUND(SPACE_RECLAIMABLE / 1024 / 1024 / 1024, 2) AS "삭제가능(GB)",
+       NUMBER_OF_FILES AS "파일수"
+FROM V$RECOVERY_FILE_DEST;

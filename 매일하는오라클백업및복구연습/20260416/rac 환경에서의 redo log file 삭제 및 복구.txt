@@ -1,0 +1,867 @@
+시나리오 
+current log 파일 삭제 후 가능한곳 까지만 복구 (SCN기반)
+
+복구 순서 요약
+srvctl stop database : 전체 DB 정지
+STARTUP MOUNT : MOUNT까지만 기동
+@log : 상태 확인, INACTIVE 여부 확인
+DROP LOGFILE GROUP N : 손상된 그룹 제거
+ADD LOGFILE THREAD N GROUP N : 새 그룹 재생성
+ALTER DATABASE OPEN : DB 오픈
+ALTER SYSTEM SWITCH LOGFILE : 새 그룹 활성화
+
+
+로그파일이 너무 적은 관계로 (현재 instance당 로그파일이 너무 적으므로 추가해야 한다)
+
+SYS@racdb1:rac1:CDB$ROOT > @log
+
+    GROUP#    THREAD# STATUS            SEQUENCE# ARC BYTES/1024/1024 FIRST_CHANGE#                      NEXT_CHANGE#
+---------- ---------- ---------------- ---------- --- --------------- ------------- ---------------------------------
+         1          1 INACTIVE                  1 YES             200       3291863                           3291901
+         2          1 CURRENT                   2 NO              200       3291901              18446744073709551615
+         3          2 CURRENT                   5 NO              100       3296964              18446744073709551615
+         4          2 INACTIVE                  4 YES             200       3293093                           3296430
+
+SYS@racdb1:rac1:CDB$ROOT > @logfile
+
+    GROUP# MEMBER
+---------- ----------------------------------------
+         1 +DATA/RACDB/ONLINELOG/group_1.264.123015
+           0941
+
+         1 +FRA/RACDB/ONLINELOG/group_1.257.1230150
+           967
+
+         2 +DATA/RACDB/ONLINELOG/group_2.262.123015
+           0941
+
+         2 +FRA/RACDB/ONLINELOG/group_2.259.1230150
+           967
+
+         3 +FRA/RACDB/ONLINELOG/group_3.262.1230203
+           369
+
+         3 +DATA/RACDB/ONLINELOG/group_3.273.123020
+           3367
+
+         4 +DATA/RACDB/ONLINELOG/group_4.271.123015
+           2629
+
+         4 +FRA/RACDB/ONLINELOG/group_4.260.1230152
+           637
+
+
+8 rows selected.
+
+
+## REDO LOG 2그룹 씩 추가
+SYS@racdb1:rac1:CDB$ROOT > alter database add logfile thread 1 group 5 '+DATA' SIZE 200M;
+
+Database altered.
+
+SYS@racdb1:rac1:CDB$ROOT >  alter database add logfile thread 1 group 6 '+DATA' SIZE 200M;
+
+Database altered.
+
+SYS@racdb1:rac1:CDB$ROOT > alter database add logfile thread 2  group 7  '+DATA' SIZE 200M;
+
+Database altered.
+
+SYS@racdb1:rac1:CDB$ROOT >  alter database add logfile thread 2  group 8   '+DATA' SIZE 200M;
+
+Database altered.
+
+SYS@racdb1:rac1:CDB$ROOT >
+
+
+    GROUP#    THREAD# STATUS            SEQUENCE# ARC BYTES/1024/1024 FIRST_CHANGE#                      NEXT_CHANGE#
+---------- ---------- ---------------- ---------- --- --------------- ------------- ---------------------------------
+         1          1 INACTIVE                  1 YES             200       3291863                           3291901
+         2          1 CURRENT                   2 NO              200       3291901              18446744073709551615
+         3          2 CURRENT                   5 NO              100       3296964              18446744073709551615
+         4          2 INACTIVE                  4 YES             200       3293093                           3296430
+         5          1 UNUSED                    0 YES             200             0                                 0
+         6          1 UNUSED                    0 YES             200             0                                 0
+         7          2 UNUSED                    0 YES             200             0                                 0
+         8          2 UNUSED                    0 YES             200             0                                 0
+
+8 rows selected.
+
+SYS@racdb1:rac1:CDB$ROOT > @logfile
+
+    GROUP# MEMBER
+---------- ----------------------------------------
+         1 +FRA/RACDB/ONLINELOG/group_1.257.1230150
+           967
+
+         1 +DATA/RACDB/ONLINELOG/group_1.264.123015
+           0941
+
+         2 +FRA/RACDB/ONLINELOG/group_2.259.1230150
+           967
+
+         2 +DATA/RACDB/ONLINELOG/group_2.262.123015
+           0941
+
+         3 +FRA/RACDB/ONLINELOG/group_3.262.1230203
+           369
+
+         3 +DATA/RACDB/ONLINELOG/group_3.273.123020
+           3367
+
+         4 +FRA/RACDB/ONLINELOG/group_4.260.1230152
+           637
+
+         4 +DATA/RACDB/ONLINELOG/group_4.271.123015
+           2629
+
+         5 +DATA/RACDB/ONLINELOG/group_5.286.123072
+           1691
+
+         6 +DATA/RACDB/ONLINELOG/group_6.287.123072
+           1719
+
+         7 +DATA/RACDB/ONLINELOG/group_7.288.123072
+           1775
+
+         8 +DATA/RACDB/ONLINELOG/group_8.289.123072
+           1791
+
+
+12 rows selected.
+
+SYS@racdb1:rac1:CDB$ROOT >
+
+## REDO LOG 2,3 삭제 
+## REDO LOG 파일 추가할때 DATA와 FRA에 각각 하나씩 추가했어야 했는데 모두DATA에 추가했다. 
+## 나중에 다시 만들자
+
+group_1.264.1230150941
+group_2.262.1230150941
+group_3.273.1230203367
+group_4.271.1230152629
+group_5.286.1230721691
+group_6.287.1230721719
+group_7.288.1230721775
+group_8.289.1230721791
+ASMCMD> rm group_2.262.1230150941
+ASMCMD> rm group_3.273.1230203367
+ASMCMD> cd ..
+ASMCMD> ls
+4F068D65E0577F98E0630F000F0ACD3C/
+4F06ED533AA3BF96E0630F000F0A4C82/
+86B637B62FE07A65E053F706E80A27CA/
+CONTROLFILE/
+DATAFILE/
+ONLINELOG/
+PARAMETERFILE/
+PASSWORD/
+TEMPFILE/
+ASMCMD> cd ..
+ASMCMD> ls
+RACDB/
+ASMCMD> cd ..
+ASMCMD> cd FRA
+ASMCMD> ls
+RACDB/
+ASMCMD> cd RACDB/ONLINELOG
+ASMCMD> ls
+group_1.257.1230150967
+group_2.259.1230150967
+group_3.262.1230203369
+group_4.260.1230152637
+ASMCMD> rm group_2.259.1230150967
+ASMCMD> rm group_3.262.1230203369
+ASMCMD>
+
+## rac1에서 startup 을 하면 에러 발생할것이다.
+명확하게 로그파일이이 없다는 메시지가없으므로 alert logf를 확인한다.
+
+Total System Global Area 2147482744 bytes
+Fixed Size                  9137272 bytes
+Variable Size             721420288 bytes
+Database Buffers         1409286144 bytes
+Redo Buffers                7639040 bytes
+Database mounted.
+ORA-03113: end-of-file on communication channel
+Process ID: 57477
+Session ID: 16 Serial number: 25000
+
+## 로그파일을 열수업다는 에러를 확인했다.
+
+2026-04-16T11:25:01.496641+09:00
+Errors in file /u01/app/oracle/diag/rdbms/racdb/racdb1/trace/racdb1_lgwr_57757.trc:
+ORA-00313: open failed for members of log group 2 of thread 1
+ORA-00312: online log 2 thread 1: '+FRA/RACDB/ONLINELOG/group_2.259.1230150967'
+ORA-17503: ksfdopn:2 Failed to open file +FRA/RACDB/ONLINELOG/group_2.259.1230150967
+ORA-15012: ASM file '+FRA/RACDB/ONLINELOG/group_2.259.1230150967' does not exist
+ORA-00312: online log 2 thread 1: '+DATA/RACDB/ONLINELOG/group_2.262.1230150941'
+ORA-17503: ksfdopn:2 Failed to open file +DATA/RACDB/ONLINELOG/group_2.262.1230150941
+ORA-15012: ASM file '+DATA/RACDB/ONLINELOG/group_2.262.1230150941' does not exist
+2026-04-16T11:25:01.533542+09:00
+Errors in file /u01/app/oracle/diag/rdbms/racdb/racdb1/trace/racdb1_ora_57808.trc:
+ORA-00313: open failed for members of log group 1 of thread
+ORA-00312: online log 2 thread 1: '+DATA/RACDB/ONLINELOG/group_2.262.1230150941'
+ORA-00312: online log 2 thread 1: '+FRA/RACDB/ONLINELOG/group_2.259.1230150967'
+USER (ospid: ): terminating the instance due to ORA error
+2026-04-16T11:25:01.665300+09:00
+System state dump requested by (instance=1, osid=57808), summary=[abnormal instance termination]. error - 'Instance is terminating.
+'
+System State dumped to trace file /u01/app/oracle/diag/rdbms/racdb/racdb1/trace/racdb1_diag_57690.trc
+2026-04-16T11:25:02.140886+09:00
+Dumping diagnostic data in directory=[cdmp_20260416112501], requested by (instance=1, osid=57808), summary=[abnormal instance termination].
+2026-04-16T11:25:03.251345+09:00
+Instance terminated by USER, pid = 57808
+
+## 정리하자면 rac1의 online log 2가 깨졌다는건데
+online log 그룹2, 3을 지웠음에도 3에 대한 내용이 없고 rac2에 대한 내용이 없는건 
+rac2를 아직 안올려 봤기 때문이다. 실무에선 로그를 둘다 확인해야 하겠다.
+다른파일도 깨졌느지 한번에 체크하는 방법이 있는지 궁금하다.
+online log 2 thread 1: '+FRA/RACDB/ONLINELOG/group_2.259.1230150967'
+online log 2 thread 1: '+DATA/RACDB/ONLINELOG/group_2.262.1230150941'
+online log 2 thread 1: '+DATA/RACDB/ONLINELOG/group_2.262.1230150941'
+online log 2 thread 1: '+FRA/RACDB/ONLINELOG/group_2.259.1230150967'
+
+
+## rac 환경에서 list failure을 실행해 보았다. 지원하지 않는다고 한다.
+RMAN> list failure
+2> ;
+
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of list command at 04/16/2026 11:36:44
+RMAN-05533: Command LIST FAILURE is not supported on RAC database
+
+##  VALIDATE DATABASE;을 사용해 보았으나 datafile만 체크할 뿐 logfile에 대한 언급은 없다.
+
+RMAN> VALIDATE DATABASE;
+
+Starting validate at 16-APR-26
+allocated channel: ORA_DISK_1
+channel ORA_DISK_1: SID=213 instance=racdb1 device type=DISK
+channel ORA_DISK_1: starting validation of datafile
+channel ORA_DISK_1: specifying datafile(s) for validation
+input datafile file number=00018 name=+DATA/RACDB/DATAFILE/sysaux.263.1230225665
+input datafile file number=00001 name=+DATA/RACDB/DATAFILE/system.257.1230150757
+input datafile file number=00003 name=+DATA/RACDB/DATAFILE/sysaux.258.1230150823
+input datafile file number=00004 name=+DATA/RACDB/DATAFILE/undotbs1.259.1230150847
+input datafile file number=00015 name=+DATA/RACDB/DATAFILE/ts01.281.1230199589
+input datafile file number=00022 name=+DATA/RACDB/DATAFILE/ts200.261.1230565107
+input datafile file number=00009 name=+DATA/RACDB/DATAFILE/undotbs2.270.1230152021
+input datafile file number=00007 name=+DATA/RACDB/DATAFILE/users.260.1230150849
+input datafile file number=00017 name=+DATA/RACDB/DATAFILE/undotbs_small.272.1230221481
+channel ORA_DISK_1: validation complete, elapsed time: 00:00:45
+List of Datafiles
+=================
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+1    OK     0              17856        115208          3313344
+  File Name: +DATA/RACDB/DATAFILE/system.257.1230150757
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              79482
+  Index      0              12775
+  Other      0              5087
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+3    OK     0              20432        78089           3313278
+  File Name: +DATA/RACDB/DATAFILE/sysaux.258.1230150823
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              10093
+  Index      0              5936
+  Other      0              41619
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+4    OK     0              129          36480           3313341
+  File Name: +DATA/RACDB/DATAFILE/undotbs1.259.1230150847
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              0
+  Index      0              0
+  Other      0              36351
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+7    OK     0              253          1601            3143738
+  File Name: +DATA/RACDB/DATAFILE/users.260.1230150849
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              819
+  Index      0              259
+  Other      0              269
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+9    OK     0              311          3200            3313314
+  File Name: +DATA/RACDB/DATAFILE/undotbs2.270.1230152021
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              0
+  Index      0              0
+  Other      0              2889
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+15   OK     0              6273         6400            2165572
+  File Name: +DATA/RACDB/DATAFILE/ts01.281.1230199589
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              0
+  Index      0              0
+  Other      0              127
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+17   OK     0              104          256             2439145
+  File Name: +DATA/RACDB/DATAFILE/undotbs_small.272.1230221481
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              0
+  Index      0              0
+  Other      0              152
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+18   OK     0              127166       131072          3313004
+  File Name: +DATA/RACDB/DATAFILE/sysaux.263.1230225665
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              1526
+  Index      0              1664
+  Other      0              716
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+22   OK     0              1            6401            3291030
+  File Name: +DATA/RACDB/DATAFILE/ts200.261.1230565107
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              0
+  Index      0              0
+  Other      0              6399
+
+channel ORA_DISK_1: starting validation of datafile
+channel ORA_DISK_1: specifying datafile(s) for validation
+input datafile file number=00006 name=+DATA/RACDB/86B637B62FE07A65E053F706E80A27CA/DATAFILE/sysaux.267.1230151537
+input datafile file number=00005 name=+DATA/RACDB/86B637B62FE07A65E053F706E80A27CA/DATAFILE/system.266.1230151535
+input datafile file number=00008 name=+DATA/RACDB/86B637B62FE07A65E053F706E80A27CA/DATAFILE/undotbs1.268.1230151537
+channel ORA_DISK_1: validation complete, elapsed time: 00:00:15
+List of Datafiles
+=================
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+5    OK     0              7300         34560           2141812
+  File Name: +DATA/RACDB/86B637B62FE07A65E053F706E80A27CA/DATAFILE/system.266.1230151535
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              16826
+  Index      0              8509
+  Other      0              1925
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+6    OK     0              11143        39680           2141213
+  File Name: +DATA/RACDB/86B637B62FE07A65E053F706E80A27CA/DATAFILE/sysaux.267.1230151537
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              3363
+  Index      0              1782
+  Other      0              23392
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+8    OK     0              1799         12800           2141809
+  File Name: +DATA/RACDB/86B637B62FE07A65E053F706E80A27CA/DATAFILE/undotbs1.268.1230151537
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              0
+  Index      0              0
+  Other      0              11001
+
+channel ORA_DISK_1: starting validation of datafile
+channel ORA_DISK_1: specifying datafile(s) for validation
+input datafile file number=00019 name=+DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/sysaux.282.1230225867
+input datafile file number=00020 name=+DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/system.283.1230226979
+input datafile file number=00021 name=+DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/undotbs1.284.1230227041
+input datafile file number=00011 name=+DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/sysaux.277.1230153145
+input datafile file number=00010 name=+DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/system.276.1230153143
+input datafile file number=00012 name=+DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/undotbs1.275.1230153143
+input datafile file number=00013 name=+DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/undo_2.279.1230153319
+input datafile file number=00014 name=+DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/users.280.1230153371
+channel ORA_DISK_1: validation complete, elapsed time: 00:00:55
+List of Datafiles
+=================
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+10   OK     0              6385         34560           3292129
+  File Name: +DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/system.276.1230153143
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              17528
+  Index      0              8719
+  Other      0              1928
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+11   OK     0              12327        42240           2537737
+  File Name: +DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/sysaux.277.1230153145
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              3754
+  Index      0              2102
+  Other      0              24057
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+12   OK     0              1145         12800           2538166
+  File Name: +DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/undotbs1.275.1230153143
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              0
+  Index      0              0
+  Other      0              11655
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+13   OK     0              12539        12800           2499307
+  File Name: +DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/undo_2.279.1230153319
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              0
+  Index      0              0
+  Other      0              261
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+14   OK     0              513          640             2153541
+  File Name: +DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/users.280.1230153371
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              0
+  Index      0              0
+  Other      0              127
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+19   OK     0              130945       131072          2496629
+  File Name: +DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/sysaux.282.1230225867
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              0
+  Index      0              0
+  Other      0              127
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+20   OK     0              130945       131072          2498435
+  File Name: +DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/system.283.1230226979
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              0
+  Index      0              0
+  Other      0              127
+
+File Status Marked Corrupt Empty Blocks Blocks Examined High SCN
+---- ------ -------------- ------------ --------------- ----------
+21   OK     0              130945       131072          2498547
+  File Name: +DATA/RACDB/4F06ED533AA3BF96E0630F000F0A4C82/DATAFILE/undotbs1.284.1230227041
+  Block Type Blocks Failing Blocks Processed
+  ---------- -------------- ----------------
+  Data       0              0
+  Index      0              0
+  Other      0              127
+
+channel ORA_DISK_1: starting validation of datafile
+channel ORA_DISK_1: specifying datafile(s) for validation
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03009: failure of validate command on ORA_DISK_1 channel at 04/16/2026 11:40:28
+ORA-00245: control file backup failed; in Oracle RAC, target might not be on shared storage
+
+
+## rac2 alter database mount -> open으로 변경했다.
+## 재미있는 점은 mount 상태에서는 로그파일이 삭제된것을 인지하지 못하다가 open으로 변경후
+인지하기 시작했다.
+SYS@racdb2:': > alter database open
+  2  ;
+alter database open
+*
+ERROR at line 1:
+ORA-00313: open failed for members of log group 3 of thread 2
+ORA-00312: online log 3 thread 2: '+FRA/RACDB/ONLINELOG/group_3.262.1230203369'
+ORA-17503: ksfdopn:2 Failed to open file
++FRA/RACDB/ONLINELOG/group_3.262.1230203369
+ORA-15012: ASM file '+FRA/RACDB/ONLINELOG/group_3.262.1230203369' does not
+exist
+ORA-00312: online log 3 thread 2:
+'+DATA/RACDB/ONLINELOG/group_3.273.1230203367'
+ORA-17503: ksfdopn:2 Failed to open file
++DATA/RACDB/ONLINELOG/group_3.273.1230203367
+ORA-15012: ASM file '+DATA/RACDB/ONLINELOG/group_3.273.1230203367' does not
+exist
+
+## 이제 물리적으로 삭제된 로그파일을 drop하겠다. redo로그는 살릴방법이 없다.
+애시당초 백업 대상도 아니므로
+
+
+SYS@racdb1:rac1:CDB$ROOT > ALTER DATABASE DROP LOGFILE GROUP 2;
+ALTER DATABASE DROP LOGFILE GROUP 2
+*
+ERROR at line 1:
+ORA-01623: log 2 is current log for instance racdb1 (thread 1) - cannot drop
+ORA-00312: online log 2 thread 1:
+'+DATA/RACDB/ONLINELOG/group_2.262.1230150941'
+ORA-00312: online log 2 thread 1: '+FRA/RACDB/ONLINELOG/group_2.259.1230150967'
+
+## 파일이 깨졌음에도 current log 라서 drop 할수없다고 한다. 강제로 로그 스위치를 해서
+current log를 변경해주면 될것 같다.
+## 궁금증 rac에서 redo 로그 파일이 하나만 깨졌다면 db가 올라왔을까? 에러는 출력되었을까? 어떻게 복구하나?
+
+#################### 정답 ##########################################################
+방법 1. CLEAR 명령어로 한 방에 해결 (권장)
+해당 그룹에 살아있는 멤버가 하나라도 있다면, 이 명령어가 가장 쉽고 빠릅니다.
+
+SQL
+SQL> ALTER DATABASE CLEAR LOGFILE GROUP 2;
+작동 원리: 이 명령을 날리면 오라클이 해당 그룹(Group 2)의 모든 멤버를 물리적으로 새로 생성하고 초기화합니다.
+
+장점: 깨진 파일은 알아서 지우고(혹은 덮어쓰고) 건강한 상태로 다시 만들어줍니다. 질문하신 "다음 사이클 때 동기화"를 기다릴 필요 없이 즉시 새 파일로 준비됩니다.
+
+##########################################################################################
+
+
+## mount상태이므로 log switch가 안된다.
+SYS@racdb1:rac1:CDB$ROOT > @ra_sw
+alter system archive log current
+*
+ERROR at line 1:
+ORA-01109: database not open
+
+
+SYS@racdb1:rac1:CDB$ROOT >
+
+
+### current 로그파일을 drop하기 위해 검색해보니 두가지 방법이 있다.
+1. CLEAR LOGFILE 
+ALTER DATABASE CLEAR LOGFILE GROUP [그룹번호];
+파일 재생성: OS에서 삭제된 파일을 오라클이 직접 다시 만들어줍니다.
+
+상태 초기화: CURRENT든 ACTIVE든 묻지도 따지지도 않고 깨끗한 상태로 세팅합니다.
+
+DB 오픈 가능: 이 명령으로 유실된 파일을 살려내면 즉시 ALTER DATABASE OPEN;이 가능해집니다.
+
+2. ALTER SYSTEM ARCHIVE LOG CURRENT; 후 Drop (될지 안될지 모르고 비권장이라고 한다.)
+
+
+##  ALTER DATABASE CLEAR LOGFILE GROUP 2; 을 실행하니 archive 된 데이터가 아니라서
+파일을 새로 만들 수 없다고 한다.
+
+SYS@racdb1:rac1:CDB$ROOT >
+SYS@racdb1:rac1:CDB$ROOT > ALTER DATABASE CLEAR LOGFILE GROUP 2;
+ALTER DATABASE CLEAR LOGFILE GROUP 2
+*
+ERROR at line 1:
+ORA-00350: log 2 of instance racdb1 (thread 1) needs to be archived
+ORA-00312: online log 2 thread 1: '+DATA/RACDB/ONLINELOG/group_2.262.1230150941'
+ORA-00312: online log 2 thread 1: '+FRA/RACDB/ONLINELOG/group_2.259.1230150967'
+
+
+SYS@racdb1:rac1:CDB$ROOT >
+
+## ALTER DATABASE CLEAR UNARCHIVED LOGFILE GROUP 2; 명령어를 수행하면 강제로 파일을 만들어 준다고 한다.
+어차피 유실된 파일이기에 위의 방법을 선택한다.
+
+SYS@racdb1:rac1:CDB$ROOT > ALTER DATABASE CLEAR UNARCHIVED LOGFILE GROUP 2;
+
+Database altered.
+
+SYS@racdb1:rac1:CDB$ROOT > ALTER DATABASE CLEAR UNARCHIVED LOGFILE GROUP 3;
+
+Database altered.
+
+SYS@racdb1:rac1:CDB$ROOT >
+
+
+## 로그파일이 생성된것을 확인하였다.
+ASMCMD> ls
+group_1.264.1230150941
+group_2.273.1230725405
+group_3.262.1230725443
+group_4.271.1230152629
+group_5.286.1230721691
+group_6.287.1230721719
+group_7.288.1230721775
+group_8.289.1230721791
+
+
+ASMCMD> ls
+group_1.257.1230150967
+group_2.262.1230725411
+group_3.259.1230725447
+group_4.260.1230152637
+ASMCMD> pwd
++fra/racdb/onlinelog
+ASMCMD>
+
+
+## 이제 불완전 복구를 하면 될것 같다. 복구 가능할것 같은 SCN을 찾는다.
+## 여기서 햇갈렸다. SCN을 로그파일에서 찾아야할지 다른 뷰에서 찾아야할지 아니면 RMAN에게 맞길지
+## 일단 공부를 위해 내가 알아보기로 했다.
+
+
+
+
+    GROUP#    THREAD# STATUS            SEQUENCE# ARC BYTES/1024/1024 FIRST_CHANGE#                      NEXT_CHANGE#
+---------- ---------- ---------------- ---------- --- --------------- ------------- ---------------------------------
+         1          1 INACTIVE                  1 YES             200       3291863                           3291901
+         6          1 UNUSED                    0 YES             200             0                                 0
+         5          1 CURRENT                   3 NO              200       3313349              18446744073709551615
+         2          1 UNUSED                    0 YES             200       3291901                           3313349
+         7          2 UNUSED                    0 YES             200             0                                 0
+         8          2 UNUSED                    0 YES             200             0                                 0
+         3          2 UNUSED                    0 YES             100       3296964                           3313328
+         4          2 INACTIVE                  4 YES             200       3293093                           3296430
+
+## 2,3번을 복구했는데 4번이 아닌 5번이 current가 된 이유는 아무래도 rac1에서 복구했기 때문에 thread1의 로그그룹인 5번이 current가 된듯하다.
+
+##복구 가능한 최신 SCN은 current 로그파일의 FIRST_CHANGE를 기점으로 수행하기로 하였다. 
+## until scn recovery는 설정한 scn을 포함하지 않는 그 직전의 scn까지 복구이므로 문제없이 수행될거라 생각한다.
+
+### 아래와 같이 복구를 한다.
+
+# 1. RMAN 접속
+rman target /
+
+# 2. 복구 스크립트 실행
+
+RMAN> RESTORE DATABASE UNTIL SCN 3313349;
+의미: "3313349 시점 이전에 받아둔 가장 적절한 백업본을 찾아와서 복원해라"는 뜻입니다.
+
+단계 2: 데이터 동기화 및 복구 (Recover)
+복구 단계에서도 마찬가지로 목표 지점을 직접 찍어줍니다.
+
+Bash
+RMAN> RECOVER DATABASE UNTIL SCN 3313349;
+주의: 이때 아카이브 로그와 리두 로그를 하나씩 읽으며 3313349 직전까지 데이터를 밀어 넣습니다. 5번 로그가 없으므로 2번 로그의 끝까지 성공적으로 수행될 겁니다.
+
+단계 3: 데이터베이스 오픈 (Open)
+복구가 끝났다면 마지막으로 DB를 엽니다.
+
+Bash
+RMAN> ALTER DATABASE OPEN RESETLOGS;
+
+
+archived log for thread 2 with sequence 5 is already on disk as file +FRA/RACDB/ARCHIVELOG/2026_04_16/thread_2_seq_5.342.1230722265
+unable to find archived log
+archived log thread=1 sequence=2
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of recover command at 04/16/2026 12:29:02
+RMAN-06054: media recovery requesting unknown archived log for thread 1 with sequence 2 and starting SCN of 3309339
+
+RMAN>
+
+archived log for thread 2 with sequence 5 is already on disk as file +FRA/RACDB/ARCHIVELOG/2026_04_16/thread_2_seq_5.342.1230722265
+unable to find archived log
+archived log thread=1 sequence=2
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of recover command at 04/16/2026 12:29:02
+RMAN-06054: media recovery requesting unknown archived log for thread 1 with sequence 2 and starting SCN of 3309339
+
+RMAN>
+## SCN 3309339를 찾는것 같은데 아마 redo로그에 잇을것같은데  아까 복구했떤 3번에 있는거 같거든 3309339면 3296964와 3313328사이니까
+ 2          1 UNUSED                    0 YES             200       3291901                           3313349
+         7          2 UNUSED                    0 YES             200             0                                 0
+         8          2 UNUSED                    0 YES             200             0                                 0
+         3          2 UNUSED                    0 YES             100       3296964                           3313328
+
+
+
+## SCN of 3309339은 새로만든 로그파일 2번에 속한 사실상 실체없는 (내용이 없는)scn이므로 새로만든 파일의 first scn중에 가장 번호가 낮은 즉 2,3번을
+## 새로 생성하였으므로 2번의 first_scn으로 다시 시도한다
+## RESTORE부터 다시 시작한다.
+# 1. 백업본에서 3291901 시점 이전의 깨끗한 파일들을 다시 꺼내옵니다.
+RMAN> RESTORE DATABASE UNTIL SCN 3291901;
+
+# 2. 이제 3291901까지만 딱 맞춰서 복구합니다. (아까처럼 더 멀리 안 갑니다.)
+RMAN> RECOVER DATABASE UNTIL SCN 3291901;
+
+# 3. 새로운 타임라인으로 DB 오픈
+RMAN> ALTER DATABASE OPEN RESETLOGS;
+
+
+## 가장 최신의 백업본이 SCN 3291901 시점보다 늦게 만들어진 백업본뿐이라서 에러가 발생한다.
+왜? 
+
+1. 원인: 백업 시점보다 더 과거로 갈 수는 없다
+RMAN의 RESTORE UNTIL SCN은 다음 규칙을 따릅니다.
+
+성공 조건: 데이터파일 1번부터 21번까지 모두 SCN 3291901보다 작은(과거의) SCN을 가진 백업본이 존재해야 함.
+
+현재 문제: 지금 가지고 계신 백업본들의 SCN이 3291901보다 큰(미래인) 것 같습니다.
+
+예시:
+
+내가 가진 백업본의 SCN이 3300000이라고 칩시다.
+
+아까 시도했던 최신 시점(예: 3310000)으로의 복구는 3300000 백업본을 가져다가 로그를 더하면 되니까 성공합니다.
+
+하지만 3291901로 돌아가고 싶다면? 3300000 백업본은 이미 그보다 미래의 데이터라 쓸 수 없습니다. 3291901보다 더 옛날 백업본이 필요한데, 그게 지금 RMAN이 못 찾겠다고 아우성치는 겁니다
+
+1. UNDO가 있는데 왜 못 돌아가나요?
+오라클에서 UNDO 데이터의 주 목적은 **롤백(Rollback)**입니다. 하지만 복구(Recovery) 작업은 결이 조금 다릅니다.
+
+UNDO의 역할: "작업이 진행 중인(Active)" 트랜잭션을 취소할 때 사용합니다.
+
+RECOVER의 원리: 데이터파일에 로그(Redo)를 **덧칠해서 미래로만 전진(Forward)**하는 방식입니다.
+
+문제의 지점: 아까 RECOVER를 하다가 이미 SCN 3309339까지 데이터파일을 업데이트해버렸죠? 오라클 엔진 입장에서 이 파일은 이제 "3309339 버전"입니다.
+
+오라클의 한계: 여기서 "3291901 버전"으로 가고 싶을 때, UNDO를 써서 파일을 깎아내려가는 기능은 일반적인 RECOVER 명령에는 없습니다. (이걸 해주는 기능은 'Flashback Database'라는 별도의 기능뿐입니다.)
+
+--> undO는 덮어쓰기 때문에 복구 불능
+
+RMAN> RESTORE DATABASE UNTIL SCN 3291901;
+
+Starting restore at 16-APR-26
+using channel ORA_DISK_1
+
+RMAN-00571: ===================================                                                     ========================
+RMAN-00569: =============== ERROR MESSAGE STACK                                                      FOLLOWS ===============
+RMAN-00571: ===================================                                                     ========================
+RMAN-03002: failure of restore command at 04/16                                                     /2026 12:53:00
+RMAN-06026: some targets not found - aborting r                                                     estore
+RMAN-06023: no backup or copy of datafile 21 fo                                                     und to restore
+RMAN-06023: no backup or copy of datafile 20 fo                                                     und to restore
+RMAN-06023: no backup or copy of datafile 19 fo                                                     und to restore
+RMAN-06023: no backup or copy of datafile 18 fo                                                     und to restore
+RMAN-06023: no backup or copy of datafile 17 fo                                                     und to restore
+RMAN-06023: no backup or copy of datafile 15 fo                                                     und to restore
+RMAN-06023: no backup or copy of datafile 14 fo                                                     und to restore
+RMAN-06023: no backup or copy of datafile 13 fo                                                     und to restore
+RMAN-06023: no backup or copy of datafile 12 fo                                                     und to restore
+RMAN-06023: no backup or copy of datafile 11 fo                                                     und to restore
+RMAN-06023: no backup or copy of datafile 10 fo                                                     und to restore
+RMAN-06023: no backup or copy of datafile 9 fou                                                     nd to restore
+RMAN-06023: no backup or copy of datafile 7 fou                                                     nd to restore
+RMAN-06023: no backup or copy of datafile 4 fou                                                     nd to restore
+RMAN-06023: no backup or copy of datafile 3 fou                                                     nd to restore
+RMAN-06023: no backup or copy of datafile 1 fou                                                     nd to restore
+
+## 그래서 백업중에 리커버리 가능한 최신 SCN을 찾아 RESTORE하고 RECOVERY하기로 했다.
+## RMAN이 가르쳐주는 SCN번호를 찾아보자
+
+
+RMAN> recover database;
+
+
+
+Starting recover at 16-APR-26
+
+using channel ORA_DISK_1
+
+
+
+starting media recovery
+
+
+
+archived log for thread 2 with sequence 5 is already on disk as file +FRA/RACDB/ARCHIVELOG/2026_04_16/thread_2_seq_5.342.1230722265
+
+unable to find archived log
+
+archived log thread=1 sequence=2
+
+RMAN-00571: ===========================================================
+
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+
+RMAN-00571: ===========================================================
+
+RMAN-03002: failure of recover command at 04/16/2026 13:11:56
+
+RMAN-06054: media recovery requesting unknown archived log for thread 1 with sequence 2 and starting SCN of 3309339
+
+
+
+## 이번호가 복구할수있는 최선이라고 알려준다.
+
+RESTORE DATABASE UNTIL SCN 3309339;
+
+
+RMAN> alter database open resetlogs;
+
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of sql statement command at 04/16/2026 13:29:44
+ORA-19809: limit exceeded for recovery files
+ORA-19804: cannot reclaim 210763776 bytes disk space from 53/6870/9120 bytes limit
+
+RMAN>
+
+cannot reclaim 210763776 bytes disk space from 53/6870/9120 bytes limit
+-> FRA저장공간  200메가 더 필요하다고 한다. 중요한건 총 여유공간 200메가가 아닌 200메가가더 필요하다는 말이다.
+
+
+RMAN> alter database open resetlogs;
+
+Statement processed
+
+RMAN>
+
+
+
+PDB_NAME
+--------------------------------------------------------------------------------
+CDB$ROOT
+
+
+HOST_NAME
+--------------------------------------------------------------------------------
+rac2
+
+SYS@racdb2:rac2:CDB$ROOT > @i
+
+INSTANCE_NAME    STATUS
+---------------- ------------
+racdb2           OPEN
+
+SYS@racdb2:rac2:CDB$ROOT >
+
+
+
+
+############################################## 교훈 ####################################################
+
+아래를 시도했을때 이미 RMAN은 친절하게 SCN 3309339가 복구할수있는 가장 최신의 번호라는걸 알려주었다. 그걸 캐치하지 못하였다.
+
+## 2,3번을 복구했는데 4번이 아닌 5번이 current가 된 이유는 아무래도 rac1에서 복구했기 때문에 thread1의 로그그룹인 5번이 current가 된듯하다.
+
+##복구 가능한 최신 SCN은 current 로그파일의 FIRST_CHANGE를 기점으로 수행하기로 하였다. 
+## until scn recovery는 설정한 scn을 포함하지 않는 그 직전의 scn까지 복구이므로 문제없이 수행될거라 생각한다. (SCN 3313349)
+
+# 2. 복구 스크립트 실행
+
+archived log for thread 2 with sequence 5 is already on disk as file +FRA/RACDB/ARCHIVELOG/2026_04_16/thread_2_seq_5.342.1230722265
+unable to find archived log
+archived log thread=1 sequence=2
+RMAN-00571: ===========================================================
+RMAN-00569: =============== ERROR MESSAGE STACK FOLLOWS ===============
+RMAN-00571: ===========================================================
+RMAN-03002: failure of recover command at 04/16/2026 12:29:02
+RMAN-06054: media recovery requesting unknown archived log for thread 1 with sequence 2 and starting SCN of 3309339
+
+
+
+
+
+
