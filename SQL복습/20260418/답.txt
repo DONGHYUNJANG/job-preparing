@@ -1,0 +1,109 @@
+dept_name, employee_name, sales_amount, sale_date 컬럼을 기본적으로 출력해야 합니다.
+위에서 제시한 정렬 기준을 적용하여 다음 세 가지 방식의 순위를 별도의 컬럼으로 생성하세요.
+row_num: ROW_NUMBER() 함수 사용
+rk: RANK() 함수 사용
+drk: DENSE_RANK() 함수 사용
+
+
+SELECT dept_name, employee_name, sales_amount, sale_date,
+ROW_NUMBER()over (PARTITION BY sale_date ORDER BY sales_amount) as row_num,
+RANK()over (PARTITION BY sale_date ORDER BY sales_amount) as rk,
+DENSE_RANK()over (PARTITION BY sale_date ORDER BY sales_amount) as drk
+FROM department_sales;
+
+Q) order by가 윈도우 함수에도있고 order by에도 있으면 어떻게 되나
+-> 내 생각엔 sql처리 순서가 어쨌든 order by가 마지막이니 마지막 order by대로 정렬되겠지
+
+select dept_name, employee_name, sales_amount, sale_date,
+ROW_NUMBER()over (PARTITION BY dept_name ORDER BY sales_amount) as row_num from department_sales
+order by row_num;
+
+q) window 함수 partition by 에 의한 정렬의 우선순위
+-> 처음에 window함수나 parttion by의 무엇인가에 의해 우선순위가결정이 될거라 생각했으나 사실은 sql엔진 마음이므로 의도대로 정렬하기 위해선
+마지막에 order by를 명시적으로 쓰는게 좋다.
+
+1. 윈도우 함수 내부의 정렬 (ORDER BY sales_amount)
+ROW_NUMBER(), RANK(), DENSE_RANK() 뒤에 붙은 ORDER BY는 순위를 매기기 위한 계산 기준일 뿐, 전체 결과의 출력 순서를 보장하지 않습니다.
+
+동작 방식: 먼저 sale_date별로 데이터를 묶은(PARTITION) 후, 그 묶음 안에서 sales_amount가 낮은 순서(기본 ASC)부터 번호를 부여합니다.
+
+2. 전체 결과의 정렬 기준
+현재 쿼리문 끝에 전체 ORDER BY 절이 없기 때문에, PostgreSQL 엔진이 가장 효율적이라고 판단하는 방식(보통 물리적으로 저장된 순서나 인덱스 상황)에 따라 제각각 출력됩니다.
+
+만약 의도하신 대로 결과를 보고 싶다면, 쿼리 가장 마지막에 ORDER BY를 추가해야 합니다.
+
+날짜별로 모아서 보고 싶을 때: ORDER BY sale_date, row_num
+
+전체 매출 순으로 보고 싶을 때: ORDER BY sales_amount DESC
+
+
+SELECT dept_name, employee_name, sales_amount, sale_date,
+ROW_NUMBER()over (PARTITION BY dept_name ORDER BY sales_amount DESC, sale_date ASC) as row_num,
+RANK()over (PARTITION BY dept_name ORDER BY sales_amount DESC, sale_date ASC) as rk,
+DENSE_RANK()over (PARTITION BY dept_name ORDER BY sales_amount DESC, sale_date ASC) as drk
+FROM department_sales
+ORDER BY dept_name ASC;
+
+ dept_name | employee_name | sales_amount | sale_date  | row_num | rk | drk
+-----------+---------------+--------------+------------+---------+----+-----
+ IT        | Ivan          |      6000.00 | 2024-04-10 |       1 |  1 |   1
+ IT        | Jack          |      6000.00 | 2024-04-10 |       2 |  1 |   1
+ Marketing | Frank         |      3500.00 | 2024-04-01 |       1 |  1 |   1
+ Marketing | Grace         |      3500.00 | 2024-04-02 |       2 |  2 |   2
+ Marketing | Heidi         |      3000.00 | 2024-04-03 |       3 |  3 |   3
+ Sales     | Alice         |      5000.00 | 2024-04-01 |       1 |  1 |   1
+ Sales     | Charlie       |      5000.00 | 2024-04-01 |       2 |  1 |   1
+ Sales     | Bob           |      5000.00 | 2024-04-01 |       3 |  1 |   1
+ Sales     | David         |      4500.00 | 2024-04-02 |       4 |  4 |   2
+ Sales     | Ellen         |      4000.00 | 2024-04-03 |       5 |  5 |   3
+(10개 행)
+
+
+postgres=#
+
+Q)번외 DEPT_NAME이 바뀌는 행에 점선 넣기
+SELECT 
+CASE WHEN LAG(dept_name) OVER (ORDER BY dept_name ASC) <> dept_name THEN '-----------' 
+ELSE dept_name END, 
+CASE WHEN LAG(dept_name) OVER (ORDER BY dept_name ASC) <> dept_name THEN '-----------' 
+ELSE employee_name END, 
+CASE WHEN LAG(dept_name) OVER (ORDER BY dept_name ASC) <> dept_name THEN '-----------' 
+ELSE sales_amount::text END, 
+CASE WHEN LAG(dept_name) OVER (ORDER BY dept_name ASC) <> dept_name THEN '-----------' 
+ELSE sale_date::text END,
+CASE WHEN LAG(dept_name) OVER (ORDER BY dept_name ASC) <> dept_name THEN '-----------' 
+ELSE
+ROW_NUMBER()over (PARTITION BY dept_name ORDER BY sales_amount DESC, sale_date ASC) ::text END as row_num,
+CASE WHEN LAG(dept_name) OVER (ORDER BY dept_name ASC) <> dept_name THEN '-----------' 
+ELSE
+RANK()over (PARTITION BY dept_name ORDER BY sales_amount DESC, sale_date ASC) ::text END as rk,
+CASE WHEN LAG(dept_name) OVER (ORDER BY dept_name ASC) <> dept_name THEN '-----------' 
+ELSE
+DENSE_RANK()over (PARTITION BY dept_name ORDER BY sales_amount DESC, sale_date ASC) ::text END as drk,
+LAG(dept_name) OVER (ORDER BY dept_name ASC)
+FROM department_sales;
+
+
+######## AI의 최적화된 SQL ######## ######## ######## ######## ######## ######## ######## ######## 
+SELECT v.*
+FROM (
+    SELECT *,
+           LAG(dept_name) OVER (ORDER BY dept_name) as prev_dept,
+           ROW_NUMBER() OVER (PARTITION BY dept_name ORDER BY sales_amount DESC) as raw_rn
+    FROM department_sales
+) t
+CROSS JOIN LATERAL (
+    -- 부서가 바뀌었는데(DISTINCT), 그게 '진짜 첫 줄'이 아닐 때(prev_dept IS NOT NULL)만 점선 생성
+    SELECT '-----------'::text as dept, '-----------'::text as name, '-----------'::text as r_num
+    WHERE t.prev_dept IS DISTINCT FROM t.dept_name 
+      AND t.prev_dept IS NOT NULL  -- 이 조건 하나가 '첫 줄 점선'을 막아줍니다!
+    
+    UNION ALL
+    
+    -- 실제 데이터 행
+    SELECT t.dept_name, t.employee_name, t.raw_rn::text
+) v;
+
+
+
+
