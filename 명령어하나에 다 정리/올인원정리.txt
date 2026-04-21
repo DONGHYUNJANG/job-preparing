@@ -1704,3 +1704,20 @@ FROM V$RECOVERY_FILE_DEST;
 # 🕵️‍♂️ RAC scan 스캐너 상태 확인
 # =================================================
 srvctl status scan_listener
+
+
+# ================================================
+# 🕵️‍♂️ UNDO RETENTION 수정 with US enqueue
+# =================================================
+
+RAC#1> alter system set undo_retention=3600 scope=both sid='*';
+
+System altered.
+
+RAC#1> alter tablespace undotbs1 retention guarantee;
+
+Tablespace altered.
+
+RAC#1> alter tablespace undotbs2 retention guarantee;
+
+Tablespace altered.
