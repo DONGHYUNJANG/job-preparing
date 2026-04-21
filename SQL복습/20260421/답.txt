@@ -1,0 +1,73 @@
+WITH RECURSIVE org_tree AS (
+    -- Anchor: 시작점
+    SELECT 
+        dept_id, 
+        dept_name, 
+        -- 처음엔 자기 이름이 곧 경로! (TEXT로 형변환 필요)
+        dept_name::TEXT AS path,
+        revenue,
+        1  as depth,
+        0::numeric as parent_revenue
+    FROM departments
+    WHERE parent_id IS NULL
+
+    UNION ALL
+
+    -- Recursive: 부모의 경로에 내 이름을 붙이기
+    SELECT 
+        d.dept_id, 
+        d.dept_name, 
+        -- t.path(부모가 만든 길) 뒤에 d.dept_name(내 이름)을 붙임
+        t.path || ' > ' || d.dept_name,
+        d.revenue,
+        t.depth + 1,
+	t.revenue
+    FROM departments d
+    JOIN org_tree t ON d.parent_id = t.dept_id
+)
+SELECT *,
+ROUND(AVG(revenue) OVER (PARTITION BY depth), 3) as avg_revenue_at_depth,
+ROUND(revenue/NULLIF(parent_revenue, 0) * 100, 3) as pct_of_parent
+FROM org_tree
+ORDER BY path;
+
+
+AI 답
+WITH RECURSIVE org_tree AS (
+    SELECT 
+        dept_id, 
+        dept_name, 
+        dept_name::TEXT AS path,
+        revenue,
+        1 AS depth,
+        NULL::NUMERIC(15,2) AS parent_revenue -- 최상위는 부모가 없으므로 NULL
+    FROM departments
+    WHERE parent_id IS NULL
+
+    UNION ALL
+
+    SELECT 
+        d.dept_id, 
+        d.dept_name, 
+        t.path || ' > ' || d.dept_name,
+        d.revenue,
+        t.depth + 1,
+        t.revenue -- ★ 핵심: 부모(t)의 매출(revenue)을 나의 parent_revenue로 저장!
+    FROM departments d
+    JOIN org_tree t ON d.parent_id = t.dept_id
+)
+SELECT 
+    dept_id,
+    dept_name,
+    depth,
+    path,
+    revenue,
+    parent_revenue,
+    ROUND(AVG(revenue) OVER (PARTITION BY depth), 3) AS avg_rev_depth,
+    -- 상위 부서 대비 비중 계산 (부모가 NULL이면 0 처리)
+    CASE 
+        WHEN parent_revenue IS NULL OR parent_revenue = 0 THEN 0 
+        ELSE ROUND((revenue / parent_revenue) * 100, 2) 
+    END AS pct_of_parent
+FROM org_tree
+ORDER BY path;
