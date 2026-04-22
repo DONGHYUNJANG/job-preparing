@@ -1,0 +1,76 @@
+SELECT sales_amount, dept_name,
+ROUND(SUM(sales_amount) OVER (PARTITION BY dept_name) / SUM(sales_amount) OVER (), 3) as Dept_Ratio,
+PERCENT_RANK() OVER (PARTITION BY dept_name ORDER BY sales_amount DESC) as Sales_Percent_Rank,
+ROUND(CUME_DIST() OVER (PARTITION BY dept_name ORDER BY sales_amount ASC)::numeric, 3) as Sales_Cume_Dist
+from sales_records
+order by dept_name, sales_amount;
+
+ sales_amount | dept_name | dept_ratio | sales_percent_rank | sales_cume_dist
+--------------+-----------+------------+--------------------+-----------------
+   1000000.00 | IT지원팀  |      0.333 |                  1 |           0.333
+   4500000.00 | IT지원팀  |      0.333 |                  0 |           1.000
+   4500000.00 | IT지원팀  |      0.333 |                  0 |           1.000
+   1500000.00 | 영업1팀   |      0.333 |                  1 |           0.333
+   3500000.00 | 영업1팀   |      0.333 |                0.5 |           0.667
+   5000000.00 | 영업1팀   |      0.333 |                  0 |           1.000
+   2000000.00 | 영업2팀   |      0.333 |                  1 |           0.500
+   8000000.00 | 영업2팀   |      0.333 |                  0 |           1.000
+   
+AI의 답
+🛠️ 최종 검토 및 수정 제안
+Dept_Ratio의 정수 나눗셈 방지:
+sales_amount가 정수형(INT)이라면 결과가 0으로 나올 수 있습니다. 정확한 비율을 위해 1.0을 곱해주거나 ::numeric으로 형변환을 해주는 것이 안전합니다.
+
+PERCENT_RANK의 타입 변환:
+PostgreSQL의 ROUND 함수는 PERCENT_RANK()가 내뱉는 double precision을 바로 받지 못하므로, 여기에도 ::numeric 처리가 필요합니다.
+
+CUME_DIST의 정렬 방향:
+보통 "매출 상위 몇 %"를 따질 때는 매출이 높은 사람이 앞순위(작은 값)를 가져야 하므로 DESC 정렬을 주로 씁니다. (작성하신 ASC는 매출이 낮은 사람부터 누적 비중을 쌓는 방식입니다.)
+
+SELECT 
+    sales_amount, 
+    dept_name,
+    -- 1. 부서 비중: Numeric 형변환 후 반올림
+    ROUND((SUM(sales_amount) OVER (PARTITION BY dept_name) * 1.0 / SUM(sales_amount) OVER ()), 3) as Dept_Ratio,
+    
+    -- 2. 부서 내 상위 % 순위: double precision을 numeric으로 변환 후 반올림
+    ROUND(PERCENT_RANK() OVER (PARTITION BY dept_name ORDER BY sales_amount DESC)::numeric, 3) as Sales_Percent_Rank,
+    
+    -- 3. 부서 내 누적 분포: numeric 변환 후 반올림
+    ROUND(CUME_DIST() OVER (PARTITION BY dept_name ORDER BY sales_amount DESC)::numeric, 3) as Sales_Cume_Dist
+FROM sales_records
+ORDER BY dept_name, sales_amount DESC;
+
+배운것
+
+1. 왜 매출 분석에서 DESC(내림차순)를 자주 쓸까요?
+비즈니스 분석에서 "매출 비중"을 따질 때는 보통 **"상위권 사원들이 전체 매출의 몇 %를 책임지고 있는가?"**를 보고 싶어 합니다.
+
+ORDER BY sales_amount DESC를 쓰면:
+
+매출 1등부터 누적 비중을 계산합니다.
+
+1등의 CUME_DIST가 0.2라면, "매출 상위 20% 이내에 1등이 포함된다"는 뜻이 됩니다.
+
+즉, **"상위 누적 비중"**을 구하게 됩니다.
+
+2. 사용자님 말씀대로 ASC(오름차순)를 쓰면?
+사용자님 생각처럼 낮은 쪽부터 쌓아 올리는 것이 수학적으로는 더 전형적인 **"누적 분포 함수"**의 형태입니다.
+
+ORDER BY sales_amount ASC를 쓰면:
+
+매출 꼴찌부터 누적 비중을 계산합니다.
+
+꼴찌의 CUME_DIST가 0.1이라면, "하위 10% 이내에 이 사원이 있다"는 뜻이 됩니다.
+
+이는 보통 **"하위 누적 비중"**을 볼 때 사용합니다.
+
+3. double precision 부동 소수점에 ROUND함수를 사용하면 에러가 발생한다.
+
+오류:  round(double precision, integer) 이름의 함수가 없음
+줄 4: ROUND(CUME_DIST() OVER (PARTITION BY dept_name ORDER BY sale...
+      ^
+힌트:  지정된 이름 및 인자 자료형과 일치하는 함수가 없습니다. 명시적 형변환자를 추가해야 할 수도 있습니다.
+
+
+4. ::numeric 문법이 익숙하지않다. 
