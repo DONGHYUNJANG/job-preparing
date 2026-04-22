@@ -1721,3 +1721,214 @@ Tablespace altered.
 RAC#1> alter tablespace undotbs2 retention guarantee;
 
 Tablespace altered.
+
+
+
+# ================================================
+# 🕵️‍♂️ SGA INFO 
+# =================================================
+select * from v$sgainfo;
+
+shared pool size / granule size =  granule 갯수
+
+# ================================================
+ NAT ↔ Host-Only 트래픽 중계 허용 (iptables)**
+# =================================================
+
+
+1번노드와 2번 노드에서 root 유져로 각각 아래의 명령어를 실행합니다. 
+
+```bash
+
+# iptables -t nat -A POSTROUTING -o enp0s3 -j MASQUERADE
+
+# iptables -A FORWARD -i enp0s8 -o enp0s3 -j ACCEPT
+
+#  iptables -A FORWARD -i enp0s3 -o enp0s8 -m state --state RELATED,ESTABLISHED -j ACCEPT
+```
+
+**3. Windows에 라우팅 추가**
+
+**관리자 CMD에서:
+
+route add 10.0.2.0 mask 255.255.255.0 192.168.56.101
+route add 10.0.2.0 mask 255.255.255.0 192.168.56.102
+
+**영구설정
+route -p add 10.0.2.0 mask 255.255.255.0 192.168.56.101
+route -p add 10.0.2.0 mask 255.255.255.0 192.168.56.102
+
+**확인
+```bash
+C:\Windows\System32>route print
+===========================================================================
+인터페이스 목록
+ 12...8c b0 e9 ed 1c 64 ......Realtek PCIe GbE Family Controller
+  8...0a 00 27 00 00 08 ......VirtualBox Host-Only Ethernet Adapter
+  1...........................Software Loopback Interface 1
+===========================================================================
+
+IPv4 경로 테이블
+===========================================================================
+활성 경로:
+네트워크 대상      네트워크 마스크     게이트웨이      인터페이스    메트릭
+          0.0.0.0          0.0.0.0      192.168.0.1    192.168.23.24    281
+        10.15.0.0    255.255.255.0   192.168.56.101     192.168.56.1     26
+        10.15.0.0    255.255.255.0   192.168.56.102     192.168.56.1     26
+        127.0.0.0        255.0.0.0             연결됨         127.0.0.1    331
+        127.0.0.1  255.255.255.255             연결됨         127.0.0.1    331
+  127.255.255.255  255.255.255.255             연결됨         127.0.0.1    331
+      192.168.0.0      255.255.0.0             연결됨     192.168.23.24    281
+    192.168.23.24  255.255.255.255             연결됨     192.168.23.24    281
+     192.168.56.0    255.255.255.0             연결됨      192.168.56.1    281
+     192.168.56.1  255.255.255.255             연결됨      192.168.56.1    281
+   192.168.56.255  255.255.255.255             연결됨      192.168.56.1    281
+  192.168.255.255  255.255.255.255             연결됨     192.168.23.24    281
+        224.0.0.0        240.0.0.0             연결됨         127.0.0.1    331
+        224.0.0.0        240.0.0.0             연결됨      192.168.56.1    281
+        224.0.0.0        240.0.0.0             연결됨     192.168.23.24    281
+  255.255.255.255  255.255.255.255             연결됨         127.0.0.1    331
+  255.255.255.255  255.255.255.255             연결됨      192.168.56.1    281
+  255.255.255.255  255.255.255.255             연결됨     192.168.23.24    281
+===========================================================================
+영구 경로:
+  네트워크 주소   네트워크 마스크 게이트웨이 주소    메트릭
+          0.0.0.0          0.0.0.0      192.168.0.1    기본값
+        10.15.0.0    255.255.255.0   192.168.56.101       1
+        10.15.0.0    255.255.255.0   192.168.56.102       1
+```
+
+1. **그리고 다음과 같이 윈도우 명령 프롬프트 창에 ping을 날려봅니다.**
+
+```bash
+ping 10.0.2.15
+
+ping 10.0.2.16
+
+ping 10.0.2.120
+```
+
+
+
+# ================================================
+# 시간당 로그스위치 확인
+# 시간당 3~5회가 적정
+# =================================================
+select to_char(first_time,'yyyy-mm-dd hh24')ashour,
+count(*)as switch_count
+from   v$log_history
+where  first_time>= sysdate-1
+groupby to_char(first_time,'yyyy-mm-dd hh24')
+orderbyhour;
+
+
+
+
+# ================================================
+# 인덱스 사용 여부 모니터링
+# 한달정도 모니터링 후 사용여부 판단
+# 모니터링 부하가 있는가? 거의
+# =================================================
+```sql
+create index emp_sal on emp(sal);
+```
+
+### 실습 3. 인덱스 사용 모니터링 시작
+
+```sql
+alter index emp_sal monitoring usage;
+```
+
+### 실습 4. 현재 상태 확인
+
+- `V$OBJECT_USAGE`에서 `INDEX_NAME`, `USED` 또는 `MONITORING` 컬럼으로 확인
+
+```sql
+select index_name, used
+ from v$object_usage;
+```
+
+```s
+select index_name, monitoring
+from v$object_usage;
+```
+
+### 실습 5. 인덱스를 사용하도록 SQL 수행
+
+- 힌트를 사용해 `EMP_SAL` 인덱스를 사용하도록 유도한 뒤, `SAL = 3000` 사원 조회
+
+```sql
+select /*+ index(emp emp_sal) */ ename, sal
+ from emp
+ where sal = 3000;
+```
+
+### 실습 6. 실제 사용 여부 확인
+
+- `USED` 값이 `YES`로 바뀌었는지 확인
+
+```sql
+select index_name, used
+ from v$object_usage;
+```
+
+### 실습 7. 모니터링 종료
+
+```sql
+alter index emp_sal nomonitoring usage;
+```
+
+- 종료 후 상태 재확인
+
+```sql
+select index_name, monitoring
+from v$object_usage;
+```
+
+# ================================================
+# 인덱스 사용 여부 모니터링
+# 한달정도 모니터링 후 사용여부 판단
+# 모니터링 부하가 있는가? 거의
+# =================================================
+
+SELECT tablespace_name,
+       ROUND(SUM(bytes) / 1024 / 1024, 2) AS size_mb,
+       ROUND(SUM(bytes) / 1024 / 1024 / 1024, 2) AS size_gb,
+       ROUND(SUM(CASE WHEN status = 'ACTIVE'    THEN bytes ELSE 0 END) / 1024 / 1024, 2) AS active_mb,
+       ROUND(SUM(CASE WHEN status = 'UNEXPIRED' THEN bytes ELSE 0 END) / 1024 / 1024, 2) AS unexpired_mb,
+       ROUND(SUM(CASE WHEN status = 'EXPIRED'   THEN bytes ELSE 0 END) / 1024 / 1024, 2) AS expired_mb
+FROM   dba_undo_extents
+GROUP  BY tablespace_name;
+
+# ================================================
+# RAC 인터 커넥트 문제 확인
+# =================================================
+
+cluvfy comp nodecon -n all -verbose
+
+
+# ================================================
+# RAC 서비스 추가 방법
+# =================================================
+
+```sql
+[oracle@rac1 ~]$ srvctl add service -db racdb -s order -r racdb1 -a racdb2
+[oracle@rac1 ~]$
+[oracle@rac1 ~]$ srvctl start service -db racdb -service order
+[oracle@rac1 ~]$
+[oracle@rac1 ~]$ srvctl status service -db racdb -service order
+Service order is running on instance(s) racdb1
+[oracle@rac1 ~]$
+```
+
+<aside>
+
+-s : 서비스 이름
+
+-r : 서비스가 시작될 노드
+
+-a: 백업 노드
+
+</aside>
+
+lsnrctl status

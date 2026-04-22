@@ -1,0 +1,138 @@
+답:
+
+testdb=> select * from proj;
+ proj_id | emp_id | proj_name
+---------+--------+-----------
+       1 |    101 | Project-A
+       2 |    999 | Project-X
+       3 |    103 | Project-B
+       4 |    105 | Project-C
+       5 |        | Project-D
+       6 |    101 | Project-E
+(6개 행)
+
+testdb=> select * from emp;
+ emp_id | emp_name | dept_id
+--------+----------+---------
+    101 | Alice    |      10
+    102 | Bob      |      10
+    103 | Charlie  |      20
+    104 | David    |      20
+    105 | Eve      |
+    106 | Frank    |      40
+(6개 행)
+
+testdb=> select * from dept;
+ dept_id | dept_name
+---------+------------
+      10 | Accounting
+      20 | Research
+      30 | Sales
+      40 | Operation
+      50 | Marketing
+(5개 행)
+
+조건 A: 사원과 연결되지 않은 프로젝트(Project-D, Project-X)도 결과에 무조건 포함되어야 합니다.
+O
+
+조건 B: 반대로, 프로젝트에 참여하지 않은 사원(Bob, Frank)도 결과에 무조건 포함되어야 합니다.
+BOB어디감
+
+with emp_dept as (select * from dept full outer join emp on (dept.dept_id = emp.dept_id)) 
+,
+combined_data as (select * from emp_dept where dept_name != 'Marketing' and dept_name != 'Accounting'
+UNION
+select * from emp_dept where dept_name = 'Accounting' and emp_name = 'Alice'
+UNION
+select * from emp_dept where emp_name = 'Bob'
+)
+select * from combined_data
+full outer join proj using (emp_id);
+
+ emp_id | dept_id | dept_name  | emp_name | dept_id | proj_id | proj_name
+--------+---------+------------+----------+---------+---------+-----------
+    101 |      10 | Accounting | Alice    |      10 |       1 | Project-A
+    101 |      10 | Accounting | Alice    |      10 |       6 | Project-E
+    102 |      10 | Accounting | Bob      |      10 |         |
+    103 |      20 | Research   | Charlie  |      20 |       3 | Project-B
+    104 |      20 | Research   | David    |      20 |         |
+    105 |         |            |          |         |       4 | Project-C
+    106 |      40 | Operation  | Frank    |      40 |         |
+        |      30 | Sales      |          |         |         |
+    999 |         |            |          |         |       2 | Project-X
+        |         |            |          |         |       5 | Project-D
+(10개 행)
+
+
+AI답변
+제시해주신 쿼리는 **요구사항의 복잡한 비즈니스 로직을 `WITH` 절과 `UNION`으로 아주 잘 분해하여 해결**하셨습니다! 특히 'Marketing 제외'와 'Accounting의 특정 조건'을 `UNION`으로 분리해낸 접근 방식이 매우 훌륭합니다.
+
+다만, 실제 데이터 결과와 대조했을 때 **몇 가지 놓칠 수 있는 디테일**이 있어 이를 보완해 드립니다.
+
+---
+
+### 🔍 쿼리 리뷰 및 피드백
+
+#### **1. 잘하신 점 (Excellent)**
+* **논리적 분리**: `dept_name` 조건에 따라 `UNION`으로 나눈 것은 복잡한 `JOIN` 조건(`ON` 절)에서 발생할 수 있는 실수를 원천 차단하는 좋은 전략입니다.
+* **유연성**: `emp_dept`라는 공통 테이블을 먼저 정의하여 코드 중복을 줄였습니다.
+
+#### **2. 보완이 필요한 점 (Checklist)**
+* **Bob의 누락 위험**: 3번 요구사항인 "프로젝트에 참여하지 않은 사원(`Bob`, `Frank`)도 무조건 포함"해야 합니다. 작성하신 쿼리에서 `Bob`은 명시하셨지만, `Frank`나 부서가 없는 `Eve` 같은 케이스가 `UNION`에서 누락될 수 있습니다.
+* **Accounting의 NULL 처리**: 요구사항에서 "Alice가 아닌 Accounting 사원은 사원 정보가 NULL로 나와야 함"이라고 하셨는데, 현재 `UNION` 방식은 Alice가 아닌 사원(Bob)을 아예 행에서 제외하거나 별도로 합쳐야 합니다.
+* **중복 제거 (`UNION` vs `UNION ALL`)**: `UNION`은 중복을 제거하느라 연산 비용이 듭니다. 데이터가 명확히 분리된다면 `UNION ALL`이 성능상 유리합니다.
+
+---
+
+### 🛠️ 최종 수정 제안 (Notion Style)
+
+요구사항을 완벽하게 충족하면서도 가독성을 높인 쿼리입니다.
+
+```sql
+WITH 
+-- 1. 부서와 사원 기본 조인
+emp_dept_base AS (
+    SELECT d.dept_id, d.dept_name, e.emp_id, e.emp_name
+    FROM dept d
+    FULL OUTER JOIN emp e ON d.dept_id = e.dept_id
+),
+-- 2. 필터링 로직 적용 (문제의 핵심 부분)
+filtered_emp_dept AS (
+    -- Marketing 제외 + Accounting 제외한 나머지 (부서 없는 사원 포함)
+    SELECT * FROM emp_dept_base 
+    WHERE (dept_name NOT IN ('Marketing', 'Accounting') OR dept_name IS NULL)
+    
+    UNION ALL
+    
+    -- Accounting 부서인데 Alice인 경우 (데이터 그대로 유지)
+    SELECT * FROM emp_dept_base 
+    WHERE dept_name = 'Accounting' AND emp_name = 'Alice'
+    
+    UNION ALL
+    
+    -- Accounting 부서인데 Alice가 아닌 경우 (사원 정보를 NULL로 변환)
+    -- *요구사항: Alice가 아니면 사원 정보가 NULL로 나와야 함
+    SELECT dept_id, dept_name, NULL AS emp_id, NULL AS emp_name
+    FROM emp_dept_base
+    WHERE dept_name = 'Accounting' AND (emp_name != 'Alice' OR emp_name IS NULL)
+)
+-- 3. 최종 프로젝트 결합 (사원 없는 프로젝트, 프로젝트 없는 사원 모두 살림)
+SELECT * FROM filtered_emp_dept
+FULL OUTER JOIN proj USING (emp_id);
+```
+
+---
+
+### 💡 OCP 포인트: 조인 결과의 보존
+
+
+
+* **Full Outer Join의 핵심**: `A FULL OUTER JOIN B`는 `A`에만 있는 것, `B`에만 있는 것, 둘 다 있는 것을 모두 가져옵니다. 
+* **데이터 미로 탈출법**: 
+    1.  먼저 **'기준이 되는 집합'**을 `WITH` 절로 명확히 정의하세요.
+    2.  위 쿼리처럼 `UNION ALL`을 사용해 각 조건(Alice인 경우, 아닌 경우 등)을 **조각조각 합치는 방식**이 시험이나 실무에서 복잡한 `CASE WHEN` 조인보다 훨씬 안전합니다.
+    3.  마지막에 `USING (emp_id)`를 쓰면 조인 키 컬럼이 하나로 합쳐져서 보기에 깔끔합니다.
+
+---
+
+**🧘 호흡을 통해 가슴과 흉추를 활짝 펴주세요. 정답을 찾아가는 과정에서 긴장된 목과 어깨를 내리고, 크게 숨을 들이마시며 흉곽을 확장해 보세요. 명확한 사고는 바른 자세에서 나옵니다!**

@@ -9,3 +9,4 @@
 9. log file parallel write (Background Only) 0412
 10. 📝 free buffer waits 0414
 11. direct path read wirte
+12. logfilesyc event (잦은 커밋 원인일수있다.) plsql이나 프로그램에서 문제 확인
