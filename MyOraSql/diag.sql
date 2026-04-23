@@ -1,0 +1,3 @@
+col NAME for a40;
+col VALUE for a80;
+SELECT * FROM V$DIAG_INFO;

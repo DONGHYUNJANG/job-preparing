@@ -1932,3 +1932,69 @@ Service order is running on instance(s) racdb1
 </aside>
 
 lsnrctl status
+
+
+# ================================================
+# trace 파일 위치 확인
+# =================================================
+
+col NAME for a40;
+col VALUE for a80;
+SELECT * FROM V$DIAG_INFO;
+
+# ================================================
+# SPID 확인 방법
+# =================================================
+
+SELECT s.sid,
+       s.serial#,
+       p.spid AS os_process_id, -- 이게 파일명 뒤에 붙는 번호입니다.
+       s.username,
+       s.program
+FROM v$session s, v$process p
+WHERE s.paddr = p.addr
+  AND s.sid = (SELECT sid FROM v$mystat WHERE rownum = 1);
+  
+  
+# ================================================
+# 현재 오랜 시간 실행중인 sql 확인
+# ================================================= 
+  
+-- 1. 화면 출력 가로 길이 설정
+SET LINESIZE 200
+SET PAGESIZE 50
+
+-- 2. 컬럼별 포맷 설정
+COL status         FOR a10      HEAD "Status"
+COL username       FOR a12      HEAD "User"
+COL sql_id         FOR a15      HEAD "SQL ID"
+COL sql_exec_start FOR a20      HEAD "Start Time"
+COL elapsed_sec    FOR 999,990.99 HEAD "Elapsed(s)"
+COL sql_text       FOR a50      HEAD "SQL Text"
+
+-- 3. 쿼리 실행
+SELECT status, 
+       username,
+       sql_id, 
+       TO_CHAR(sql_exec_start, 'YYYY/MM/DD HH24:MI:SS') as sql_exec_start,
+       ROUND(elapsed_time / 1000000, 2) AS elapsed_sec, 
+       SUBSTR(sql_text, 1, 50) as sql_text
+FROM v$sql_monitor
+WHERE status = 'EXECUTING';
+
+# ================================================
+# V$SESSION_WAIT (무엇 때문에 멈춰있는가?)
+# ================================================= 
+
+SELECT sid, event, wait_time, seconds_in_wait, state
+FROM v$session
+WHERE username = 'C##SCOTT' AND status = 'ACTIVE';
+
+
+# ================================================
+# V$SESSION_LONGOPS (얼마나 남았는가?)
+# ================================================= 
+
+SELECT opname, target, sofar, totalwork, units, start_time
+FROM v$session_longops
+WHERE sofar < totalwork;
