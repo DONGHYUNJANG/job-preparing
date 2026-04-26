@@ -1,0 +1,61 @@
+SELECT ca.category_name, pr.price, ori.quantity, ors.order_date, 
+SUM(COALESCE(pr.price, 0) * COALESCE(ori.quantity, 0)) OVER (PARTITION BY ca.category_id) as category_sales,
+ROUND(
+SUM(COALESCE(pr.price, 0) * COALESCE(ori.quantity, 0))
+ OVER (PARTITION BY ca.category_id)
+/ NULLIF(SUM(COALESCE(pr.price, 0) * COALESCE(ori.quantity, 0)) OVER(), 0) 
+* 100
+, 2)
+as sales_percentage
+FROM
+CATEGORIES ca LEFT JOIN PRODUCTS pr
+ON (ca.category_id = pr.category_id)
+LEFT JOIN ORDER_ITEMS ori
+ON(pr.product_id = ori.product_id)
+LEFT JOIN ORDERS ors
+ON(ori.order_id = ors.order_id)
+ORDER BY category_sales DESC;
+
+
+SELECT ca.category_name, pr.price, ori.quantity, ors.order_date,
+SUM(price_c * quantity_c) OVER (PARTITION BY ca.category_id) as category_sales,
+ROUND(SUM(price_c * quantity_c) OVER (PARTITION BY ca.category_id) 
+/ NULLIF(SUM(price_c * quantity_c) OVER(), 0) * 100
+, 2)
+as sales_percentage
+FROM
+CATEGORIES ca LEFT JOIN PRODUCTS pr
+ON (ca.category_id = pr.category_id)
+LEFT JOIN ORDER_ITEMS ori
+ON(pr.product_id = ori.product_id)
+LEFT JOIN ORDERS ors
+ON(ori.order_id = ors.order_id)
+CROSS JOIN LATERAL (
+SELECT 
+COALESCE(pr.price, 0) as price_c,
+COALESCE(ori.quantity, 0) as quantity_c
+)
+ORDER BY category_sales DESC;
+
+WITH main_t as  (
+SELECT ca.category_name as cat_name, ors.order_date as date, ca.category_id as cate_id,
+COALESCE(pr.price, 0) as price_c,
+COALESCE(ori.quantity, 0) as qua_c
+FROM
+CATEGORIES ca LEFT JOIN PRODUCTS pr
+ON (ca.category_id = pr.category_id)
+LEFT JOIN ORDER_ITEMS ori
+ON(pr.product_id = ori.product_id)
+LEFT JOIN ORDERS ors
+ON(ori.order_id = ors.order_id)
+)
+SELECT
+main_t.*,
+SUM(main_t.price_c * main_t.qua_c) OVER (PARTITION BY main_t.cate_id) as category_sales,
+ROUND(SUM(main_t.price_c * main_t.qua_c) OVER (PARTITION BY main_t.cate_id)
+/ NULLIF(SUM(main_t.price_c * main_t.qua_c) OVER(), 0) * 100
+, 2)
+as sales_percentage
+FROM main_t;
+
+
