@@ -1998,3 +1998,11 @@ WHERE username = 'C##SCOTT' AND status = 'ACTIVE';
 SELECT opname, target, sofar, totalwork, units, start_time
 FROM v$session_longops
 WHERE sofar < totalwork;
+
+
+
+# ================================================
+# 클러스터 상태 점검
+# =================================================
+
+ crsctl check crs
