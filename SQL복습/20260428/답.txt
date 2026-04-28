@@ -1,0 +1,185 @@
+testdb=# select * from departments;
+ dept_id |  dept_name
+---------+-------------
+      10 | Development
+      20 | Design
+      30 | Planning
+      40 | Support
+      50 | Sales
+(5개 행)
+
+testdb=# select * from employees;
+ emp_id | emp_name | dept_id | hire_date
+--------+----------+---------+------------
+      1 | Alice    |      10 | 2020-01-01
+      2 | Bob      |      10 | 2021-03-15
+      3 | Charlie  |      20 | 2019-11-20
+      4 | David    |      30 | 2022-05-10
+      5 | Eve      |      10 | 2023-01-01
+      6 | Frank    |      40 | 2018-06-01
+      7 | Grace    |      20 | 2021-09-12
+      8 | Heidi    |      50 | 2022-11-30
+(8개 행)
+
+testdb=# select * from projects;
+ proj_id |      proj_name       | budget
+---------+----------------------+--------
+     101 | Cloud Migration      | 150000
+     102 | UI Renewal           |  30000
+     103 | AI Chatbot           |  80000
+     104 | Security Audit       |  45000
+     105 | Mobile App Dev       | 120000
+     106 | Legacy Modernization | 200000
+(6개 행)
+
+
+testdb=# select * from project_assignments;
+ assignment_id | emp_id | proj_id | hours_worked | work_date
+---------------+--------+---------+--------------+------------
+             1 |      1 |     101 |           40 | 2024-01-10
+             2 |      1 |     101 |           30 | 2024-01-20
+             3 |      1 |     103 |           25 | 2024-02-15
+             4 |      2 |     101 |           35 | 2024-01-12
+             5 |      2 |     104 |           10 | 2024-03-05
+             6 |      2 |     101 |           20 | 2024-04-10
+             7 |      3 |     102 |           50 | 2024-03-01
+             8 |      3 |     105 |           45 | 2024-05-10
+             9 |      5 |     103 |           60 | 2024-01-20
+            10 |      5 |     106 |           30 | 2024-06-15
+            11 |      6 |     104 |           15 | 2024-02-10
+            12 |      6 |     104 |           20 | 2024-02-20
+            13 |      6 |     104 |           25 | 2024-03-01
+            14 |      7 |     102 |           10 | 2024-01-05
+            15 |      7 |     105 |           15 | 2024-02-05
+            16 |      8 |     101 |            5 | 2024-01-10
+            17 |      1 |     106 |           10 | 2024-07-01
+(17개 행)
+
+testdb=# select * from performance_reviews;
+ review_id | emp_id | review_year | rating
+-----------+--------+-------------+--------
+         1 |      1 |        2024 |      5
+         2 |      2 |        2024 |      4
+         3 |      3 |        2024 |      3
+         4 |      4 |        2024 |      4
+         5 |      5 |        2024 |      5
+         6 |      6 |        2024 |      2
+         7 |      7 |        2024 |      4
+         8 |      8 |        2024 |      3
+(8개 행)
+
+WITH assign as (
+SELECT t1.* from (
+SELECT
+emp_id,
+proj_id,
+SUM(CASE WHEN TO_CHAR(work_date, 'YYYY') = '2024' THEN
+hours_worked ELSE 0 END
+) OVER (PARTITION BY emp_id) as total_hours
+from project_assignments) t1
+WHERE t1.total_hours >=80
+),
+temp1 as (
+SELECT * FROM assign LEFT JOIN 
+employees USING (emp_id)
+),
+temp2 as (
+SELECT * FROM temp1 LEFT JOIN 
+departments USING (dept_id)
+),
+temp3 as (
+SELECT * FROM temp2 LEFT JOIN
+performance_reviews USING (emp_id)
+),
+temp4 as (
+SELECT * FROM temp3 LEFT JOIN
+projects USING (proj_id)
+)
+SELECT * FROM temp4;
+
+ proj_id | emp_id | dept_id | total_hours | emp_name | hire_date  |  dept_name  | review_id | review_year | rating |      proj_name       | budget
+---------+--------+---------+-------------+----------+------------+-------------+-----------+-------------+--------+----------------------+--------
+     106 |      1 |      10 |         105 | Alice    | 2020-01-01 | Development |         1 |        2024 |      5 | Legacy Modernization | 200000
+     103 |      1 |      10 |         105 | Alice    | 2020-01-01 | Development |         1 |        2024 |      5 | AI Chatbot           |  80000
+     101 |      1 |      10 |         105 | Alice    | 2020-01-01 | Development |         1 |        2024 |      5 | Cloud Migration      | 150000
+     101 |      1 |      10 |         105 | Alice    | 2020-01-01 | Development |         1 |        2024 |      5 | Cloud Migration      | 150000
+     102 |      3 |      20 |          95 | Charlie  | 2019-11-20 | Design      |         3 |        2024 |      3 | UI Renewal           |  30000
+     105 |      3 |      20 |          95 | Charlie  | 2019-11-20 | Design      |         3 |        2024 |      3 | Mobile App Dev       | 120000
+     103 |      5 |      10 |          90 | Eve      | 2023-01-01 | Development |         5 |        2024 |      5 | AI Chatbot           |  80000
+     106 |      5 |      10 |          90 | Eve      | 2023-01-01 | Development |         5 |        2024 |      5 | Legacy Modernization | 200000
+
+
+
+WITH assign as (
+SELECT t1.* from (
+SELECT
+emp_id,
+proj_id,
+SUM(CASE WHEN TO_CHAR(work_date, 'YYYY') = '2024' THEN
+hours_worked ELSE 0 END
+) OVER (PARTITION BY emp_id) as total_hours
+from project_assignments) t1
+WHERE t1.total_hours >=80
+),
+temp1 as (
+SELECT * FROM assign LEFT JOIN 
+employees USING (emp_id)
+),
+temp2 as (
+SELECT * FROM temp1 LEFT JOIN 
+departments USING (dept_id)
+),
+temp3 as (
+SELECT * FROM temp2 LEFT JOIN
+performance_reviews USING (emp_id)
+),
+temp4 as (
+SELECT * FROM temp3 LEFT JOIN
+projects USING (proj_id)
+),
+temp5 as (
+SELECT 
+emp_name, 
+dept_name, 
+total_hours as total_hours_2024, 
+MAX(CASE WHEN review_year = 2024 THEN rating ELSE NULL END) OVER (PARTITION BY emp_id) as current_rating,
+proj_name 
+FROM temp4
+)
+SELECT 
+emp_name,
+dept_name, 
+total_hours_2024, 
+current_rating,
+STRING_AGG(proj_name, ',') as assigned_projects
+FROM temp5
+GROUP BY emp_name, dept_name, total_hours_2024, current_rating
+ORDER BY total_hours_2024 DESC;
+
+
+ emp_name |  dept_name  | total_hours_2024 | current_rating |                        assigned_projects
+----------+-------------+------------------+----------------+-----------------------------------------------------------------
+ Alice    | Development |              105 |              5 | Cloud Migration,Cloud Migration,AI Chatbot,Legacy Modernization
+ Charlie  | Design      |               95 |              3 | Mobile App Dev,UI Renewal
+ Eve      | Development |               90 |              5 | Legacy Modernization,AI Chatbot
+
+
+
+
+
+### **2. SQL 실습 문제 (심화)**
+
+**[문제]**
+2024년도 실적을 바탕으로 **'핵심 인재 리포트'**를 작성하려고 합니다. 다음 조건에 맞는 쿼리를 작성하세요.
+
+1.  **필터링 조건:** * 2024년에 투입된 **총 근무 시간(`hours_worked`)의 합계가 80시간 이상**인 사원만 추출하세요.
+2.  **인라인 뷰 활용 전략:** * `project_assignments` 테이블에서 사원별 `total_hours`를 먼저 집계하고 80시간 이상인 사원 ID만 걸러내는 **서브쿼리(Inline View)**를 작성하세요.
+    * 해당 서브쿼리의 결과를 `employees`, `departments`, `performance_reviews`, `projects` 등과 조인하세요.
+3.  **출력 컬럼:**
+    * `emp_name` (사원명)
+    * `dept_name` (부서명)
+    * `total_hours_2024` (2024년 총 근무 시간 합계)
+    * `current_rating` (2024년 성과 등급)
+    * `assigned_projects` (참여한 프로젝트들의 이름을 쉼표로 구분하여 출력)
+4.  **정렬:**
+    * `total_hours_2024`를 기준으로 내림차순 정렬하세요.
