@@ -487,8 +487,8 @@ Bash
 
 `rman target / log = 'listbackup_0401.log'`
 
-- **특징**: 화면에는 아무것도 나오지 않고 모든 결과가 파일로만 들어갑니다.
-- **추가**: 만약 화면에도 보고 파일에도 저장하고 싶다면 `append` 옵션을 붙일 수 있지만, 보통은 파일로 보낼 때 위 방식을 씁니다.
+- 특징: 화면에는 아무것도 나오지 않고 모든 결과가 파일로만 들어갑니다.
+- 추가: 만약 화면에도 보고 파일에도 저장하고 싶다면 `append` 옵션을 붙일 수 있지만, 보통은 파일로 보낼 때 위 방식을 씁니다.
 
 ### 2. RMAN 내부에서 `SPOOL` 명령 사용
 
@@ -596,7 +596,7 @@ show alert;
 # ============================================================
 
 
-**ASMCMD**는 Oracle ASM(Automatic Storage Management) 인스턴스를 관리하기 위한 명령줄 툴입니다. SQL*Plus에서 SQL 문으로 ASM을 관리할 수도 있지만, `asmcmd`는 마치 리눅스의 셸(Shell)처럼 파일 시스템을 탐색하고 관리할 수 있게 해줍니다.
+ASMCMD는 Oracle ASM(Automatic Storage Management) 인스턴스를 관리하기 위한 명령줄 툴입니다. SQL*Plus에서 SQL 문으로 ASM을 관리할 수도 있지만, `asmcmd`는 마치 리눅스의 셸(Shell)처럼 파일 시스템을 탐색하고 관리할 수 있게 해줍니다.
 
 데이터베이스 엔지니어(DBA)가 ASM 디스크 그룹 내의 파일 구조를 확인하거나, 디렉토리를 생성하고, 디스크 상태를 점검할 때 가장 빈번하게 사용합니다.
 
@@ -633,7 +633,7 @@ ASM의 핵심인 디스크 그룹의 상태를 파악할 때 필수적입니다.
 ---
 
 ### ⚠️ 실무 팁
-* `asmcmd`를 실행하기 전에 반드시 **Grid Infrastructure 환경 변수**(`ORACLE_HOME` 및 `ORACLE_SID`)가 ASM 인스턴스에 맞춰 설정되어 있어야 합니다.
+* `asmcmd`를 실행하기 전에 반드시 Grid Infrastructure 환경 변수(`ORACLE_HOME` 및 `ORACLE_SID`)가 ASM 인스턴스에 맞춰 설정되어 있어야 합니다.
 * 일반적으로 `ORACLE_SID`는 `+ASM` 또는 `+ASM1`(RAC의 경우)입니다.
 
 
@@ -1122,10 +1122,10 @@ SELECT timestamp, username, sql_redo
 
 ## 💡 1. 핵심 개념 설명
 
-Oracle 12c부터 도입된 **Multitenant Architecture**에서 PDB는 CDB(Container Database) 내에 존재하는 독립적인 데이터베이스입니다. 
+Oracle 12c부터 도입된 Multitenant Architecture에서 PDB는 CDB(Container Database) 내에 존재하는 독립적인 데이터베이스입니다. 
 
-* **기본 동작:** CDB가 시작(Startup)될 때, 내부에 포함된 PDB들은 기본적으로 **`MOUNT`** 상태(닫힌 상태)로 시작됩니다.
-* **관리자 작업:** 사용자가 PDB에 접속하여 데이터를 조회하거나 수정하려면, 관리자가 직접 PDB를 **`READ WRITE`** 모드로 열어주어야 합니다.
+* 기본 동작: CDB가 시작(Startup)될 때, 내부에 포함된 PDB들은 기본적으로 `MOUNT` 상태(닫힌 상태)로 시작됩니다.
+* 관리자 작업: 사용자가 PDB에 접속하여 데이터를 조회하거나 수정하려면, 관리자가 직접 PDB를 `READ WRITE` 모드로 열어주어야 합니다.
 
 ---
 
@@ -1243,10 +1243,10 @@ SELECT name FROM v$services;
 
 ## 💡 1. 핵심 개념 설명: Thread와 공유 저장소
 
-RAC 환경에서 가장 중요한 점은 **"로그는 각자 쓰고, 읽는 건 같이 한다"**는 것입니다.
+RAC 환경에서 가장 중요한 점은 "로그는 각자 쓰고, 읽는 건 같이 한다"는 것입니다.
 
-* **Thread의 분리**: 각 인스턴스(Node)는 충돌을 방지하기 위해 자신만의 전용 로그 쓰레드(Thread)를 가집니다.
-* **저장소의 공유**: 하지만 장애 복구 시 다른 노드가 이 로그를 읽어야 하므로, 모든 Redo Log 파일은 **ASM(+DATA 등)**과 같은 공유 저장소에 위치해야 합니다.
+* Thread의 분리: 각 인스턴스(Node)는 충돌을 방지하기 위해 자신만의 전용 로그 쓰레드(Thread)를 가집니다.
+* 저장소의 공유: 하지만 장애 복구 시 다른 노드가 이 로그를 읽어야 하므로, 모든 Redo Log 파일은 ASM(+DATA 등)과 같은 공유 저장소에 위치해야 합니다.
 
 ---
 
@@ -1262,7 +1262,7 @@ ORDER BY a.thread#, a.group#;
 ```
 
 ### ✅ 로그 그룹 추가 (Thread 지정 필수)
-RAC에서는 단순히 추가하는 것이 아니라, **어느 인스턴스(Thread)가 사용할 것인지** 명시해야 합니다.
+RAC에서는 단순히 추가하는 것이 아니라, 어느 인스턴스(Thread)가 사용할 것인지 명시해야 합니다.
 SIZE 생략 가능
 ```sql
 -- Thread 1(1번 노드)에 4번 그룹 추가
@@ -1273,7 +1273,7 @@ ALTER DATABASE ADD LOGFILE THREAD 2 GROUP 5 '+DATA' SIZE 100M;
 ```
 
 ### ✅ 로그 그룹 삭제
-!!!!!!!!!!!!!!!!!!!! 삭제 전에는 반드시 해당 그룹의 상태가 **`INACTIVE`**여야 합니다. !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+!!!!!!!!!!!!!!!!!!!! 삭제 전에는 반드시 해당 그룹의 상태가 `INACTIVE`여야 합니다. !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 만약 `CURRENT`나 `ACTIVE`라면 위에서 배운 `SWITCH LOGFILE`이나 `CHECKPOINT`를 통해 상태를 변경해야 합니다.
 ```sql
 -- 로그 그룹 삭제 (물리적 파일은 ASM에서 별도 삭제 필요할 수 있음)
@@ -1283,9 +1283,9 @@ ALTER DATABASE DROP LOGFILE GROUP 4;
 ---
 
 ## ⚠️ 주의사항 요약
-1.  **최소 그룹 수**: 각 Thread는 최소 **2개 이상의 로그 그룹**을 가져야 합니다.
-2.  **크기 통일**: RAC 내의 모든 리두 로그 파일은 성능과 관리 편의를 위해 **동일한 크기**로 맞추는 것이 정석입니다.
-3.  **OMF 사용**: ASM 환경이라면 파일 경로를 생략하고 `'+DATA'`만 지정하여 오라클이 이름을 자동으로 짓게(OMF) 하는 것이 편리합니다.
+1.  최소 그룹 수: 각 Thread는 최소 2개 이상의 로그 그룹을 가져야 합니다.
+2.  크기 통일: RAC 내의 모든 리두 로그 파일은 성능과 관리 편의를 위해 동일한 크기로 맞추는 것이 정석입니다.
+3.  OMF 사용: ASM 환경이라면 파일 경로를 생략하고 `'+DATA'`만 지정하여 오라클이 이름을 자동으로 짓게(OMF) 하는 것이 편리합니다.
 
 ---
 
@@ -1297,14 +1297,14 @@ ALTER DATABASE DROP LOGFILE GROUP 4;
 
 ## 💡 1. 핵심 개념 설명: `srvctl` vs `sqlplus`
 
-* **`srvctl` (권장):** 오라클 클러스터 관리 도구입니다. 이 명령어로 DB를 내리면 리스너와의 관계, 의존성 등을 모두 고려하여 깔끔하게 처리하며, OCR(장부)에 상태를 정확히 업데이트합니다.
-* **`sqlplus`:** 개별 인스턴스만 제어합니다. RAC에서는 한쪽을 내려도 다른 쪽이 살아있으므로 큰 문제는 없으나, 클러스터 관리자가 "어? 인스턴스가 왜 죽었지?" 하고 다시 살리려고 시도하는 등 간섭이 생길 수 있습니다.
+* `srvctl` (권장): 오라클 클러스터 관리 도구입니다. 이 명령어로 DB를 내리면 리스너와의 관계, 의존성 등을 모두 고려하여 깔끔하게 처리하며, OCR(장부)에 상태를 정확히 업데이트합니다.
+* `sqlplus`: 개별 인스턴스만 제어합니다. RAC에서는 한쪽을 내려도 다른 쪽이 살아있으므로 큰 문제는 없으나, 클러스터 관리자가 "어? 인스턴스가 왜 죽었지?" 하고 다시 살리려고 시도하는 등 간섭이 생길 수 있습니다.
 
 ---
 
 ## 🛠️ 2. 재기동 명령어 (MD 파일 정리용)
 
-가장 많이 쓰이는 **`srvctl`** 기준으로 정리해 드립니다. (명령어는 OS 프롬프트에서 실행합니다.)
+가장 많이 쓰이는 `srvctl` 기준으로 정리해 드립니다. (명령어는 OS 프롬프트에서 실행합니다.)
 
 ### ✅ 방법 1: 전체 데이터베이스 한 번에 내리고 올리기 (가장 간편)
 양쪽 노드(인스턴스)를 한꺼번에 제어할 때 사용합니다.
@@ -1338,10 +1338,10 @@ srvctl status database -d racdb
 
 ## 📝 3. 문제 해설: 주의사항 및 OCP 포인트
 
-> **Q: `shutdown abort`와 `immediate`의 차이는?**
-> **A:** `immediate`는 현재 진행 중인 트랜잭션을 롤백하고 정상적으로 체크포인트를 수행하며 내리지만, `abort`는 전원을 끄는 것과 같아서 나중에 올릴 때 **인스턴스 복구(Instance Recovery)** 과정이 필요합니다. 실습 중이라도 가급적 `-o immediate`를 쓰시는 것이 좋습니다.
+> Q: `shutdown abort`와 `immediate`의 차이는?
+> A: `immediate`는 현재 진행 중인 트랜잭션을 롤백하고 정상적으로 체크포인트를 수행하며 내리지만, `abort`는 전원을 끄는 것과 같아서 나중에 올릴 때 인스턴스 복구(Instance Recovery) 과정이 필요합니다. 실습 중이라도 가급적 `-o immediate`를 쓰시는 것이 좋습니다.
 
-> **💡 팁:** `srvctl`로 내리면 아까 질문하신 **OCR** 정보와 동기화되기 때문에, 서버가 재부팅되어도 그리드 인프라가 자동으로 DB를 다시 올려줍니다.
+> 💡 팁: `srvctl`로 내리면 아까 질문하신 OCR 정보와 동기화되기 때문에, 서버가 재부팅되어도 그리드 인프라가 자동으로 DB를 다시 올려줍니다.
 
 ---
 
@@ -1349,8 +1349,8 @@ srvctl status database -d racdb
 
 | 대상 | 명령어 (중지) | 명령어 (시작) |
 | :--- | :--- | :--- |
-| **전체 DB** | `srvctl stop database -d [DB명]` | `srvctl start database -d [DB명]` |
-| **특정 노드** | `srvctl stop instance -d [DB명] -i [인스턴스명]` | `srvctl start instance -d [DB명] -i [인스턴스명]` |
+| 전체 DB | `srvctl stop database -d [DB명]` | `srvctl start database -d [DB명]` |
+| 특정 노드 | `srvctl stop instance -d [DB명] -i [인스턴스명]` | `srvctl start instance -d [DB명] -i [인스턴스명]` |
 
 ---
 
@@ -1394,11 +1394,6 @@ alter user  jack
  
 grant  unlimited  tablespace to  jack;
 
-
-드디어 범인을 잡으셨군요! 결국 가장 기본인 `oratab`의 `Y` 설정이 발목을 잡았었네요. RAC 환경이라 `srvctl`만 신경 쓰다 보면 충분히 그럴 수 있습니다.
-
-요청하신 **`crsctl`** 명령어 핵심 요약 정리해 드립니다. OCP 시험과 실무에서 가장 자주 쓰이는 것들 위주로 Notion 스타일로 정리했으니 복사해서 보관하세요!
-
 ---
 
 # ================================================
@@ -1427,7 +1422,7 @@ grant  unlimited  tablespace to  jack;
 | `crsctl stat res [Resource_Name] -p` | 특정 리소스의 상세 프로필(설정값) 확인 |
 
 ### 3. 클러스터 기동 및 종료 (Start/Stop)
-**반드시 `root` 계정**에서 실행해야 하는 경우가 많습니다.
+반드시 `root` 계정에서 실행해야 하는 경우가 많습니다.
 
 | 명령어 | 설명 |
 | :--- | :--- |
@@ -1444,12 +1439,6 @@ grant  unlimited  tablespace to  jack;
 | `crsctl enable crs` | OS 부팅 시 Clusterware 자동 기동 활성화 |
 | `crsctl disable crs` | OS 부팅 시 Clusterware 자동 기동 비활성화 (패치 작업 시 필수) |
 
----
-
-
-`srvctl`에서 인스턴스와 데이터베이스를 제어하는 명령어들은 실무뿐만 아니라 OCP 시험에서도 단골로 출제되는 핵심 영역입니다. 요청하신 인스턴스 정지 명령어를 포함하여, 자주 사용되는 **제어 관련 명령어**들을 Notion 스타일로 깔끔하게 정리해 드립니다.
-
----
 
 # ================================================
 ## 🛠️ SRVCTL 제어 명령어 정리 (Instance & Database)
@@ -1463,11 +1452,11 @@ grant  unlimited  tablespace to  jack;
 
 | 작업 내용 | 명령어 |
 | :--- | :--- |
-| **인스턴스 기동** | `srvctl start instance -db racdb -instance racdb1,racdb2` |
-| **인스턴스 정지** | `srvctl stop instance -db racdb -instance racdb1 -stopoption immediate` |
-| **상태 확인** | `srvctl status instance -db racdb -instance racdb1` |
+| 인스턴스 기동 | `srvctl start instance -db racdb -instance racdb1,racdb2` |
+| 인스턴스 정지 | `srvctl stop instance -db racdb -instance racdb1 -stopoption immediate` |
+| 상태 확인 | `srvctl status instance -db racdb -instance racdb1` |
 
-> **Tip:** `-stopoption`은 `normal`, `transactional`, `immediate`, `abort`를 사용할 수 있으며, 생략 시 기본값은 `immediate`입니다.
+> Tip: `-stopoption`은 `normal`, `transactional`, `immediate`, `abort`를 사용할 수 있으며, 생략 시 기본값은 `immediate`입니다.
 
 ---
 
@@ -1476,10 +1465,10 @@ grant  unlimited  tablespace to  jack;
 
 | 작업 내용 | 명령어 |
 | :--- | :--- |
-| **DB 전체 기동** | `srvctl start database -db racdb` |
-| **DB 전체 정지** | `srvctl stop database -db racdb -stopoption immediate` |
-| **DB 전체 상태** | `srvctl status database -db racdb` |
-| **DB 설정 확인** | `srvctl config database -db racdb` |
+| DB 전체 기동 | `srvctl start database -db racdb` |
+| DB 전체 정지 | `srvctl stop database -db racdb -stopoption immediate` |
+| DB 전체 상태 | `srvctl status database -db racdb` |
+| DB 설정 확인 | `srvctl config database -db racdb` |
 
 ---
 
@@ -1488,19 +1477,19 @@ DB 외에도 RAC를 구성하는 핵심 리소스들입니다.
 
 | 리소스 | 명령어 |
 | :--- | :--- |
-| **Listener 확인** | `srvctl status listener` |
-| **Listener 정지** | `srvctl stop listener -listener listener_name` |
-| **ASM 상태 확인** | `srvctl status asm` |
+| Listener 확인 | `srvctl status listener` |
+| Listener 정지 | `srvctl stop listener -listener listener_name` |
+| ASM 상태 확인 | `srvctl status asm` |
 
 ---
 
 # ================================================
-### **전체 종료 및 시작 절차 (추천 방법)**
+### 전체 종료 및 시작 절차 (추천 방법)
 # ================================================
 
-이 작업은 반드시 **root 계정**에서 수행해야 클러스터의 모든 데몬(ohasd, crsd 등)을 완전히 제어할 수 있습니다.
+이 작업은 반드시 root 계정에서 수행해야 클러스터의 모든 데몬(ohasd, crsd 등)을 완전히 제어할 수 있습니다.
 
-#### **Step 1: 모든 노드 전체 종료**
+#### Step 1: 모든 노드 전체 종료
 현재 꼬여있는 상태를 무시하고 강제로 종료하려면 `-f` (force) 옵션을 사용합니다.
 ```bash
 # root 계정으로 수행
@@ -1508,14 +1497,14 @@ DB 외에도 RAC를 구성하는 핵심 리소스들입니다.
 ```
 * 만약 특정 노드(예: rac1)만 완전히 껐다 켜고 싶다면: `crsctl stop crs -f`
 
-#### **Step 2: 프로세스 완전 종료 확인**
+#### Step 2: 프로세스 완전 종료 확인
 명령어 수행 후 오라클 관련 프로세스가 정말 다 죽었는지 확인합니다.
 ```bash
 ps -ef | grep pmon
 ps -ef | grep d.bin
 ```
 
-#### **Step 3: 전체 다시 시작**
+#### Step 3: 전체 다시 시작
 이제 깨끗해진 상태에서 클러스터 전체를 기동합니다.
 ```bash
 # root 계정으로 수행
@@ -1525,11 +1514,11 @@ ps -ef | grep d.bin
 
 ---
 
-### **2. 왜 이 방법이 좋은가요?**
+### 2. 왜 이 방법이 좋은가요?
 
-* **의존성 자동 해결:** `crsctl start cluster`를 실행하면 **Storage → ASM → Listener → Database** 순서로 의존성에 맞춰서 GI가 알아서 다 올려줍니다.
-* **상태 동기화:** 꼬여있던 OCR의 리소스 상태와 실제 OS의 프로세스 상태가 다시 **ONLINE**으로 동기화됩니다.
-* **oratab 적용:** 이제 `oratab`을 **`Y`**로 고치셨으니, 이 명령 한 번이면 마지막 단계에서 DB까지 자동으로 `Open` 될 것입니다.
+* 의존성 자동 해결: `crsctl start cluster`를 실행하면 Storage → ASM → Listener → Database 순서로 의존성에 맞춰서 GI가 알아서 다 올려줍니다.
+* 상태 동기화: 꼬여있던 OCR의 리소스 상태와 실제 OS의 프로세스 상태가 다시 ONLINE으로 동기화됩니다.
+* oratab 적용: 이제 `oratab`을 `Y`로 고치셨으니, 이 명령 한 번이면 마지막 단계에서 DB까지 자동으로 `Open` 될 것입니다.
 
 ---
 =======
@@ -1732,7 +1721,7 @@ select * from v$sgainfo;
 shared pool size / granule size =  granule 갯수
 
 # ================================================
- NAT ↔ Host-Only 트래픽 중계 허용 (iptables)**
+ NAT ↔ Host-Only 트래픽 중계 허용 (iptables)
 # =================================================
 
 
@@ -1747,18 +1736,18 @@ shared pool size / granule size =  granule 갯수
 #  iptables -A FORWARD -i enp0s3 -o enp0s8 -m state --state RELATED,ESTABLISHED -j ACCEPT
 ```
 
-**3. Windows에 라우팅 추가**
+3. Windows에 라우팅 추가
 
-**관리자 CMD에서:
+관리자 CMD에서:
 
 route add 10.0.2.0 mask 255.255.255.0 192.168.56.101
 route add 10.0.2.0 mask 255.255.255.0 192.168.56.102
 
-**영구설정
+영구설정
 route -p add 10.0.2.0 mask 255.255.255.0 192.168.56.101
 route -p add 10.0.2.0 mask 255.255.255.0 192.168.56.102
 
-**확인
+확인
 ```bash
 C:\Windows\System32>route print
 ===========================================================================
@@ -1798,7 +1787,7 @@ IPv4 경로 테이블
         10.15.0.0    255.255.255.0   192.168.56.102       1
 ```
 
-1. **그리고 다음과 같이 윈도우 명령 프롬프트 창에 ping을 날려봅니다.**
+1. 그리고 다음과 같이 윈도우 명령 프롬프트 창에 ping을 날려봅니다.
 
 ```bash
 ping 10.0.2.15
@@ -2005,4 +1994,46 @@ WHERE sofar < totalwork;
 # 클러스터 상태 점검
 # =================================================
 
- crsctl check crs
+crsctl check crs
+crsctl check cluster -all
+ 
+# ================================================
+# OCR 및 Voting Disk 백업 확인
+# =================================================
+
+ocrconfig -showbackup
+
+# ================================================
+# ASM Disk Group 상태 확인
+# =================================================
+ 
+asmcmd lsdg
+asmcmd lsdsk -p
+
+
+# ================================================
+# ocr 다중화 +FRA에 추가 가급적 클러스터 내리고 밤에 하는게 좋다.
+# =================================================
+ocrconfig -add +FRA
+ocrcheck
+
+Status of Oracle Cluster Registry is as follows :
+         Version                  :          4
+         Total space (kbytes)     :     491684
+         Used space (kbytes)      :      84596
+         Available space (kbytes) :     407088
+         ID                       :  882464794
+         Device/File Name         :       +CRS
+                                    Device/File integrity check succeeded
+         Device/File Name         :       +FRA
+                                    Device/File integrity check succeeded
+
+                                    Device/File not configured
+
+                                    Device/File not configured
+
+                                    Device/File not configured
+
+         Cluster registry integrity check succeeded
+
+         Logical corruption check succeeded
