@@ -1,0 +1,5 @@
+UNDO                                                        REDO
+ACTIVE(COMMIT 안됨)                                 CURRENT(사용중: COMMIT 안됨)
+UNEXPIRED(COMMIT됨, RETENTION만료 안됨)  ACTIVE (COMMIT됨, DISK안써짐)
+EXPIRED(COMMIT됨, RETENTION만료 됨)        INACTIVE (DISK써짐)
+                                                               FREE (안번도 사용안함)

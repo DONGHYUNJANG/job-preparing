@@ -1,0 +1,3 @@
+SELECT 스칼라쿼리
+FROM     인라인뷰
+WHERE, HAVING 중첩서브쿼리

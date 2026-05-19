@@ -1,0 +1,10 @@
+HASH JOIN, NL JOIN , FILTER 선택 기준
+
+                     카디널리티                      서브쿼리 테이블 크기
+인덱스없음      상관없음                              상관없음                        HASH JOIN
+
+
+인덱스 있음      카디널리티 높음               상관없음                            NL JOIN
+
+
+인덱스 있음      카디널리티 낮음                상관없음                            FILTER
