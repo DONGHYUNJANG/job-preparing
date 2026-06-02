@@ -1,7 +1,0 @@
-Index Skew
--> 리프노드 한쪽으로 치우침
-Index Sparse
--> 리프노드값이 듬성듬성
-문제점: 인덱스 효율이 떨어짐, Hot block 가능성 높아짐
-해결책: Alter Index, Shirink
-
